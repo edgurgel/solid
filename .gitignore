@@ -4,3 +4,4 @@
 erl_crash.dump
 *.ez
 /src/solid_parser.erl
+/doc
