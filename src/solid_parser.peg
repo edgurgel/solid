@@ -1,0 +1,50 @@
+text   <- string:blob (liquid:liquid text:text)? `{text, Node}`;
+blob   <- ((!open_block .)*) ~;
+liquid <- open_block:open_block space (argument:argument filters:filters / argument:argument)? space close_block:close_block `
+case Node of
+  [_, _, Block, _, _] -> lists:flatten([Block])
+end
+`;
+filters <- (space "|" space filter (":" space arguments)? )+`
+[case N of
+  [_, _, _, Filter, [_, _, Args]] -> {Filter, Args};
+  [_, _, _, Filter, _] -> {Filter, []}
+end || N <- Node]
+`;
+arguments <- argument (space "," space argument)* `
+case Node of
+  [Arg1, Args] -> [Arg1 | [Arg || [_, _, _, Arg] <- Args]]
+end
+`;
+argument <- value:value / field:field ~;
+value <- space (string / number / true / false / null) space `lists:nth(2, Node)`;
+
+%% Terminals
+
+open_block     <- "{{" ~;
+close_block    <- "}}" ~;
+field          <- [0-9a-zA-Z\.]* `iolist_to_binary(Node)`;
+filter         <- [a-zA-Z]* `iolist_to_binary(Node)`;
+space          <- [ \t\n\s\r]* `{space, iolist_to_binary(Node)}`;
+
+string <- '"' chars:(!'"' ("\\\\" / '\\"' / .))* '"' `
+iolist_to_binary(proplists:get_value(chars, Node))
+`;
+number <- int frac? exp?
+`
+case Node of
+  [Int, [], []] -> list_to_integer(binary_to_list(iolist_to_binary(Int)));
+  [Int, Frac, []] -> list_to_float(binary_to_list(iolist_to_binary([Int, Frac])));
+  [Int, [], Exp] -> list_to_float(binary_to_list(iolist_to_binary([Int, ".0", Exp])));
+  _ -> list_to_float(binary_to_list(iolist_to_binary(Node)))
+end
+`;
+int <- '-'? (non_zero_digit digit+) / digit ~;
+frac <- '.' digit+ ~;
+exp <- e digit+ ~;
+e <- [eE] ('+' / '-')? ~;
+non_zero_digit <- [1-9] ~;
+digit <- [0-9] ~;
+true <- 'true' `true`;
+false <- 'false' `false`;
+null <- 'nil' `nil`;
