@@ -6,7 +6,10 @@ defmodule Solid.Mixfile do
   """
 
   @compile_peg_task "tasks/compile.peg.exs"
-  Code.eval_file @compile_peg_task
+  @do_peg_compile?  File.exists?(@compile_peg_task)
+  if @do_peg_compile? do
+    Code.eval_file @compile_peg_task
+  end
 
   def project do
     [app: :solid,
