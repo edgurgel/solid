@@ -6,6 +6,14 @@ defmodule Solid.Integration.ObjectsTest do
     assert render("No Number!", %{ "key" => 123 }) == "No Number!"
   end
 
+  test "single quoted string" do
+    assert render("String: {{ 'text' }}") == "String: text"
+  end
+
+  test "double quoted string" do
+    assert render("String: {{ \"text\" }}") == "String: text"
+  end
+
   test "basic key rendering" do
     assert render("Number {{ key }} !", %{ "key" => 123 }) == "Number 123 !"
   end

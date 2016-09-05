@@ -18,6 +18,9 @@ end
 `;
 argument <- value:value / field:field ~;
 value <- space (string / number / true / false / null) space `lists:nth(2, Node)`;
+string <- single_quoted_string / double_quoted_string `
+iolist_to_binary(proplists:get_value(string, Node))
+`;
 
 %% Terminals
 
@@ -27,9 +30,9 @@ field          <- [0-9a-zA-Z\.]* `iolist_to_binary(Node)`;
 filter         <- [a-zA-Z]* `iolist_to_binary(Node)`;
 space          <- [ \t\n\s\r]* `{space, iolist_to_binary(Node)}`;
 
-string <- '"' chars:(!'"' ("\\\\" / '\\"' / .))* '"' `
-iolist_to_binary(proplists:get_value(chars, Node))
-`;
+double_quoted_string <- '"' string:(!'"' ("\\\\" / '\\"' / .))* '"' ~;
+single_quoted_string <- "'" string:(!"'" ("\\\\" / "\\'" / .))* "'" ~;
+
 number <- int frac? exp?
 `
 case Node of
