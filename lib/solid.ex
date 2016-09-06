@@ -19,21 +19,26 @@ defmodule Solid do
   It renders the compiled template using a `hash` with variables
   """
   @spec render(any, Map.t) :: iolist
-  def render({:text, text} = template, hash \\ %{}) do
+  def render(text, hash \\ %{}) do
     case text do
-      [{:string, string} | tail] -> [string | render_liquid(hd(tail), hash)]
+      [{:string, string}, []] ->
+        [string]
+      [{:string, string}, [{:open_object, _}, {:text, tail}]] ->
+        [string, "{{", render(tail, hash)]
+      [{:string, string}, [{:object, object}, {:text, tail}]] ->
+        [string, render_object(object, hash), render(tail)]
     end
   end
 
-  def render_liquid([], _hash), do: []
-  def render_liquid(liquid, hash) when is_list(liquid) do
-    argument = get_in(liquid, [:liquid, :argument])
+  def render_object([], _hash), do: []
+  def render_object(object, hash) when is_list(object) do
+    argument = object[:argument]
     value    = Argument.get(argument, hash)
 
-    filters = get_in(liquid, [:liquid, :filters])
-    value  = value |> apply_filters(filters, hash)
+    filters = object[:filters]
+    value   = value |> apply_filters(filters, hash)
 
-    [to_string(value) | render(liquid[:text], hash)]
+    to_string(value)
   end
 
   defp apply_filters(input, nil, _), do: input

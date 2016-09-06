@@ -1,6 +1,10 @@
-text   <- string:blob (liquid:liquid text:text)? `{text, Node}`;
-blob   <- ((!open_block .)*) ~;
-liquid <- open_block:open_block space (argument:argument filters:filters / argument:argument)? space close_block:close_block `
+text   <- string:blob (object:object text:text / open_object:open_object text:text)? `
+Node
+`;
+blob   <- ((!open_object .)*) `
+iolist_to_binary(Node)
+`;
+object <- open_object:open_object space (argument:argument filters:filters / argument:argument)? space close_object:close_object `
 case Node of
   [_, _, Block, _, _] -> lists:flatten([Block])
 end
@@ -24,8 +28,8 @@ iolist_to_binary(proplists:get_value(string, Node))
 
 %% Terminals
 
-open_block     <- "{{" ~;
-close_block    <- "}}" ~;
+open_object     <- "{{" ~;
+close_object    <- "}}" ~;
 field          <- [0-9a-zA-Z\.]* `iolist_to_binary(Node)`;
 filter         <- [a-zA-Z]* `iolist_to_binary(Node)`;
 space          <- [ \t\n\s\r]* `{space, iolist_to_binary(Node)}`;
