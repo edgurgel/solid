@@ -5,7 +5,7 @@ defmodule Solid do
   iex> Solid.parse("{{ variable }}") |> Solid.render(%{ "variable" => "value" }) |> to_string
   "value"
   """
-  alias Solid.{Argument, Filter}
+  alias Solid.{Argument, Filter, Expression}
 
   @doc """
   It generates the compiled template
@@ -25,13 +25,26 @@ defmodule Solid do
         [string]
       [{:string, string}, [{:open_object, _}, {:text, tail}]] ->
         [string, "{{", render(tail, hash)]
+      [{:string, string}, [{:open_tag, _}, {:text, tail}]] ->
+        [string, "{%", render(tail, hash)]
+      [{:string, string}, [{:tag, tag}, {:text, tail}]] ->
+        [string, render_tag(tag, hash), render(tail)]
       [{:string, string}, [{:object, object}, {:text, tail}]] ->
         [string, render_object(object, hash), render(tail)]
     end
   end
 
-  def render_object([], _hash), do: []
-  def render_object(object, hash) when is_list(object) do
+  defp render_tag([], _hash), do: []
+  defp render_tag(tag, hash) when is_list(tag) do
+    if eval_expression(tag[:expression], hash) do
+      render(tag[:text], hash)
+    else
+      ""
+    end
+  end
+
+  defp render_object([], _hash), do: []
+  defp render_object(object, hash) when is_list(object) do
     argument = object[:argument]
     value    = Argument.get(argument, hash)
 
@@ -39,6 +52,13 @@ defmodule Solid do
     value   = value |> apply_filters(filters, hash)
 
     to_string(value)
+  end
+
+  defp eval_expression(bool, _hash) when is_boolean(bool), do: bool
+  defp eval_expression([arg1, op, arg2], hash) do
+    v1 = Argument.get(arg1, hash)
+    v2 = Argument.get(arg2, hash)
+    Expression.eval(v1, op, v2)
   end
 
   defp apply_filters(input, nil, _), do: input

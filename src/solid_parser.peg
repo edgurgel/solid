@@ -1,14 +1,27 @@
-text   <- string:blob (object:object text:text / open_object:open_object text:text)? `
-Node
-`;
-blob   <- ((!open_object .)*) `
-iolist_to_binary(Node)
-`;
+text   <- string:blob (object:object text:text
+                       / tag:tag text:text
+                     % / open_tag:open_tag text:text
+                       / open_object:open_object text:text)? ~;
+blob   <- (!open_object !open_tag .)* `iolist_to_binary(Node)`;
 object <- open_object:open_object space (argument:argument filters:filters / argument:argument)? space close_object:close_object `
 case Node of
   [_, _, Block, _, _] -> lists:flatten([Block])
 end
 `;
+tag <- open_tag:open_tag space if:if expression:expression close_tag:close_tag text:text
+       open_tag:open_tag space endif:endif space close_tag:close_tag `
+case Node of
+  [_, _, If, Exp, _, Text, _, _, _, _, _] -> [If, Exp, Text]
+end
+`;
+
+expression <- space (argument space operator space argument / boolean) space `
+case Node of
+  [_, [Arg1, _, Op, _, Arg2], _] -> [Arg1, Op, Arg2];
+  [_, Bool, _] -> Bool
+end
+`;
+
 filters <- (space "|" space filter (":" space arguments)? )+`
 [case N of
   [_, _, _, Filter, [_, _, Args]] -> {Filter, Args};
@@ -28,8 +41,15 @@ iolist_to_binary(proplists:get_value(string, Node))
 
 %% Terminals
 
-open_object     <- "{{" ~;
-close_object    <- "}}" ~;
+operator       <- "==" / "!=" / ">" / "<" / ">=" / "<=" `
+  binary_to_existing_atom(Node, utf8)
+`;
+open_object    <- "{{" ~;
+close_object   <- "}}" ~;
+open_tag       <-  "{%" ~;
+close_tag      <-  "%}" ~;
+if             <- "if" ~;
+endif          <- "endif" ~;
 field          <- [0-9a-zA-Z\.]* `iolist_to_binary(Node)`;
 filter         <- [a-zA-Z]* `iolist_to_binary(Node)`;
 space          <- [ \t\n\s\r]* `{space, iolist_to_binary(Node)}`;
@@ -52,6 +72,7 @@ exp <- e digit+ ~;
 e <- [eE] ('+' / '-')? ~;
 non_zero_digit <- [1-9] ~;
 digit <- [0-9] ~;
+boolean <- true / false ~;
 true <- 'true' `true`;
 false <- 'false' `false`;
 null <- 'nil' `nil`;
