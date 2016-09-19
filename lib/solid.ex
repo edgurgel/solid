@@ -36,10 +36,16 @@ defmodule Solid do
 
   defp render_tag([], _hash), do: []
   defp render_tag(tag, hash) when is_list(tag) do
-    if eval_expression(tag[:expression], hash) do
-      render(tag[:text], hash)
+    if_exp = tag[:if_exp]
+    if eval_expression(if_exp[:expression], hash) do
+      render(if_exp[:text], hash)
     else
-      ""
+      else_exp = tag[:else_exp]
+      if else_exp do
+        render(else_exp[:text], hash)
+      else
+        ""
+      end
     end
   end
 

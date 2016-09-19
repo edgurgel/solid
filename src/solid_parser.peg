@@ -8,10 +8,12 @@ case Node of
   [_, _, Block, _, _] -> lists:flatten([Block])
 end
 `;
-tag <- open_tag:open_tag space if:if expression:expression close_tag:close_tag text:text
-       open_tag:open_tag space endif:endif space close_tag:close_tag `
+tag <- open_tag space if expression:expression close_tag text:text
+       (open_tag space else space close_tag text:text)?
+       open_tag space endif space close_tag `
 case Node of
-  [_, _, If, Exp, _, Text, _, _, _, _, _] -> [If, Exp, Text]
+  [_, _, _If, Exp, _, Text, [], _, _, _EndIf, _, _] -> [{if_exp, [Exp, Text]}];
+  [_, _, _If, Exp, _, IfText, [_, _, _Else, _, _, ElseText], _, _, _EndIf, _, _] -> [{if_exp, [Exp, IfText]}, {else_exp, [ElseText]}]
 end
 `;
 
@@ -49,6 +51,7 @@ close_object   <- "}}" ~;
 open_tag       <-  "{%" ~;
 close_tag      <-  "%}" ~;
 if             <- "if" ~;
+else           <- "else" ~;
 endif          <- "endif" ~;
 field          <- [0-9a-zA-Z\.]* `iolist_to_binary(Node)`;
 filter         <- [a-zA-Z]* `iolist_to_binary(Node)`;

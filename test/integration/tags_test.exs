@@ -29,4 +29,12 @@ defmodule Solid.Integration.TagsTest do
   test "if with object" do
     assert render("{% if 1 != 2 %}{{ key }}{% endif %}", %{ "key" => 123 }) == "123"
   end
+
+  test "else true" do
+    assert render("{% if 1 == 1 %}True{% else %}False{% endif %} is True", %{ "key" => 123 }) == "True is True"
+  end
+
+  test "else false" do
+    assert render("{% if 1 != 1 %}True{% else %}False{% endif %} is False", %{ "key" => 123 }) == "False is False"
+  end
 end
