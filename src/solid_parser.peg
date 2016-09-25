@@ -8,14 +8,27 @@ case Node of
   [_, _, Block, _, _] -> lists:flatten([Block])
 end
 `;
-tag <- open_tag space if expression:expression close_tag text:text
-       (open_tag space else space close_tag text:text)?
-       open_tag space endif space close_tag `
+tag <- if_tag / unless_tag ~;
+
+if_tag <- open_tag space if expression:expression close_tag text:text
+          else_tag?
+          open_tag space endif space close_tag `
 case Node of
   [_, _, _If, Exp, _, Text, [], _, _, _EndIf, _, _] -> [{if_exp, [Exp, Text]}];
   [_, _, _If, Exp, _, IfText, [_, _, _Else, _, _, ElseText], _, _, _EndIf, _, _] -> [{if_exp, [Exp, IfText]}, {else_exp, [ElseText]}]
 end
 `;
+
+unless_tag <- open_tag space unless expression:expression close_tag text:text
+              else_tag?
+              open_tag space endunless space close_tag `
+case Node of
+  [_, _, _Unless, Exp, _, Text, [], _, _, _EndUnless, _, _] -> [{unless_exp, [Exp, Text]}];
+  [_, _, _Unless, Exp, _, UnlessText, [_, _, _Else, _, _, ElseText], _, _, _EndUnless, _, _] -> [{unless_exp, [Exp, UnlessText]}, {else_exp, [ElseText]}]
+end
+`;
+
+else_tag <- (open_tag space else space close_tag text:text) ~;
 
 expression <- space (argument space operator space argument / boolean) space `
 case Node of
@@ -53,6 +66,8 @@ close_tag      <-  "%}" ~;
 if             <- "if" ~;
 else           <- "else" ~;
 endif          <- "endif" ~;
+unless         <- "unless" ~;
+endunless      <- "endunless" ~;
 field          <- [0-9a-zA-Z\.]* `iolist_to_binary(Node)`;
 filter         <- [a-zA-Z]* `iolist_to_binary(Node)`;
 space          <- [ \t\n\s\r]* `{space, iolist_to_binary(Node)}`;

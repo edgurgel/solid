@@ -37,4 +37,28 @@ defmodule Solid.Integration.TagsTest do
   test "else false" do
     assert render("{% if 1 != 1 %}True{% else %}False{% endif %} is False", %{ "key" => 123 }) == "False is False"
   end
+
+  test "unless true expression" do
+    assert render("{% unless 1 == 1 %}True{% endunless %}False?", %{ "key" => 123 }) == "False?"
+  end
+
+  test "unless false expression" do
+    assert render("{% unless 1 != 1 %}True{% endunless %} is True", %{ "key" => 123 }) == "True is True"
+  end
+
+  test "unless true" do
+    assert render("{% unless true %}False{% endunless %}False?", %{ "key" => 123 }) == "False?"
+  end
+
+  test "unless false" do
+    assert render("{% unless false %}True{% endunless %} is True", %{ "key" => 123 }) == "True is True"
+  end
+
+  test "nested unless" do
+    assert render("{% unless 1 != 1 %}{% unless 1 == 2 %}True{% endunless %}{% endunless %} is True", %{ "key" => 123 }) == "True is True"
+  end
+
+  test "unless with object" do
+    assert render("{% unless 1 == 2 %}{{ key }}{% endunless %}", %{ "key" => 123 }) == "123"
+  end
 end
