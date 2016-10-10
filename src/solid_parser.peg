@@ -56,7 +56,7 @@ iolist_to_binary(proplists:get_value(string, Node))
 
 %% Terminals
 
-operator       <- "==" / "!=" / ">" / "<" / ">=" / "<=" `
+operator       <- "==" / "!=" / ">" / "<" / ">=" / "<=" / "contains" `
   binary_to_existing_atom(Node, utf8)
 `;
 open_object    <- "{{" ~;
