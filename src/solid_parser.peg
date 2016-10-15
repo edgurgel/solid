@@ -8,27 +8,55 @@ case Node of
   [_, _, Block, _, _] -> lists:flatten([Block])
 end
 `;
-tag <- if_tag / unless_tag ~;
+tag <- cond_if_tag / cond_unless_tag ~;
 
-if_tag <- open_tag space if expression:expression close_tag text:text
-          else_tag?
-          open_tag space endif space close_tag `
+cond_if_tag <- if_tag
+               elsif_tag*
+               else_tag?
+               open_tag space endif space close_tag `
 case Node of
-  [_, _, _If, Exp, _, Text, [], _, _, _EndIf, _, _] -> [{if_exp, [Exp, Text]}];
-  [_, _, _If, Exp, _, IfText, [_, _, _Else, _, _, ElseText], _, _, _EndIf, _, _] -> [{if_exp, [Exp, IfText]}, {else_exp, [ElseText]}]
+  [IfExp, [], [], _, _, _EndIf, _, _] -> [IfExp];
+  [IfExp, [], ElseExp, _, _, _EndIf, _, _] -> [IfExp, ElseExp];
+  [IfExp, Elsifs, [], _, _, _EndIf, _, _] -> [IfExp, {elsif_exps, Elsifs}];
+  [IfExp, Elsifs, ElseExp, _, _, _EndIf, _, _] -> [IfExp, Elsifs, ElseExp]
 end
 `;
 
-unless_tag <- open_tag space unless expression:expression close_tag text:text
-              else_tag?
-              open_tag space endunless space close_tag `
+if_tag <- open_tag space if expression:expression close_tag text:text `
 case Node of
-  [_, _, _Unless, Exp, _, Text, [], _, _, _EndUnless, _, _] -> [{unless_exp, [Exp, Text]}];
-  [_, _, _Unless, Exp, _, UnlessText, [_, _, _Else, _, _, ElseText], _, _, _EndUnless, _, _] -> [{unless_exp, [Exp, UnlessText]}, {else_exp, [ElseText]}]
+  [_, _, _If, Exp, _, Text] -> {if_exp, [Exp, Text]}
 end
 `;
 
-else_tag <- (open_tag space else space close_tag text:text) ~;
+elsif_tag <- open_tag space elsif expression:expression close_tag text:text `
+case Node of
+  [_, _, _Elsif, Exp, _, Text] -> {elsif_exp, [Exp, Text]}
+end
+`;
+
+else_tag <- (open_tag space else space close_tag text:text) `
+case Node of
+  [_, _, _Else, _, _, ElseText] -> {else_exp, [ElseText]}
+end
+`;
+
+unless_tag <- open_tag space unless expression:expression close_tag text:text `
+case Node of
+  [_, _, _Unless, Exp, _, Text] -> {unless_exp, [Exp, Text]}
+end
+`;
+
+cond_unless_tag <- unless_tag
+                   elsif_tag*
+                   else_tag?
+                   open_tag space endunless space close_tag `
+case Node of
+  [UnlessExp, [], _, _, _EndUnless, _, _] -> [UnlessExp];
+  [UnlessExp, [], ElseExp, _, _, _EndUnless, _, _] -> [UnlessExp, ElseExp];
+  [UnlessExp, Elsifs, [], _, _, _EndUnless, _, _] -> [UnlessExp, {elsif_exps, Elsifs}];
+  [UnlessExp, Elsifs, ElseExp, _, _, _EndUnless, _, _] -> [UnlessExp, Elsifs, ElseExp]
+end
+`;
 
 expression <- space (argument space operator space argument / boolean) space `
 case Node of
@@ -65,6 +93,7 @@ open_tag       <-  "{%" ~;
 close_tag      <-  "%}" ~;
 if             <- "if" ~;
 else           <- "else" ~;
+elsif          <- "elsif" ~;
 endif          <- "endif" ~;
 unless         <- "unless" ~;
 endunless      <- "endunless" ~;

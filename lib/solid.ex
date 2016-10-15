@@ -5,7 +5,7 @@ defmodule Solid do
   iex> Solid.parse("{{ variable }}") |> Solid.render(%{ "variable" => "value" }) |> to_string
   "value"
   """
-  alias Solid.{Argument, Filter, Expression}
+  alias Solid.{Argument, Filter, Tag}
 
   @doc """
   It generates the compiled template
@@ -28,37 +28,15 @@ defmodule Solid do
       [{:string, string}, [{:open_tag, _}, {:text, tail}]] ->
         [string, "{%", render(tail, hash)]
       [{:string, string}, [{:tag, tag}, {:text, tail}]] ->
-        [string, render_tag(tag, hash), render(tail)]
+        [string, render_tag(tag, hash), render(tail, hash)]
       [{:string, string}, [{:object, object}, {:text, tail}]] ->
-        [string, render_object(object, hash), render(tail)]
+        [string, render_object(object, hash), render(tail, hash)]
     end
   end
 
-  defp render_tag([], _hash), do: []
-  defp render_tag([{:if_exp, exp} | _] = tag, hash) when is_list(tag) do
-    if eval_expression(exp[:expression], hash) do
-      render(exp[:text], hash)
-    else
-      else_exp = tag[:else_exp]
-      if else_exp do
-        render(else_exp[:text], hash)
-      else
-        ""
-      end
-    end
-  end
-
-  defp render_tag([{:unless_exp, exp} | _] = tag, hash) when is_list(tag) do
-    unless eval_expression(exp[:expression], hash) do
-      render(exp[:text], hash)
-    else
-      else_exp = tag[:else_exp]
-      if else_exp do
-        render(else_exp[:text], hash)
-      else
-        ""
-      end
-    end
+  defp render_tag(tag, hash) do
+    result = Tag.eval(tag, hash)
+    if result, do: render(result, hash), else: ""
   end
 
   defp render_object([], _hash), do: []
@@ -70,13 +48,6 @@ defmodule Solid do
     value   = value |> apply_filters(filters, hash)
 
     to_string(value)
-  end
-
-  defp eval_expression(bool, _hash) when is_boolean(bool), do: bool
-  defp eval_expression([arg1, op, arg2], hash) do
-    v1 = Argument.get(arg1, hash)
-    v2 = Argument.get(arg2, hash)
-    Expression.eval(v1, op, v2)
   end
 
   defp apply_filters(input, nil, _), do: input
