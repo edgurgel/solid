@@ -5,7 +5,7 @@ defmodule Solid do
   iex> Solid.parse("{{ variable }}") |> Solid.render(%{ "variable" => "value" }) |> to_string
   "value"
   """
-  alias Solid.{Argument, Filter}
+  alias Solid.{Argument, Filter, Tag}
 
   @doc """
   It generates the compiled template
@@ -25,13 +25,22 @@ defmodule Solid do
         [string]
       [{:string, string}, [{:open_object, _}, {:text, tail}]] ->
         [string, "{{", render(tail, hash)]
+      [{:string, string}, [{:open_tag, _}, {:text, tail}]] ->
+        [string, "{%", render(tail, hash)]
+      [{:string, string}, [{:tag, tag}, {:text, tail}]] ->
+        [string, render_tag(tag, hash), render(tail, hash)]
       [{:string, string}, [{:object, object}, {:text, tail}]] ->
-        [string, render_object(object, hash), render(tail)]
+        [string, render_object(object, hash), render(tail, hash)]
     end
   end
 
-  def render_object([], _hash), do: []
-  def render_object(object, hash) when is_list(object) do
+  defp render_tag(tag, hash) do
+    result = Tag.eval(tag, hash)
+    if result, do: render(result, hash), else: ""
+  end
+
+  defp render_object([], _hash), do: []
+  defp render_object(object, hash) when is_list(object) do
     argument = object[:argument]
     value    = Argument.get(argument, hash)
 
