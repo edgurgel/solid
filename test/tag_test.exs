@@ -3,8 +3,8 @@ defmodule Solid.TagTest do
   import Solid.Tag
   doctest Solid.Tag
 
-  @true_exp  [{:value, 1}, :==, {:value, 1}]
-  @false_exp [{:value, 1}, :!=, {:value, 1}]
+  @true_exp  [{{:value, 1}, :==, {:value, 1}}]
+  @false_exp [{{:value, 1}, :!=, {:value, 1}}]
 
   describe "Tag.eval/2" do
     test "eval if_exp true" do

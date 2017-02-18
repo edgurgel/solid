@@ -22,13 +22,13 @@ case Node of
 end
 `;
 
-if_tag <- open_tag space if expression:expression close_tag text:text `
+if_tag <- open_tag space if expression:boolean_expression close_tag text:text `
 case Node of
   [_, _, _If, Exp, _, Text] -> {if_exp, [Exp, Text]}
 end
 `;
 
-elsif_tag <- open_tag space elsif expression:expression close_tag text:text `
+elsif_tag <- open_tag space elsif expression:boolean_expression close_tag text:text `
 case Node of
   [_, _, _Elsif, Exp, _, Text] -> {elsif_exp, [Exp, Text]}
 end
@@ -40,7 +40,7 @@ case Node of
 end
 `;
 
-unless_tag <- open_tag space unless expression:expression close_tag text:text `
+unless_tag <- open_tag space unless expression:boolean_expression close_tag text:text `
 case Node of
   [_, _, _Unless, Exp, _, Text] -> {unless_exp, [Exp, Text]}
 end
@@ -60,8 +60,14 @@ end
 
 expression <- space (argument space operator space argument / boolean) space `
 case Node of
-  [_, [Arg1, _, Op, _, Arg2], _] -> [Arg1, Op, Arg2];
+  [_, [Arg1, _, Op, _, Arg2], _] -> {Arg1, Op, Arg2};
   [_, Bool, _] -> Bool
+end
+`;
+
+boolean_expression <- expression ((and / or) expression)* `
+case Node of
+  [Exp, Exps] -> [Exp | Exps]
 end
 `;
 
@@ -123,3 +129,5 @@ boolean <- true / false ~;
 true <- 'true' `true`;
 false <- 'false' `false`;
 null <- 'nil' `nil`;
+and <- 'and' `bool_and`;
+or <- 'or' `bool_or`;
