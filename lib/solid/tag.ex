@@ -5,7 +5,7 @@ defmodule Solid.Tag do
   More info: https://shopify.github.io/liquid/tags/control-flow/
   """
 
-  alias Solid.{Expression, Argument}
+  alias Solid.Expression
 
   @doc """
   Evaluate a tag and return the condition that succeeded or nil
@@ -45,10 +45,5 @@ defmodule Solid.Tag do
     eval_expression(elsif_exp[:expression], hash)
   end
 
-  defp eval_expression(bool, _hash) when is_boolean(bool), do: bool
-  defp eval_expression([arg1, op, arg2], hash) do
-    v1 = Argument.get(arg1, hash)
-    v2 = Argument.get(arg2, hash)
-    Expression.eval(v1, op, v2)
-  end
+  defp eval_expression(exps, hash), do: Expression.eval(exps, hash)
 end
