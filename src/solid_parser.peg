@@ -8,7 +8,30 @@ case Node of
   [_, _, Block, _, _] -> lists:flatten([Block])
 end
 `;
-tag <- cond_if_tag / cond_unless_tag ~;
+tag <- cond_if_tag / cond_unless_tag / cond_case_tag ~;
+
+cond_case_tag <- case_tag
+                 when_tag+
+                 else_tag?
+                 open_tag space endcase space close_tag `
+case Node of
+  [Case, Whens, Else, _, _, _, _, _] ->
+    WhenMap = lists:foldl(fun({ Value, Text }, Map) -> maps:put(Value, Text, Map) end, #{}, Whens),
+    [Case, {whens, WhenMap}, Else]
+end
+`;
+
+case_tag <- open_tag space case space argument space close_tag text:text `
+case Node of
+  [_, _, _Case, _, Arg, _, _, _Text] -> {case_exp, [Arg]}
+end
+`;
+
+when_tag <- open_tag space when value close_tag text:text `
+case Node of
+  [_, _, _When, Value, _, Text] -> { Value, [Text] }
+end
+`;
 
 cond_if_tag <- if_tag
                elsif_tag*
@@ -103,6 +126,9 @@ elsif          <- "elsif" ~;
 endif          <- "endif" ~;
 unless         <- "unless" ~;
 endunless      <- "endunless" ~;
+case           <- "case" ~;
+when           <- "when" ~;
+endcase        <- "endcase" ~;
 field          <- [0-9a-zA-Z\.]* `iolist_to_binary(Node)`;
 filter         <- [a-zA-Z]* `iolist_to_binary(Node)`;
 space          <- [ \t\n\s\r]* `{space, iolist_to_binary(Node)}`;
