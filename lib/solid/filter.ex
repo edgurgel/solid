@@ -4,6 +4,31 @@ defmodule Solid.Filter do
   """
 
   @doc """
+  Apply `filter` if it exists. Otherwise return the first input.
+
+  iex> Solid.Filter.apply("upcase", ["ac"])
+  "AC"
+  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3])
+  1
+  """
+  def apply(filter, args) do
+    if filter_exists?(filter, Enum.count(args)) do
+      Kernel.apply(__MODULE__, String.to_existing_atom(filter), args)
+    else
+      List.first(args)
+    end
+  end
+
+  defp filter_exists?(filter, arity) do
+    try do
+      filter = String.to_existing_atom(filter)
+      function_exported?(__MODULE__, filter, arity)
+    rescue
+      ArgumentError -> false
+    end
+  end
+
+  @doc """
   Allows you to specify a fallback in case a value doesn’t exist.
   `default` will show its value if the left side is nil, false, or empty
 

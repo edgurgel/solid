@@ -54,6 +54,6 @@ defmodule Solid do
   defp apply_filters(input, [], _), do: input
   defp apply_filters(input, [{filter, args} | filters], hash) do
     values = for arg <- args, do: Argument.get(arg, hash)
-    apply(Filter, String.to_existing_atom(filter), [input | values]) |> apply_filters(filters, hash)
+    Filter.apply(filter, [input | values]) |> apply_filters(filters, hash)
   end
 end
