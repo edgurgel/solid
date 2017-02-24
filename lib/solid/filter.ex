@@ -63,7 +63,39 @@ defmodule Solid.Filter do
   iex> Solid.Filter.replace("Take my protein pills and put my helmet on", "my", "your")
   "Take your protein pills and put your helmet on"
   """
+  @spec replace(String.t, String.t, String.t) :: String.t
   def replace(input, string, replacement \\ "") do
     input |> to_string |> String.replace(string, replacement)
+  end
+
+  @doc """
+  Removes all occurrences of nil from a list
+
+  iex> Solid.Filter.compact([1, nil, 2, nil, 3])
+  [1, 2, 3]
+  """
+  @spec compact(list) :: list
+  def compact(input) when is_list(input), do: Enum.reject(input, &(&1 == nil))
+  def compact(input, property) when is_list(input), do: Enum.reject(input, &(&1[property] == nil))
+
+  @doc """
+  Join a list of strings returning one String glued by `glue
+
+  iex> Solid.Filter.join(["a", "b", "c"])
+  "a b c"
+  iex> Solid.Filter.join(["a", "b", "c"], "-")
+  "a-b-c"
+  """
+  @spec join(list, String.t) :: String.t
+  def join(input, glue \\ " ") when is_list(input), do: Enum.join(input, glue)
+
+  @doc """
+  Map through a list of hashes accessing `property`
+
+  iex> Solid.Filter.map([%{"a" => "A"}, %{"a" => 1}], "a")
+  ["A", 1]
+  """
+  def map(input, property) when is_list(input) do
+    Enum.map(input, &(&1[property]))
   end
 end
