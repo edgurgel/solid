@@ -37,6 +37,14 @@ defmodule Solid.Expression do
   false
   iex> Solid.Expression.eval({1, :<=, 2})
   true
+  iex> Solid.Expression.eval({0, :<=, nil})
+  false
+  iex> Solid.Expression.eval({1.0, :<, nil})
+  false
+  iex> Solid.Expression.eval({nil, :>=, 1.0})
+  false
+  iex> Solid.Expression.eval({nil, :>, 0})
+  false
   iex> Solid.Expression.eval({"Beer Pack", :contains, "Pack"})
   true
   iex> Solid.Expression.eval({"Meat", :contains, "Pack"})
@@ -55,6 +63,10 @@ defmodule Solid.Expression do
   def eval({_v1, :contains, nil}), do: false
   def eval({v1, :contains, v2}) when is_list(v1), do: v2 in v1
   def eval({v1, :contains, v2}), do: String.contains?(v1, v2)
+  def eval({v1, :<=, nil}) when is_number(v1), do: false
+  def eval({v1, :<, nil}) when is_number(v1), do: false
+  def eval({nil, :>=, v2}) when is_number(v2), do: false
+  def eval({nil, :>, v2}) when is_number(v2), do: false
   def eval({v1, op, v2}), do: apply(Kernel, op, [v1, v2])
   def eval(boolean), do: boolean
 
