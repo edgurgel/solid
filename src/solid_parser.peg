@@ -145,7 +145,7 @@ case Node of
   _ -> list_to_float(binary_to_list(iolist_to_binary(Node)))
 end
 `;
-int <- '-'? (non_zero_digit digit+) / digit ~;
+int <- '-'? ((non_zero_digit digit+) / digit) ~;
 frac <- '.' digit+ ~;
 exp <- e digit+ ~;
 e <- [eE] ('+' / '-')? ~;
