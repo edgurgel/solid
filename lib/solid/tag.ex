@@ -5,18 +5,26 @@ defmodule Solid.Tag do
   More info: https://shopify.github.io/liquid/tags/control-flow/
   """
 
-  alias Solid.{Expression, Argument}
+  alias Solid.{Expression, Argument, Context}
 
   @doc """
   Evaluate a tag and return the condition that succeeded or nil
   """
-  def eval([], _hash), do: nil
-  def eval([{:if_exp, exp} | _] = tag, hash) do
+  @spec eval(any, Context.t) :: {iolist, Context.t}
+  def eval(tag, context) do
+    case do_eval(tag, context) do
+      {text, context} -> {text, context}
+      text -> {text, context}
+    end
+  end
+
+  defp do_eval([], _context), do: nil
+  defp do_eval([{:if_exp, exp} | _] = tag, context) do
     try do
-      if eval_expression(exp[:expression], hash), do: throw exp
+      if eval_expression(exp[:expression], context), do: throw exp
       elsif_exps = tag[:elsif_exps]
       if elsif_exps do
-        result = Enum.find elsif_exps, &(eval_elsif(&1, hash))
+        result = Enum.find elsif_exps, &(eval_elsif(&1, context))
         if result, do: throw elem(result, 1)
       end
       else_exp = tag[:else_exp]
@@ -26,12 +34,12 @@ defmodule Solid.Tag do
     end
   end
 
-  def eval([{:unless_exp, exp} | _] = tag, hash) do
+  defp do_eval([{:unless_exp, exp} | _] = tag, context) do
     try do
-      unless eval_expression(exp[:expression], hash), do: throw exp
+      unless eval_expression(exp[:expression], context), do: throw exp
       elsif_exps = tag[:elsif_exps]
       if elsif_exps do
-        result = Enum.find elsif_exps, &(eval_elsif(&1, hash))
+        result = Enum.find elsif_exps, &(eval_elsif(&1, context))
         if result, do: throw elem(result, 1)
       end
       else_exp = tag[:else_exp]
@@ -41,8 +49,8 @@ defmodule Solid.Tag do
     end
   end
 
-  def eval([{:case_exp, [field]} | [{:whens, when_map} | _]] = tag, hash) do
-    result = when_map[Argument.get(field, hash)]
+  defp do_eval([{:case_exp, [field]} | [{:whens, when_map} | _]] = tag, context) do
+    result = when_map[Argument.get(field, context)]
     if result do
       result[:text]
     else
@@ -50,9 +58,14 @@ defmodule Solid.Tag do
     end
   end
 
-  defp eval_elsif({:elsif_exp, elsif_exp}, hash) do
-    eval_expression(elsif_exp[:expression], hash)
+  defp do_eval({:assign_exp, field, argument}, context) do
+    context = %{context | vars: Map.put(context.vars, field, Argument.get(argument, context))}
+    {nil, context}
   end
 
-  defp eval_expression(exps, hash), do: Expression.eval(exps, hash)
+  defp eval_elsif({:elsif_exp, elsif_exp}, context) do
+    eval_expression(elsif_exp[:expression], context)
+  end
+
+  defp eval_expression(exps, context), do: Expression.eval(exps, context)
 end
