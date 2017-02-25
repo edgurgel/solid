@@ -77,4 +77,40 @@ defmodule Solid.Integration.TagsTest do
       assert render("{% unless 1 == 1 %}unless{% elsif 1 == 1 %}elsif{% endunless %}") == "elsif"
     end
   end
+
+  describe "case" do
+    test "no matching when" do
+      text = """
+      {% case handle %}
+      {% when 'cake' %}
+      This is a cake
+      {% endcase %}
+      """
+      assert render(text) == "\n"
+    end
+
+    test "no matching when with else" do
+      text = """
+      {% case handle %}
+      {% when 'cake' %}
+      This is a cake
+      {% else %}
+      Else
+      {% endcase %}
+      """
+      assert render(text) == "\nElse\n\n"
+    end
+
+    test "with a matching when" do
+      text = """
+      {% case handle %}
+      {% when 'not_cake' %}
+      Not a cake
+      {% when 'cake' %}
+      This is a cake
+      {% endcase %}
+      """
+      assert render(text, %{ "handle" => "cake"}) == "\nThis is a cake\n\n"
+    end
+  end
 end

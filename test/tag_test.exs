@@ -7,6 +7,23 @@ defmodule Solid.TagTest do
   @false_exp [{{:value, 1}, :!=, {:value, 1}}]
 
   describe "Tag.eval/2" do
+    test "eval case_exp matching" do
+      assert eval([{:case_exp, [{:field, "x"}]},
+                   {:whens, %{ "1" => %{text: "one"} }}], %{ "x" => "1"}) == "one"
+    end
+
+    test "eval case_exp not matching" do
+      assert eval([{:case_exp, [{:field, "x"}]},
+                   {:whens, %{ "2" => %{text: "two"} }}], %{ "x" => "1"}) == nil
+    end
+
+    test "eval case_exp not matching having else_exp" do
+      else_exp = %{text: "else"}
+      assert eval([{:case_exp, [{:field, "x"}]},
+                   {:whens, %{ "2" => %{text: "two"} }},
+                   {:else_exp, else_exp}], %{ "x" => "1"}) == "else"
+    end
+
     test "eval if_exp true" do
       exp = %{expression: @true_exp, text: "if"}
       assert eval([{:if_exp, exp}], %{}) == "if"

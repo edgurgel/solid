@@ -5,13 +5,13 @@ defmodule Solid.Tag do
   More info: https://shopify.github.io/liquid/tags/control-flow/
   """
 
-  alias Solid.Expression
+  alias Solid.{Expression, Argument}
 
   @doc """
   Evaluate a tag and return the condition that succeeded or nil
   """
   def eval([], _hash), do: nil
-  def eval([{:if_exp, exp} | _] = tag, hash) when is_list(tag) do
+  def eval([{:if_exp, exp} | _] = tag, hash) do
     try do
       if eval_expression(exp[:expression], hash), do: throw exp
       elsif_exps = tag[:elsif_exps]
@@ -26,7 +26,7 @@ defmodule Solid.Tag do
     end
   end
 
-  def eval([{:unless_exp, exp} | _] = tag, hash) when is_list(tag) do
+  def eval([{:unless_exp, exp} | _] = tag, hash) do
     try do
       unless eval_expression(exp[:expression], hash), do: throw exp
       elsif_exps = tag[:elsif_exps]
@@ -38,6 +38,15 @@ defmodule Solid.Tag do
       if else_exp, do: throw(else_exp)
     catch
       result -> result[:text]
+    end
+  end
+
+  def eval([{:case_exp, [field]} | [{:whens, when_map} | _]] = tag, hash) do
+    result = when_map[Argument.get(field, hash)]
+    if result do
+      result[:text]
+    else
+      tag[:else_exp][:text]
     end
   end
 
