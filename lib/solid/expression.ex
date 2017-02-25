@@ -74,19 +74,19 @@ defmodule Solid.Expression do
   Evaluate a list of expressions combined with `or`, `and
   """
   @spec eval(list, map) :: boolean
-  def eval([exp | exps], hash) when is_list(exps) do
-     Enum.reduce(exps, do_eval(exp,hash), fn
+  def eval([exp | exps], context) when is_list(exps) do
+     Enum.reduce(exps, do_eval(exp,context), fn
        [:bool_and, exp], acc ->
-         do_eval(exp, hash) and acc
+         do_eval(exp, context) and acc
        [:bool_or, exp], acc ->
-         do_eval(exp, hash) or acc
+         do_eval(exp, context) or acc
      end)
   end
 
-  defp do_eval({v1, op, v2}, hash) do
-    v1 = Argument.get(v1, hash)
-    v2 = Argument.get(v2, hash)
+  defp do_eval({v1, op, v2}, context) do
+    v1 = Argument.get(v1, context)
+    v2 = Argument.get(v2, context)
     eval({v1, op, v2})
   end
-  defp do_eval(boolean, _hash), do: eval(boolean)
+  defp do_eval(boolean, _context), do: eval(boolean)
 end
