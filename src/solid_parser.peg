@@ -111,7 +111,19 @@ case Node of
   [Arg1, Args] -> [Arg1 | [Arg || [_, _, _, Arg] <- Args]]
 end
 `;
-argument <- value:value / field:field ~;
+argument <- value:value / field ~;
+field    <- [0-9a-zA-Z\.]* access* `
+ case Node of
+   [FieldName | [[]]] -> {field, iolist_to_binary(FieldName)};
+   [FieldName | [Accesses]] ->
+     {field, iolist_to_binary(FieldName), Accesses}
+ end
+`;
+access <- "[" int "]" `
+case Node of
+  [_, Integer, _] -> {access, list_to_integer(binary_to_list(iolist_to_binary(Integer)))}
+end
+`;
 value <- space (string / number / true / false / null) space `lists:nth(2, Node)`;
 string <- single_quoted_string / double_quoted_string `
 iolist_to_binary(proplists:get_value(string, Node))
@@ -136,7 +148,6 @@ case           <- "case" ~;
 when           <- "when" ~;
 endcase        <- "endcase" ~;
 assign         <- "assign" ~;
-field          <- [0-9a-zA-Z\.]* `iolist_to_binary(Node)`;
 filter         <- [a-zA-Z]* `iolist_to_binary(Node)`;
 space          <- [ \t\n\s\r]* `{space, iolist_to_binary(Node)}`;
 
