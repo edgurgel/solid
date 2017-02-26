@@ -5,7 +5,7 @@ defmodule Solid do
   iex> Solid.parse("{{ variable }}") |> Solid.render(%{ "variable" => "value" }) |> to_string
   "value"
   """
-  alias Solid.{Argument, Filter, Tag}
+  alias Solid.{Object, Tag}
 
   defmodule Context do
     defstruct vars: %{}
@@ -44,7 +44,7 @@ defmodule Solid do
         {tail_text, context} = do_render(tail, context)
         {[string, tag_text, tail_text], context}
       [{:string, string}, [{:object, object}, {:text, tail}]] ->
-        object_text = render_object(object, context)
+        object_text = Object.render(object, context)
         {tail_text, context} = do_render(tail, context)
         {[string, object_text, tail_text], context}
     end
@@ -57,23 +57,5 @@ defmodule Solid do
     else
       {"", context}
     end
-  end
-
-  defp render_object([], _context), do: []
-  defp render_object(object, context) when is_list(object) do
-    argument = object[:argument]
-    value    = Argument.get(argument, context)
-
-    filters = object[:filters]
-    value   = value |> apply_filters(filters, context)
-
-    to_string(value)
-  end
-
-  defp apply_filters(input, nil, _), do: input
-  defp apply_filters(input, [], _), do: input
-  defp apply_filters(input, [{filter, args} | filters], context) do
-    values = for arg <- args, do: Argument.get(arg, context)
-    Filter.apply(filter, [input | values]) |> apply_filters(filters, context)
   end
 end
