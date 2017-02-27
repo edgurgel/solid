@@ -58,7 +58,7 @@ defmodule Solid.Tag do
     end
   end
 
-  defp do_eval({:assign_exp, field, argument}, context) do
+  defp do_eval({:assign_exp, {:field, field}, argument}, context) do
     context = %{context | vars: Map.put(context.vars, field, Argument.get(argument, context))}
     {nil, context}
   end
