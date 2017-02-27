@@ -28,8 +28,8 @@ The package can be installed as:
 
 ## TODO
 
-* [ ] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
+* [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
 * [ ] All the standard filters
 * [ ] Tags (if, case, unless, etc)
-* [ ] Boolean operators
+* [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
 * [ ] Whitespace control
