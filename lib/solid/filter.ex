@@ -1,4 +1,5 @@
 defmodule Solid.Filter do
+  import Kernel, except: [abs: 1]
   @moduledoc """
   Standard filters
   """
@@ -27,6 +28,23 @@ defmodule Solid.Filter do
       ArgumentError -> false
     end
   end
+
+  @doc """
+  Returns the absolute value of a number.
+
+  iex> Solid.Filter.abs(-17)
+  17
+  iex> Solid.Filter.abs(17)
+  17
+  iex> Solid.Filter.abs("-17.5")
+  17.5
+  """
+  @spec abs(number | String.t) :: number
+  def abs(input) when is_binary(input) do
+     {float, _} = Float.parse(input)
+     abs(float)
+  end
+  def abs(input), do: Kernel.abs(input)
 
   @doc """
   Allows you to specify a fallback in case a value doesn’t exist.
