@@ -153,6 +153,17 @@ defmodule Solid.Filter do
   def downcase(input), do: input |> to_string |> String.downcase
 
   @doc """
+  Returns the first item of an array.
+
+  iex> Solid.Filter.first([1, 2, 3])
+  1
+  iex> Solid.Filter.first([])
+  nil
+  """
+  @spec first(list) :: any
+  def first(input), do: List.first(input)
+
+  @doc """
   Replaces every occurrence of an argument in a string with the second argument.
 
   iex> Solid.Filter.replace("Take my protein pills and put my helmet on", "my", "your")
