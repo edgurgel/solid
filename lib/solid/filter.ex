@@ -47,6 +47,15 @@ defmodule Solid.Filter do
   def abs(input), do: Kernel.abs(input)
 
   @doc """
+  Concatenates two strings and returns the concatenated value.
+
+  iex> Solid.Filter.append("www.example.com", "/index.html")
+  "www.example.com/index.html"
+  """
+  @spec append(any, any) :: String.t
+  def append(input, string), do: "#{input}#{string}"
+
+  @doc """
   Allows you to specify a fallback in case a value doesn’t exist.
   `default` will show its value if the left side is nil, false, or empty
 
