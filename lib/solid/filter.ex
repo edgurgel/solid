@@ -115,6 +115,17 @@ defmodule Solid.Filter do
   def join(input, glue \\ " ") when is_list(input), do: Enum.join(input, glue)
 
   @doc """
+  Split input string into an array of substrings separated by given pattern.
+
+  iex> Solid.Filter.split("a b c", " ")
+  ~w(a b c)
+  iex> Solid.Filter.split("", " ")
+  [""]
+  """
+  @spec split(any, String.t) :: List.t
+  def split(input, pattern), do: to_string(input) |> String.split(pattern)
+
+  @doc """
   Map through a list of hashes accessing `property`
 
   iex> Solid.Filter.map([%{"a" => "A"}, %{"a" => 1}], "a")
