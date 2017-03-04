@@ -112,7 +112,7 @@ case Node of
 end
 `;
 argument <- value:value / field ~;
-field    <- [0-9a-zA-Z\.]* access* `
+field    <- [0-9a-zA-Z\._]* access* `
  case Node of
    [FieldName | [[]]] -> {field, iolist_to_binary(FieldName)};
    [FieldName | [Accesses]] ->
