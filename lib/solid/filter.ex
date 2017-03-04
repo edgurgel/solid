@@ -100,6 +100,27 @@ defmodule Solid.Filter do
   def default(input, _), do: input
 
   @doc """
+  Divides a number by the specified number.
+
+  The result is rounded down to the nearest integer (that is, the floor) if the divisor is an integer.
+
+  {{ 16 | divided_by: 4 }}
+  iex> Solid.Filter.divided_by(16, 4)
+  4
+  iex> Solid.Filter.divided_by(5, 3)
+  1
+  iex> Solid.Filter.divided_by(20, 7)
+  2
+  """
+  @spec divided_by(number, number) :: number
+  def divided_by(input, operand) when is_integer(operand) do
+    (input / operand) |> Float.floor |> trunc
+  end
+  def divided_by(input, operand) when is_float(operand) do
+    input / operand
+  end
+
+  @doc """
   Makes each character in a string uppercase.
   It has no effect on strings which are already all uppercase.
 
