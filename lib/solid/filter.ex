@@ -56,6 +56,17 @@ defmodule Solid.Filter do
   def append(input, string), do: "#{input}#{string}"
 
   @doc """
+  Makes the first character of a string capitalized.
+
+  iex> Solid.Filter.capitalize("my great title")
+  "My great title"
+  iex> Solid.Filter.capitalize(1)
+  "1"
+  """
+  @spec capitalize(any) :: String.t
+  def capitalize(input), do: to_string(input) |> String.capitalize
+
+  @doc """
   Allows you to specify a fallback in case a value doesn’t exist.
   `default` will show its value if the left side is nil, false, or empty
 
