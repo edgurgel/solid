@@ -67,6 +67,17 @@ defmodule Solid.Filter do
   def capitalize(input), do: to_string(input) |> String.capitalize
 
   @doc """
+  Rounds the input up to the nearest whole number. Liquid tries to convert the input to a number before the filter is applied.
+  """
+  @spec ceil(number | String.t) :: number
+  def ceil(input) when is_binary(input) do
+     {float, _} = Float.parse(input)
+     ceil(float)
+  end
+  def ceil(input) when is_integer(input), do: input
+  def ceil(input), do: Float.ceil(input) |> trunc
+
+  @doc """
   Allows you to specify a fallback in case a value doesn’t exist.
   `default` will show its value if the left side is nil, false, or empty
 
