@@ -254,4 +254,17 @@ defmodule Solid.Filter do
   def map(input, property) when is_list(input) do
     Enum.map(input, &(&1[property]))
   end
+
+  @doc """
+  Subtracts a number from another number.
+
+  iex> Solid.Filter.minus(4, 2)
+  2
+  iex> Solid.Filter.minus(16, 4)
+  12
+  iex> Solid.Filter.minus(183.357, 12)
+  171.357
+  """
+  @spec minus(number, number) :: number
+  def minus(input, number), do: input - number
 end
