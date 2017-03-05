@@ -214,6 +214,17 @@ defmodule Solid.Filter do
   def join(input, glue \\ " ") when is_list(input), do: Enum.join(input, glue)
 
   @doc """
+  Returns the last item of an array.
+
+  iex> Solid.Filter.last([1, 2, 3])
+  3
+  iex> Solid.Filter.last([])
+  nil
+  """
+  @spec last(list) :: any
+  def last(input), do: List.last(input)
+
+  @doc """
   Split input string into an array of substrings separated by given pattern.
 
   iex> Solid.Filter.split("a b c", " ")
