@@ -225,6 +225,16 @@ defmodule Solid.Filter do
   def last(input), do: List.last(input)
 
   @doc """
+  Removes all whitespaces (tabs, spaces, and newlines) from the beginning of a string.
+  The filter does not affect spaces between words.
+
+  iex> Solid.Filter.lstrip("          So much room for activities!          ")
+  "So much room for activities!          "
+  """
+  @spec lstrip(String.t) :: String.t
+  def lstrip(input), do: String.trim_leading(input)
+
+  @doc """
   Split input string into an array of substrings separated by given pattern.
 
   iex> Solid.Filter.split("a b c", " ")
