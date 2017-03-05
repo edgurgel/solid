@@ -164,6 +164,24 @@ defmodule Solid.Filter do
   def first(input), do: List.first(input)
 
   @doc """
+  Rounds a number down to the nearest whole number.
+  Solid tries to convert the input to a number before the filter is applied.
+
+  iex> Solid.Filter.floor(1.2)
+  1
+  iex> Solid.Filter.floor(2.0)
+  2
+  iex> Solid.Filter.floor("3.5")
+  3
+  """
+  @spec floor(number | String.t) :: integer
+  def floor(input) when is_binary(input) do
+    {float, _} = Float.parse(input)
+    floor(float)
+  end
+  def floor(input), do: Float.floor(input) |> trunc
+
+  @doc """
   Replaces every occurrence of an argument in a string with the second argument.
 
   iex> Solid.Filter.replace("Take my protein pills and put my helmet on", "my", "your")
