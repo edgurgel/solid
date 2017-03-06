@@ -267,4 +267,17 @@ defmodule Solid.Filter do
   """
   @spec minus(number, number) :: number
   def minus(input, number), do: input - number
+
+  @doc """
+  Adds a number to another number.
+
+  iex> Solid.Filter.plus(4, 2)
+  6
+  iex> Solid.Filter.plus(16, 4)
+  20
+  iex> Solid.Filter.plus(183.357, 12)
+  195.357
+  """
+  @spec plus(number, number) :: number
+  def plus(input, number), do: input + number
 end
