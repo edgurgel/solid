@@ -280,4 +280,13 @@ defmodule Solid.Filter do
   """
   @spec plus(number, number) :: number
   def plus(input, number), do: input + number
+
+  @doc """
+  Adds the specified string to the beginning of another string.
+
+  iex> Solid.Filter.prepend("/index.html", "www.example.com")
+  "www.example.com/index.html"
+  """
+  @spec prepend(any, any) :: String.t
+  def prepend(input, string), do: "#{string}#{input}"
 end
