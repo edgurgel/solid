@@ -289,4 +289,15 @@ defmodule Solid.Filter do
   """
   @spec prepend(any, any) :: String.t
   def prepend(input, string), do: "#{string}#{input}"
+
+  @doc """
+  Removes every occurrence of the specified substring from a string.
+
+  iex> Solid.Filter.remove("I strained to see the train through the rain", "rain")
+  "I sted to see the t through the "
+  """
+  @spec remove(String.t, String.t) :: String.t
+  def remove(input, string) do
+    String.replace(input, string, "")
+  end
 end
