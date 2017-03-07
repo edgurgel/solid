@@ -300,4 +300,14 @@ defmodule Solid.Filter do
   def remove(input, string) do
     String.replace(input, string, "")
   end
+  @doc """
+  Removes only the first occurrence of the specified substring from a string.
+
+  iex> Solid.Filter.remove_first("I strained to see the train through the rain", "rain")
+  "I sted to see the train through the rain"
+  """
+  @spec remove_first(String.t, String.t) :: String.t
+  def remove_first(input, string) do
+    String.replace(input, string, "", global: false)
+  end
 end
