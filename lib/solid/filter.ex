@@ -182,17 +182,6 @@ defmodule Solid.Filter do
   def floor(input), do: Float.floor(input) |> trunc
 
   @doc """
-  Replaces every occurrence of an argument in a string with the second argument.
-
-  iex> Solid.Filter.replace("Take my protein pills and put my helmet on", "my", "your")
-  "Take your protein pills and put your helmet on"
-  """
-  @spec replace(String.t, String.t, String.t) :: String.t
-  def replace(input, string, replacement \\ "") do
-    input |> to_string |> String.replace(string, replacement)
-  end
-
-  @doc """
   Removes all occurrences of nil from a list
 
   iex> Solid.Filter.compact([1, nil, 2, nil, 3])
@@ -309,5 +298,26 @@ defmodule Solid.Filter do
   @spec remove_first(String.t, String.t) :: String.t
   def remove_first(input, string) do
     String.replace(input, string, "", global: false)
+  end
+
+  @doc """
+  Replaces every occurrence of an argument in a string with the second argument.
+
+  iex> Solid.Filter.replace("Take my protein pills and put my helmet on", "my", "your")
+  "Take your protein pills and put your helmet on"
+  """
+  @spec replace(String.t, String.t, String.t) :: String.t
+  def replace(input, string, replacement \\ "") do
+    input |> to_string |> String.replace(string, replacement)
+  end
+  @doc """
+  Replaces only the first occurrence of the first argument in a string with the second argument.
+
+  iex> Solid.Filter.replace_first("Take my protein pills and put my helmet on", "my", "your")
+  "Take your protein pills and put my helmet on"
+  """
+  @spec replace_first(String.t, String.t, String.t) :: String.t
+  def replace_first(input, string, replacement \\ "") do
+    input |> to_string |> String.replace(string, replacement, global: false)
   end
 end
