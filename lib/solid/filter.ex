@@ -320,4 +320,13 @@ defmodule Solid.Filter do
   def replace_first(input, string, replacement \\ "") do
     input |> to_string |> String.replace(string, replacement, global: false)
   end
+
+  @doc """
+  Reverses the order of the items in an array. reverse cannot reverse a string.
+
+  iex> Solid.Filter.reverse(["a", "b", "c"])
+  ["c", "b", "a"]
+  """
+  @spec reverse(list) :: List.t
+  def reverse(input), do: Enum.reverse(input)
 end
