@@ -1,5 +1,5 @@
 defmodule Solid.Filter do
-  import Kernel, except: [abs: 1]
+  import Kernel, except: [abs: 1, round: 1]
   @moduledoc """
   Standard filters
   """
@@ -329,4 +329,23 @@ defmodule Solid.Filter do
   """
   @spec reverse(list) :: List.t
   def reverse(input), do: Enum.reverse(input)
+
+  @doc """
+  Rounds an input number to the nearest integer or,
+  if a number is specified as an argument, to that number of decimal places.
+
+  iex> Solid.Filter.round(1.2)
+  1
+  iex> Solid.Filter.round(2.7)
+  3
+  iex> Solid.Filter.round(183.357, 2)
+  183.36
+  """
+  @spec round(number) :: integer
+  def round(input, precision \\ nil)
+  def round(input, nil), do: Kernel.round(input)
+  def round(input, precision) do
+    p = :math.pow(10, precision)
+    Kernel.round(input * p) / p
+  end
 end
