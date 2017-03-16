@@ -348,4 +348,13 @@ defmodule Solid.Filter do
     p = :math.pow(10, precision)
     Kernel.round(input * p) / p
   end
+
+  @doc """
+  Removes all whitespace (tabs, spaces, and newlines) from the right side of a string.
+
+  iex> Solid.Filter.rstrip("          So much room for activities!          ")
+  "          So much room for activities!"
+  """
+  @spec rstrip(String.t) :: String.t
+  def rstrip(input), do: String.trim_trailing(input)
 end
