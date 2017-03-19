@@ -411,4 +411,14 @@ defmodule Solid.Filter do
   def sort_natural(input) do
     Enum.sort(input, &(String.downcase(&1) <= String.downcase(&2)))
   end
+
+  @doc """
+  Removes all whitespace (tabs, spaces, and newlines) from both the left and right side of a string.
+  It does not affect spaces between words.
+
+  iex> Solid.Filter.strip("          So much room for activities!          ")
+  "So much room for activities!"
+  """
+  @spec strip(String.t) :: String.t
+  def strip(input), do: String.trim(input)
 end
