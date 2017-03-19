@@ -472,4 +472,37 @@ defmodule Solid.Filter do
       input
     end
   end
+
+  @doc """
+  Shortens a string down to the number of words passed as the argument.
+  If the specified number of words is less than the number of words in the string, an ellipsis (…) is appended to the string.
+
+  iex> Solid.Filter.truncatewords("Ground control to Major Tom.", 3)
+  "Ground control to..."
+
+  # Custom ellipsis
+
+  `truncatewords` takes an optional second parameter that specifies the sequence of characters to be appended to the truncated string.
+  By default this is an ellipsis (…), but you can specify a different sequence.
+
+  iex> Solid.Filter.truncatewords("Ground control to Major Tom.", 3, "--")
+  "Ground control to--"
+
+  # No ellipsis
+
+  You can avoid showing trailing characters by passing a blank string as the second parameter:
+
+  iex> Solid.Filter.truncatewords("Ground control to Major Tom.", 3, "")
+  "Ground control to"
+  """
+  @spec truncatewords(String.t, non_neg_integer, String.t) :: String.t
+  def truncatewords(input, max_words, ellipsis \\ "...") do
+    words = String.split(input, " ")
+     if length(words) > max_words do
+       Enum.take(words, max_words)
+        |> Enum.intersperse(" ")
+        |> to_string
+        |> Kernel.<>(ellipsis)
+     end
+  end
 end
