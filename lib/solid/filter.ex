@@ -391,4 +391,24 @@ defmodule Solid.Filter do
   def slice(input, offset, length \\ nil)
   def slice(input, offset, nil), do: String.at(input, offset)
   def slice(input, offset, length), do: String.slice(input, offset, length)
+
+  @doc """
+  Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.
+
+  iex> Solid.Filter.sort(~w(zebra octopus giraffe SallySnake))
+  ~w(SallySnake giraffe octopus zebra)
+  """
+  @spec sort(List.t) :: List.t
+  def sort(input), do: Enum.sort(input)
+
+  @doc """
+  Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.
+
+  iex> Solid.Filter.sort_natural(~w(zebra octopus giraffe SallySnake))
+  ~w(giraffe octopus SallySnake zebra)
+  """
+  @spec sort_natural(List.t) :: List.t
+  def sort_natural(input) do
+    Enum.sort(input, &(String.downcase(&1) <= String.downcase(&2)))
+  end
 end
