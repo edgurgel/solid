@@ -357,4 +357,16 @@ defmodule Solid.Filter do
   """
   @spec rstrip(String.t) :: String.t
   def rstrip(input), do: String.trim_trailing(input)
+
+  @doc """
+  Returns the number of characters in a string or the number of items in an array.
+
+  iex> Solid.Filter.size("Ground control to Major Tom.")
+  28
+  iex> Solid.Filter.size(~w(ground control to Major Tom.))
+  5
+  """
+  @spec size(String.t | list) :: non_neg_integer
+  def size(input) when is_list(input), do: Enum.count(input)
+  def size(input), do: String.length(input)
 end
