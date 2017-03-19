@@ -369,4 +369,26 @@ defmodule Solid.Filter do
   @spec size(String.t | list) :: non_neg_integer
   def size(input) when is_list(input), do: Enum.count(input)
   def size(input), do: String.length(input)
+
+  @doc """
+  Returns a substring of 1 character beginning at the index specified by the argument passed in.
+  An optional second argument specifies the length of the substring to be returned.
+
+  String indices are numbered starting from 0.
+
+  iex> Solid.Filter.slice("Liquid", 0)
+  "L"
+
+  iex> Solid.Filter.slice("Liquid", 2)
+  "q"
+
+  iex> Solid.Filter.slice("Liquid", 2, 5)
+  "quid"
+  iex> Solid.Filter.slice("Liquid", -3, 2)
+  "ui"
+  """
+  @spec slice(String.t, integer, non_neg_integer) :: String.t
+  def slice(input, offset, length \\ nil)
+  def slice(input, offset, nil), do: String.at(input, offset)
+  def slice(input, offset, length), do: String.slice(input, offset, length)
 end
