@@ -434,4 +434,42 @@ defmodule Solid.Filter do
   """
   @spec times(number, number) :: number
   def times(input, operand), do: input * operand
+
+  @doc """
+  truncate shortens a string down to the number of characters passed as a parameter.
+  If the number of characters specified is less than the length of the string, an ellipsis (…) is appended to the string
+  and is included in the character count.
+
+  iex> Solid.Filter.truncate("Ground control to Major Tom.", 20)
+  "Ground control to..."
+
+  # Custom ellipsis
+
+  truncate takes an optional second parameter that specifies the sequence of characters to be appended to the truncated string.
+  By default this is an ellipsis (…), but you can specify a different sequence.
+
+  The length of the second parameter counts against the number of characters specified by the first parameter.
+  For example, if you want to truncate a string to exactly 10 characters, and use a 3-character ellipsis,
+  use 13 for the first parameter of truncate, since the ellipsis counts as 3 characters.
+
+  iex> Solid.Filter.truncate("Ground control to Major Tom.", 25, ", and so on")
+  "Ground control, and so on"
+
+  # No ellipsis
+
+  You can truncate to the exact number of characters specified by the first parameter
+  and show no trailing characters by passing a blank string as the second parameter:
+
+  iex> Solid.Filter.truncate("Ground control to Major Tom.", 20, "")
+  "Ground control to Ma"
+  """
+  @spec truncate(String.t, non_neg_integer, String.t) :: String.t
+  def truncate(input, length, ellipsis \\ "...") do
+    if String.length(input) > length do
+      length = max(0, length - String.length(ellipsis))
+      slice(input, 0, length) <> ellipsis
+    else
+      input
+    end
+  end
 end
