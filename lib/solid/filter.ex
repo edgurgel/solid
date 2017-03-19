@@ -421,4 +421,17 @@ defmodule Solid.Filter do
   """
   @spec strip(String.t) :: String.t
   def strip(input), do: String.trim(input)
+
+  @doc """
+  Multiplies a number by another number.
+
+  iex> Solid.Filter.times(3, 2)
+  6
+  iex> Solid.Filter.times(24, 7)
+  168
+  iex> Solid.Filter.times(183.357, 12)
+  2200.284
+  """
+  @spec times(number, number) :: number
+  def times(input, operand), do: input * operand
 end
