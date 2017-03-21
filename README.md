@@ -29,7 +29,7 @@ The package can be installed as:
 ## TODO
 
 * [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
-* [ ] All the standard filters
+* [ ] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
 * [ ] Tags (if, case, unless, etc)
 * [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
 * [ ] Whitespace control
