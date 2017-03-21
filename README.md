@@ -15,16 +15,18 @@ iex> Solid.parse(template) |> Solid.render(%{ "user" => %{ "name" => "José" } }
 The package can be installed as:
 
   1. Add solid to your list of dependencies in `mix.exs`:
-
-        def deps do
-          [{:solid, "~> 0.0.1"}]
-        end
-
+```elixir
+def deps do
+  [{:solid, "~> 0.0.1"}]
+end
+```
   2. Ensure solid is started before your application:
 
-        def application do
-          [applications: [:solid]]
-        end
+```elixir
+def application do
+  [applications: [:solid]]
+end
+```
 
 ## TODO
 
