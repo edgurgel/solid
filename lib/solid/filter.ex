@@ -505,4 +505,14 @@ defmodule Solid.Filter do
         |> Kernel.<>(ellipsis)
      end
   end
+
+  @doc """
+  Removes any duplicate elements in an array.
+
+  Output
+  iex> Solid.Filter.uniq(~w(ants bugs bees bugs ants))
+  ~w(ants bugs bees)
+  """
+  @spec uniq(list) :: list
+  def uniq(input), do: Enum.uniq(input)
 end
