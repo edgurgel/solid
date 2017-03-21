@@ -112,7 +112,7 @@ case Node of
 end
 `;
 argument <- value:value / field ~;
-field    <- [0-9a-zA-Z\.]* access* `
+field    <- [0-9a-zA-Z\._]* access* `
  case Node of
    [FieldName | [[]]] -> {field, iolist_to_binary(FieldName)};
    [FieldName | [Accesses]] ->
@@ -148,7 +148,7 @@ case           <- "case" ~;
 when           <- "when" ~;
 endcase        <- "endcase" ~;
 assign         <- "assign" ~;
-filter         <- [a-zA-Z]* `iolist_to_binary(Node)`;
+filter         <- [a-zA-Z_]* `iolist_to_binary(Node)`;
 space          <- [ \t\n\s\r]* `{space, iolist_to_binary(Node)}`;
 
 double_quoted_string <- '"' string:(!'"' ("\\\\" / '\\"' / .))* '"' ~;
