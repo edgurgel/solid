@@ -8,6 +8,10 @@ defmodule Solid.TagTest do
   @false_exp [{{:value, 1}, :!=, {:value, 1}}]
 
   describe "Tag.eval/2" do
+    test "eval comment" do
+      assert eval(:comment, %Context{}) == {nil, %Context{}}
+    end
+
     test "eval case_exp matching" do
       context = %Context{ vars: %{ "x" => "1"}}
       assert eval([{:case_exp, [{:field, "x"}]},
