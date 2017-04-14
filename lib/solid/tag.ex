@@ -62,6 +62,7 @@ defmodule Solid.Tag do
     context = %{context | vars: Map.put(context.vars, field, Argument.get(argument, context))}
     {nil, context}
   end
+  defp do_eval(:comment, _context), do: nil
 
   defp eval_elsif({:elsif_exp, elsif_exp}, context) do
     eval_expression(elsif_exp[:expression], context)
