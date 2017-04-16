@@ -34,4 +34,4 @@ end
 * [ ] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
 * [ ] Tags (if, case, unless, etc)
 * [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
-* [ ] Whitespace control
+* [ ] Whitespace control [#10](https://github.com/edgurgel/solid/issues/10)
