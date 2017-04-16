@@ -32,6 +32,13 @@ end
 
 * [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
 * [ ] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
+* [ ] Support to custom filters [#11](https://github.com/edgurgel/solid/issues/11)
 * [ ] Tags (if, case, unless, etc)
+  - [ ] `for`
+  - [ ] `raw`
+  - [ ] `cycle`
+  - [ ] `capture`
+  - [ ] `increment`
+  - [ ] `decrement`
 * [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
 * [ ] Whitespace control [#10](https://github.com/edgurgel/solid/issues/10)
