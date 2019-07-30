@@ -1,5 +1,5 @@
 defmodule Solid.Filter do
-  import Kernel, except: [abs: 1, round: 1]
+  import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1]
   @moduledoc """
   Standard filters
   """
