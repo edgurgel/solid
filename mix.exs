@@ -20,8 +20,8 @@ defmodule Solid.Mixfile do
      compilers: [:peg, :erlang, :elixir, :app],
      name: "solid",
      description: @description,
-     package: package,
-     deps: deps]
+     package: package(),
+     deps: deps()]
   end
 
   def application do
