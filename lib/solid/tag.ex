@@ -24,7 +24,7 @@ defmodule Solid.Tag do
     {enumerable_value, exp} = Keyword.pop_first(exp, :field)
 
     {exp, _} = Keyword.pop_first(exp, :text)
-    enumerable = Argument.get({:field, enumerable}, context)
+    enumerable = Argument.get({:field, enumerable}, context) || []
 
     result =
     enumerable
