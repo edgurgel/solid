@@ -113,4 +113,25 @@ defmodule Solid.Integration.TagsTest do
       assert render(text, %{ "handle" => "cake"}) == "\nThis is a cake\n\n"
     end
   end
+
+  describe "for" do
+    test "simple for" do
+      text = """
+      {% for value in values %}
+        Got: {{ value }}
+      {% endfor %}
+      """
+      assert render(text, %{"values" => [1,2]}) == "\n  Got: 1\n\n  Got: 2\n\n"
+    end
+
+    test "for tag with conditional tag" do
+      text = """
+      {% for value in values %}
+        {% if value > 2 %}I got {{ value }}!{% endif %}
+      {% endfor %}
+      """
+
+      assert render(text, %{"values" => [1,2,3]}) == "\n  \n\n  \n\n  I got 3!\n\n"
+    end
+  end
 end

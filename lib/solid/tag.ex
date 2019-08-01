@@ -19,6 +19,24 @@ defmodule Solid.Tag do
   end
 
   defp do_eval([], _context), do: nil
+  defp do_eval({:for_exp, exp}, context) do
+    {enumerable, exp} = Keyword.pop_first(exp, :field)
+    {enumerable_value, exp} = Keyword.pop_first(exp, :field)
+
+    {exp, _} = Keyword.pop_first(exp, :text)
+    enumerable = Argument.get({:field, enumerable}, context)
+
+    result =
+    enumerable
+    |> Enum.reduce([], fn v, acc ->
+      context = Map.put(context.vars, enumerable_value, v)
+      [Solid.render(exp, context) | acc]
+    end)
+    |> Enum.reverse()
+
+    [{:string, result}, []]
+  end
+
   defp do_eval([{:if_exp, exp} | _] = tag, context) do
     try do
       if eval_expression(exp[:expression], context), do: throw exp
