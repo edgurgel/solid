@@ -8,7 +8,7 @@ case Node of
   [_, _, Block, _, _] -> lists:flatten([Block])
 end
 `;
-tag <- cond_if_tag / cond_unless_tag / cond_case_tag / assign_tag / comment_tag ~;
+tag <- cond_if_tag / cond_unless_tag / cond_case_tag / assign_tag / comment_tag / for_tag ~;
 
 comment_tag <- open_tag space comment space close_tag text:text
                open_tag space endcomment space close_tag `comment`;
@@ -16,6 +16,12 @@ comment_tag <- open_tag space comment space close_tag text:text
 assign_tag <- open_tag space assign space field space "=" space argument space close_tag `
 case Node of
   [_, _, _, _, Field, _, _, _, Argument, _, _] -> {assign_exp, Field, Argument}
+end
+`;
+
+for_tag <- open_tag space for space argument space "in" space field space close_tag text:text open_tag space endfor space close_tag `
+case Node of
+  [_, _, _, _, Field, _, _, _, Argument, _, _, Text, _, _, _, _, _] -> {for_exp, [Argument, Field, Text]}
 end
 `;
 
@@ -151,6 +157,8 @@ case           <- "case" ~;
 when           <- "when" ~;
 endcase        <- "endcase" ~;
 assign         <- "assign" ~;
+for            <- "for" ~;
+endfor         <- "endfor" ~;
 comment        <- "comment" ~;
 endcomment     <- "endcomment" ~;
 filter         <- [a-zA-Z_]* `iolist_to_binary(Node)`;
