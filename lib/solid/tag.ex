@@ -22,7 +22,7 @@ defmodule Solid.Tag do
 
   defp do_eval({:for_exp, exp}, context) do
     {enumerable, exp} = Keyword.pop_first(exp, :field)
-    {enumerable_value, exp} = Keyword.pop_first(exp, :field)
+    {[enumerable_value | _], exp} = Keyword.pop_first(exp, :field)
 
     {exp, _} = Keyword.pop_first(exp, :text)
     enumerable = Argument.get({:field, enumerable}, context) || []
@@ -83,6 +83,7 @@ defmodule Solid.Tag do
   end
 
   defp do_eval({:assign_exp, {:field, field}, argument}, context) do
+    [field | _] = field
     context = %{context | vars: Map.put(context.vars, field, Argument.get(argument, context))}
     {nil, context}
   end
