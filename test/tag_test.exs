@@ -14,20 +14,20 @@ defmodule Solid.TagTest do
 
     test "eval case_exp matching" do
       context = %Context{ vars: %{ "x" => "1"}}
-      assert eval([{:case_exp, [{:field, "x"}]},
+      assert eval([{:case_exp, [{:field, ["x"]}]},
                    {:whens, %{ "1" => %{text: "one"} }}], context) == {"one", context}
     end
 
     test "eval case_exp not matching" do
       context = %Context{ vars: %{"x" => "1"}}
-      assert eval([{:case_exp, [{:field, "x"}]},
+      assert eval([{:case_exp, [{:field, ["x"]}]},
                    {:whens, %{ "2" => %{text: "two"} }}], context) == {nil, context}
     end
 
     test "eval case_exp not matching having else_exp" do
       context = %Context{ vars: %{ "x" => "1"}}
       else_exp = %{text: "else"}
-      assert eval([{:case_exp, [{:field, "x"}]},
+      assert eval([{:case_exp, [{:field, ["x"]}]},
                    {:whens, %{ "2" => %{text: "two"} }},
                    {:else_exp, else_exp}], context) == {"else", context}
     end

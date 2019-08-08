@@ -123,9 +123,9 @@ end
 argument <- value:value / field ~;
 field    <- [0-9a-zA-Z\._]* access* `
  case Node of
-   [FieldName | [[]]] -> {field, iolist_to_binary(FieldName)};
+   [FieldName | [[]]] -> {field, string:split(iolist_to_binary(FieldName), ".", all)};
    [FieldName | [Accesses]] ->
-     {field, iolist_to_binary(FieldName), Accesses}
+     {field, string:split(iolist_to_binary(FieldName), ".", all), Accesses}
  end
 `;
 access <- "[" int "]" `

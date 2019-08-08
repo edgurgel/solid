@@ -16,12 +16,12 @@ defmodule Solid.ObjectTest do
 
     test "field no filter" do
       context = %Context{vars: %{"var" => 1}}
-      assert render([argument: {:field, "var"}], context) == "1"
+      assert render([argument: {:field, ["var"]}], context) == "1"
     end
 
     test "field with filter" do
       context = %Context{vars: %{"var" => "a"}}
-      assert render([argument: {:field, "var"},
+      assert render([argument: {:field, ["var"]},
                      filters: [{"upcase", []}]], context) == "A"
     end
   end
