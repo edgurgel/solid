@@ -4,10 +4,10 @@ defmodule Solid.Integration.CasesTest do
 
   @cases_dir "test/cases"
 
-  @test_cases File.ls! "test/cases"
+  @test_cases File.ls! @cases_dir
   for test_case <- @test_cases do
-    for file <- File.ls! "test/cases/#{test_case}/" do
-      @external_resource "test/cases/#{test_case}/#{file}"
+    for file <- File.ls! "#{@cases_dir}/#{test_case}/" do
+      @external_resource "#{@cases_dir}/#{test_case}/#{file}"
     end
   end
 

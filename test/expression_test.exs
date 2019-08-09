@@ -3,9 +3,6 @@ defmodule Solid.ExpressionTest do
   doctest Solid.Expression
   import Solid.Expression
 
-  @true_exp  {1, :==, 1}
-  @false_exp {1, :!=, 1}
-
   describe "eval/2" do
     test "expressions with 1 boolean" do
       exps = [true]
