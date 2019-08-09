@@ -21,6 +21,12 @@ defmodule Solid.Mixfile do
      name: "solid",
      description: @description,
      package: package(),
+     docs: [
+       main: "readme",
+       extras: [
+         "README.md"
+       ],
+     ],
      deps: deps()]
   end
 
@@ -31,8 +37,8 @@ defmodule Solid.Mixfile do
   defp deps do
     [{:neotoma, "~> 1.7.3"},
      {:poison, "~> 2.0", only: :test},
-     {:earmark, "~> 1.0", only: :dev},
-     {:ex_doc, "~> 0.13", only: :dev}]
+     {:earmark, "~> 1.3", only: :dev},
+     {:ex_doc, "~> 0.21", only: :dev}]
   end
 
   defp package do
