@@ -1,4 +1,4 @@
-# Solid
+# Solid [![Build Status](https://travis-ci.org/edgurgel/solid.svg?branch=master)](https://travis-ci.org/edgurgel/solid)
 
 Solid is an implementation in Elixir of the template engine Liquid. It uses [neotoma](https://github.com/seancribbs/neotoma) to generate the parser.
 
@@ -12,21 +12,14 @@ iex> Solid.parse(template) |> Solid.render(%{ "user" => %{ "name" => "José" } }
 
 ## Installation
 
-The package can be installed as:
+The package can be installed with:
 
-  1. Add solid to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
-  [{:solid, "~> 0.0.1"}]
+  [{:solid, "~> 0.1.0"}]
 end
 ```
-  2. Ensure solid is started before your application:
 
-```elixir
-def application do
-  [applications: [:solid]]
-end
-```
 
 ## TODO
 
