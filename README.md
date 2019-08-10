@@ -27,11 +27,18 @@ end
 * [ ] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
 * [ ] Support to custom filters [#11](https://github.com/edgurgel/solid/issues/11)
 * [ ] Tags (if, case, unless, etc)
-  - [ ] `for`
-  - [ ] `raw`
-  - [ ] `cycle`
-  - [ ] `capture`
-  - [ ] `increment`
-  - [ ] `decrement`
+  - [x] `for`
+    - [ ] `else`
+    - [ ] `break`
+    - [ ] `continue`
+    - [ ] `limit`
+    - [ ] `offset`
+    - [ ] Range (3..5)
+    - [ ] `reversed`
+  - [ ] `raw` [#18](https://github.com/edgurgel/solid/issues/18)
+  - [ ] `cycle` [#17](https://github.com/edgurgel/solid/issues/17)
+  - [ ] `capture` [#19](https://github.com/edgurgel/solid/issues/19)
+  - [ ] `increment` [#16](https://github.com/edgurgel/solid/issues/16)
+  - [ ] `decrement` [#16](https://github.com/edgurgel/solid/issues/16)
 * [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
 * [ ] Whitespace control [#10](https://github.com/edgurgel/solid/issues/10)
