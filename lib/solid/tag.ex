@@ -88,10 +88,10 @@ defmodule Solid.Tag do
     {nil, context}
   end
 
-  defp do_eval({:increment_exp, field}, context) do
-    value = (Argument.get(field, context, [:counter_vars]) || 0)
+  defp do_eval({:counter_exp, field, operation, default}, context) do
+    value = (Argument.get(field, context, [:counter_vars]) || default)
     {:field, [field_name]} = field
-    context = %{context | counter_vars: Map.put(context.counter_vars, field_name, value + 1)}
+    context = %{context | counter_vars: Map.put(context.counter_vars, field_name, value + operation)}
     {[{:string, to_string(value)}, []], context}
   end
 

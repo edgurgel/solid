@@ -152,16 +152,28 @@ defmodule Solid.TagTest do
       assert eval({:assign_exp, {:field, ["z"]}, {:field, ["x", "y"]}}, context) == {nil, new_context}
     end
 
-    test "eval increment_exp with previous value" do
+    test "eval increment with previous value" do
       context = %Context{counter_vars: %{ "x" => 1}}
       new_context = %Context{counter_vars: %{"x" => 2}}
-      assert eval({:increment_exp, {:field, ["x"]}}, context) == {[{:string, "1"}, []], new_context}
+      assert eval({:counter_exp, {:field, ["x"]}, 1, 0}, context) == {[{:string, "1"}, []], new_context}
     end
 
-    test "eval increment_exp with no previous value" do
+    test "eval increment with no previous value" do
       context = %Context{ counter_vars: %{ "x" => "1"}}
       new_context = %Context{ counter_vars: %{ "x" => "1", "y" => 1}}
-      assert eval({:increment_exp, {:field, ["y"]}}, context) == {[{:string, "0"}, []], new_context}
+      assert eval({:counter_exp, {:field, ["y"]}, 1, 0}, context) == {[{:string, "0"}, []], new_context}
+    end
+
+    test "eval decrement with previous value" do
+      context = %Context{counter_vars: %{ "x" => 1}}
+      new_context = %Context{counter_vars: %{"x" => 0}}
+      assert eval({:counter_exp, {:field, ["x"]}, -1, -1}, context) == {[{:string, "1"}, []], new_context}
+    end
+
+    test "eval decrement with no previous value" do
+      context = %Context{ counter_vars: %{ "x" => "1"}}
+      new_context = %Context{ counter_vars: %{ "x" => "1", "y" => -2}}
+      assert eval({:counter_exp, {:field, ["y"]}, -1, -1}, context) == {[{:string, "-1"}, []], new_context}
     end
   end
 end
