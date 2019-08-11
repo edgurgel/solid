@@ -5,12 +5,7 @@ defmodule Solid do
   iex> Solid.parse("{{ variable }}") |> Solid.render(%{ "variable" => "value" }) |> to_string
   "value"
   """
-  alias Solid.{Object, Tag}
-
-  defmodule Context do
-    defstruct vars: %{}
-    @type t :: %Context{vars: Map.t}
-  end
+  alias Solid.{Object, Tag, Context}
 
   @doc """
   It generates the compiled template
