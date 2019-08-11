@@ -139,4 +139,77 @@ defmodule Solid.Integration.TagsTest do
       assert render(text, %{}) == "test "
     end
   end
+
+  describe "assign" do
+    test "assign literal value" do
+      text = """
+      {% assign variable = 1 %}
+      Variable: {{ variable }}
+      """
+      assert render(text, %{}) == "\nVariable: 1\n"
+    end
+
+    test "assign existing variable" do
+      text = """
+      {% assign variable = existing %}
+      Variable: {{ variable }}
+      """
+      assert render(text, %{ "existing" => 123}) == """
+
+      Variable: 123
+      """
+    end
+  end
+
+  describe "increment" do
+    test "increment" do
+      text = """
+      {% increment counter %}
+      counter value: {{ counter }}
+      """
+      assert render(text, %{}) == """
+      0
+      counter value: 1
+      """
+    end
+
+    test "increment multiple calls" do
+      text = """
+      {% increment counter %}
+      {% increment counter %}
+      counter value: {{ counter }}
+      """
+      assert render(text, %{}) == """
+      0
+      1
+      counter value: 2
+      """
+    end
+  end
+
+  describe "decrement" do
+    test "decrement" do
+      text = """
+      {% decrement counter %}
+      counter value: {{ counter }}
+      """
+      assert render(text, %{}) == """
+      -1
+      counter value: -2
+      """
+    end
+
+    test "decrement multiple calls" do
+      text = """
+      {% decrement counter %}
+      {% decrement counter %}
+      counter value: {{ counter }}
+      """
+      assert render(text, %{}) == """
+      -1
+      -2
+      counter value: -3
+      """
+    end
+  end
 end

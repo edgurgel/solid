@@ -12,7 +12,7 @@ defmodule Solid.Integration.CasesTest do
   end
 
   for test_case <- @test_cases do
-    test "test case #{test_case}" do
+    test "case #{test_case}" do
       input_liquid  = File.read!("test/cases/#{unquote(test_case)}/input.liquid")
       input_json    = File.read!("test/cases/#{unquote(test_case)}/input.json")
 
