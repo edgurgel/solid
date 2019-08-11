@@ -8,7 +8,13 @@ case Node of
   [_, _, Block, _, _] -> lists:flatten([Block])
 end
 `;
-tag <- cond_if_tag / cond_unless_tag / cond_case_tag / assign_tag / comment_tag / for_tag ~;
+tag <- cond_if_tag / cond_unless_tag / cond_case_tag / assign_tag / comment_tag / for_tag / increment_tag ~;
+
+increment_tag <- open_tag space increment space field space close_tag `
+case Node of
+  [_, _, _, _, Field, _, _] -> {increment_exp, Field}
+end
+`;
 
 comment_tag <- open_tag space comment space close_tag text:text
                open_tag space endcomment space close_tag `comment`;
@@ -156,6 +162,7 @@ endunless      <- "endunless" ~;
 case           <- "case" ~;
 when           <- "when" ~;
 endcase        <- "endcase" ~;
+increment      <- "increment" ~;
 assign         <- "assign" ~;
 for            <- "for" ~;
 endfor         <- "endfor" ~;

@@ -88,6 +88,13 @@ defmodule Solid.Tag do
     {nil, context}
   end
 
+  defp do_eval({:increment_exp, field}, context) do
+    value = (Argument.get(field, context, [:counter_vars]) || 0)
+    {:field, [field_name]} = field
+    context = %{context | counter_vars: Map.put(context.counter_vars, field_name, value + 1)}
+    {[{:string, to_string(value)}, []], context}
+  end
+
   defp do_eval(:comment, _context), do: nil
 
   defp eval_elsif({:elsif_exp, elsif_exp}, context) do
