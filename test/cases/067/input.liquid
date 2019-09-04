@@ -1,0 +1,8 @@
+Example:
+{% for value in var %}
+  {% assign new_value = value %}
+  {% if value > 2 %}
+    Got: {{ value }}
+  {% endif %}
+{% endfor %}
+{{ new_value }}

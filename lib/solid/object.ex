@@ -17,8 +17,8 @@ defmodule Solid.Object do
 
   defp apply_filters(input, nil, _), do: input
   defp apply_filters(input, [], _), do: input
-  defp apply_filters(input, [{filter, args} | filters], context) do
-    values = for arg <- args, do: Argument.get(arg, context)
+  defp apply_filters(input, [{:filter, [filter, {:arguments, args}]} | filters], context) do
+    values = for arg <- args, do: Argument.get([arg], context)
     Filter.apply(filter, [input | values]) |> apply_filters(filters, context)
   end
 end

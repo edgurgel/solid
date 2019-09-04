@@ -30,6 +30,10 @@ defmodule Solid.Integration.FiltersTest do
     assert render("Number {{ 123 | default: 456 }} !", %{}) == "Number 123 !"
   end
 
+  test "default filter with a negative integer" do
+    assert render("Number {{ 123 | plus: -123}} !", %{}) == "Number 0 !"
+  end
+
   test "replace" do
     assert render("{{ \"Take my protein pills and put my helmet on\" | replace: \"my\", \"your\" }}", %{})
       == "Take your protein pills and put your helmet on"

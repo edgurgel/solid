@@ -2,10 +2,6 @@ defmodule Solid.Integration.TagsTest do
   use ExUnit.Case, async: true
   import Solid.Helpers
 
-  # test "open tag" do
-    # assert render("{% Text", %{ "key" => 123 }) == "{% Text"
-  # end
-
   describe "if" do
     test "true expression" do
       assert render("{% if 1 == 1 %}True{% endif %} is True", %{ "key" => 123 }) == "True is True"

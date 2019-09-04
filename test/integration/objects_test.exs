@@ -6,14 +6,6 @@ defmodule Solid.Integration.ObjectsTest do
     assert render("No Number!", %{ "key" => 123 }) == "No Number!"
   end
 
-  test "empty object" do
-    assert render("{{}}") == ""
-  end
-
-  test "standalone open object" do
-    assert render("Number {{ {{ key }}!", %{ "key" => 123 }) == "Number {{ 123!"
-  end
-
   test "single quoted string" do
     assert render("String: {{ 'text' }}") == "String: text"
   end
@@ -23,7 +15,11 @@ defmodule Solid.Integration.ObjectsTest do
   end
 
   test "basic key rendering" do
-    assert render("Number {{ key }} !", %{ "key" => 123 }) == "Number 123 !"
+    assert render("Number {{ key }} ! {{ key }}", %{ "key" => 123 }) == "Number 123 ! 123"
+  end
+
+  test "field with access" do
+    assert render("Number {{ key[1] }}", %{ "key" => [1, 2, 3] }) == "Number 2"
   end
 
   test "complex key rendering" do
