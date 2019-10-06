@@ -1,6 +1,6 @@
 defmodule Solid.Context do
   defstruct vars: %{}, counter_vars: %{}
-  @type t :: %__MODULE__{vars: Map.t, counter_vars: Map.t}
+  @type t :: %__MODULE__{vars: Map.t(), counter_vars: Map.t()}
   @type scope :: :counter_vars | :vars
 
   @doc """
@@ -27,8 +27,10 @@ defmodule Solid.Context do
 
   defp do_get_in(nil, _), do: nil
   defp do_get_in(data, []), do: data
+
   defp do_get_in(data, [key | keys]) when is_map(data) do
     do_get_in(data[key], keys)
   end
+
   defp do_get_in(_, _), do: nil
 end

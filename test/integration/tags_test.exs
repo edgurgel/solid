@@ -4,39 +4,43 @@ defmodule Solid.Integration.TagsTest do
 
   describe "if" do
     test "true expression" do
-      assert render("{% if 1 == 1 %}True{% endif %} is True", %{ "key" => 123 }) == "True is True"
+      assert render("{% if 1 == 1 %}True{% endif %} is True", %{"key" => 123}) == "True is True"
     end
 
     test "false expression" do
-      assert render("{% if 1 != 1 %}True{% endif %}False?", %{ "key" => 123 }) == "False?"
+      assert render("{% if 1 != 1 %}True{% endif %}False?", %{"key" => 123}) == "False?"
     end
 
     test "true" do
-      assert render("{% if true %}True{% endif %} is True", %{ "key" => 123 }) == "True is True"
+      assert render("{% if true %}True{% endif %} is True", %{"key" => 123}) == "True is True"
     end
 
     test "false" do
-      assert render("{% if false %}True{% endif %}False?", %{ "key" => 123 }) == "False?"
+      assert render("{% if false %}True{% endif %}False?", %{"key" => 123}) == "False?"
     end
 
     test "boolean expression" do
-      assert render("{% if 1 != 1 or 3 == 3 %}True{% endif %}", %{ "key" => 123 }) == "True"
+      assert render("{% if 1 != 1 or 3 == 3 %}True{% endif %}", %{"key" => 123}) == "True"
     end
 
     test "nested" do
-      assert render("{% if 1 == 1 %}{% if 1 != 2 %}True{% endif %}{% endif %} is True", %{ "key" => 123 }) == "True is True"
+      assert render("{% if 1 == 1 %}{% if 1 != 2 %}True{% endif %}{% endif %} is True", %{
+               "key" => 123
+             }) == "True is True"
     end
 
     test "with object" do
-      assert render("{% if 1 != 2 %}{{ key }}{% endif %}", %{ "key" => 123 }) == "123"
+      assert render("{% if 1 != 2 %}{{ key }}{% endif %}", %{"key" => 123}) == "123"
     end
 
     test "else true" do
-      assert render("{% if 1 == 1 %}True{% else %}False{% endif %} is True", %{ "key" => 123 }) == "True is True"
+      assert render("{% if 1 == 1 %}True{% else %}False{% endif %} is True", %{"key" => 123}) ==
+               "True is True"
     end
 
     test "else false" do
-      assert render("{% if 1 != 1 %}True{% else %}False{% endif %} is False", %{ "key" => 123 }) == "False is False"
+      assert render("{% if 1 != 1 %}True{% else %}False{% endif %} is False", %{"key" => 123}) ==
+               "False is False"
     end
 
     test "elsif" do
@@ -46,27 +50,32 @@ defmodule Solid.Integration.TagsTest do
 
   describe "unless" do
     test "true expression" do
-      assert render("{% unless 1 == 1 %}True{% endunless %}False?", %{ "key" => 123 }) == "False?"
+      assert render("{% unless 1 == 1 %}True{% endunless %}False?", %{"key" => 123}) == "False?"
     end
 
     test "false expression" do
-      assert render("{% unless 1 != 1 %}True{% endunless %} is True", %{ "key" => 123 }) == "True is True"
+      assert render("{% unless 1 != 1 %}True{% endunless %} is True", %{"key" => 123}) ==
+               "True is True"
     end
 
     test "true" do
-      assert render("{% unless true %}False{% endunless %}False?", %{ "key" => 123 }) == "False?"
+      assert render("{% unless true %}False{% endunless %}False?", %{"key" => 123}) == "False?"
     end
 
     test "false" do
-      assert render("{% unless false %}True{% endunless %} is True", %{ "key" => 123 }) == "True is True"
+      assert render("{% unless false %}True{% endunless %} is True", %{"key" => 123}) ==
+               "True is True"
     end
 
     test "nested" do
-      assert render("{% unless 1 != 1 %}{% unless 1 == 2 %}True{% endunless %}{% endunless %} is True", %{ "key" => 123 }) == "True is True"
+      assert render(
+               "{% unless 1 != 1 %}{% unless 1 == 2 %}True{% endunless %}{% endunless %} is True",
+               %{"key" => 123}
+             ) == "True is True"
     end
 
     test "with object" do
-      assert render("{% unless 1 == 2 %}{{ key }}{% endunless %}", %{ "key" => 123 }) == "123"
+      assert render("{% unless 1 == 2 %}{{ key }}{% endunless %}", %{"key" => 123}) == "123"
     end
 
     test "elsif" do
@@ -82,6 +91,7 @@ defmodule Solid.Integration.TagsTest do
       This is a cake
       {% endcase %}
       """
+
       assert render(text) == "\n"
     end
 
@@ -94,6 +104,7 @@ defmodule Solid.Integration.TagsTest do
       Else
       {% endcase %}
       """
+
       assert render(text) == "\nElse\n\n"
     end
 
@@ -106,7 +117,8 @@ defmodule Solid.Integration.TagsTest do
       This is a cake
       {% endcase %}
       """
-      assert render(text, %{ "handle" => "cake"}) == "\nThis is a cake\n\n"
+
+      assert render(text, %{"handle" => "cake"}) == "\nThis is a cake\n\n"
     end
   end
 
@@ -117,7 +129,8 @@ defmodule Solid.Integration.TagsTest do
         Got: {{ value }}
       {% endfor %}
       """
-      assert render(text, %{"values" => [1,2]}) == "\n  Got: 1\n\n  Got: 2\n\n"
+
+      assert render(text, %{"values" => [1, 2]}) == "\n  Got: 1\n\n  Got: 2\n\n"
     end
 
     test "with conditional tag" do
@@ -127,7 +140,7 @@ defmodule Solid.Integration.TagsTest do
       {% endfor %}
       """
 
-      assert render(text, %{"values" => [1,2,3]}) == "\n  \n\n  \n\n  I got 3!\n\n"
+      assert render(text, %{"values" => [1, 2, 3]}) == "\n  \n\n  \n\n  I got 3!\n\n"
     end
 
     test "with no value" do
@@ -142,6 +155,7 @@ defmodule Solid.Integration.TagsTest do
       {% assign variable = 1 %}
       Variable: {{ variable }}
       """
+
       assert render(text, %{}) == "\nVariable: 1\n"
     end
 
@@ -150,10 +164,11 @@ defmodule Solid.Integration.TagsTest do
       {% assign variable = existing %}
       Variable: {{ variable }}
       """
-      assert render(text, %{ "existing" => 123}) == """
 
-      Variable: 123
-      """
+      assert render(text, %{"existing" => 123}) == """
+
+             Variable: 123
+             """
     end
   end
 
@@ -163,10 +178,11 @@ defmodule Solid.Integration.TagsTest do
       {% increment counter %}
       counter value: {{ counter }}
       """
+
       assert render(text, %{}) == """
-      0
-      counter value: 1
-      """
+             0
+             counter value: 1
+             """
     end
 
     test "increment multiple calls" do
@@ -175,11 +191,12 @@ defmodule Solid.Integration.TagsTest do
       {% increment counter %}
       counter value: {{ counter }}
       """
+
       assert render(text, %{}) == """
-      0
-      1
-      counter value: 2
-      """
+             0
+             1
+             counter value: 2
+             """
     end
   end
 
@@ -189,10 +206,11 @@ defmodule Solid.Integration.TagsTest do
       {% decrement counter %}
       counter value: {{ counter }}
       """
+
       assert render(text, %{}) == """
-      -1
-      counter value: -2
-      """
+             -1
+             counter value: -2
+             """
     end
 
     test "decrement multiple calls" do
@@ -201,11 +219,12 @@ defmodule Solid.Integration.TagsTest do
       {% decrement counter %}
       counter value: {{ counter }}
       """
+
       assert render(text, %{}) == """
-      -1
-      -2
-      counter value: -3
-      """
+             -1
+             -2
+             counter value: -3
+             """
     end
   end
 end

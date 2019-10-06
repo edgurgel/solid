@@ -78,6 +78,7 @@ defmodule Solid.Expression do
     Enum.reduce(exps, do_eval(exp, context), fn
       [:bool_and, exp], acc ->
         do_eval(exp, context) and acc
+
       [:bool_or, exp], acc ->
         do_eval(exp, context) or acc
     end)
@@ -88,5 +89,6 @@ defmodule Solid.Expression do
     v2 = Argument.get(v2, context)
     eval({v1, op, v2})
   end
+
   defp do_eval(boolean, _context) when boolean in [true, false], do: eval(boolean)
 end

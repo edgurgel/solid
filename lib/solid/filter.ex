@@ -1,5 +1,6 @@
 defmodule Solid.Filter do
   import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1]
+
   @moduledoc """
   Standard filters
   """
@@ -39,11 +40,12 @@ defmodule Solid.Filter do
   iex> Solid.Filter.abs("-17.5")
   17.5
   """
-  @spec abs(number | String.t) :: number
+  @spec abs(number | String.t()) :: number
   def abs(input) when is_binary(input) do
-     {float, _} = Float.parse(input)
-     abs(float)
+    {float, _} = Float.parse(input)
+    abs(float)
   end
+
   def abs(input), do: Kernel.abs(input)
 
   @doc """
@@ -52,7 +54,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.append("www.example.com", "/index.html")
   "www.example.com/index.html"
   """
-  @spec append(any, any) :: String.t
+  @spec append(any, any) :: String.t()
   def append(input, string), do: "#{input}#{string}"
 
   @doc """
@@ -63,17 +65,18 @@ defmodule Solid.Filter do
   iex> Solid.Filter.capitalize(1)
   "1"
   """
-  @spec capitalize(any) :: String.t
-  def capitalize(input), do: to_string(input) |> String.capitalize
+  @spec capitalize(any) :: String.t()
+  def capitalize(input), do: to_string(input) |> String.capitalize()
 
   @doc """
   Rounds the input up to the nearest whole number. Liquid tries to convert the input to a number before the filter is applied.
   """
-  @spec ceil(number | String.t) :: number
+  @spec ceil(number | String.t()) :: number
   def ceil(input) when is_binary(input) do
-     {float, _} = Float.parse(input)
-     ceil(float)
+    {float, _} = Float.parse(input)
+    ceil(float)
   end
+
   def ceil(input) when is_integer(input), do: input
   def ceil(input), do: Float.ceil(input) |> trunc
 
@@ -114,8 +117,9 @@ defmodule Solid.Filter do
   """
   @spec divided_by(number, number) :: number
   def divided_by(input, operand) when is_integer(operand) do
-    (input / operand) |> Float.floor |> trunc
+    (input / operand) |> Float.floor() |> trunc
   end
+
   def divided_by(input, operand) when is_float(operand) do
     input / operand
   end
@@ -133,8 +137,8 @@ defmodule Solid.Filter do
   iex> Solid.Filter.upcase(nil)
   ""
   """
-  @spec upcase(any) :: String.t
-  def upcase(input), do: input |> to_string |> String.upcase
+  @spec upcase(any) :: String.t()
+  def upcase(input), do: input |> to_string |> String.upcase()
 
   @doc """
   Makes each character in a string lowercase.
@@ -149,8 +153,8 @@ defmodule Solid.Filter do
   iex> Solid.Filter.downcase(nil)
   ""
   """
-  @spec downcase(any) :: String.t
-  def downcase(input), do: input |> to_string |> String.downcase
+  @spec downcase(any) :: String.t()
+  def downcase(input), do: input |> to_string |> String.downcase()
 
   @doc """
   Returns the first item of an array.
@@ -174,11 +178,12 @@ defmodule Solid.Filter do
   iex> Solid.Filter.floor("3.5")
   3
   """
-  @spec floor(number | String.t) :: integer
+  @spec floor(number | String.t()) :: integer
   def floor(input) when is_binary(input) do
     {float, _} = Float.parse(input)
     floor(float)
   end
+
   def floor(input), do: Float.floor(input) |> trunc
 
   @doc """
@@ -199,7 +204,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.join(["a", "b", "c"], "-")
   "a-b-c"
   """
-  @spec join(list, String.t) :: String.t
+  @spec join(list, String.t()) :: String.t()
   def join(input, glue \\ " ") when is_list(input), do: Enum.join(input, glue)
 
   @doc """
@@ -220,7 +225,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.lstrip("          So much room for activities!          ")
   "So much room for activities!          "
   """
-  @spec lstrip(String.t) :: String.t
+  @spec lstrip(String.t()) :: String.t()
   def lstrip(input), do: String.trim_leading(input)
 
   @doc """
@@ -231,7 +236,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.split("", " ")
   [""]
   """
-  @spec split(any, String.t) :: List.t
+  @spec split(any, String.t()) :: List.t()
   def split(input, pattern), do: to_string(input) |> String.split(pattern)
 
   @doc """
@@ -241,7 +246,7 @@ defmodule Solid.Filter do
   ["A", 1]
   """
   def map(input, property) when is_list(input) do
-    Enum.map(input, &(&1[property]))
+    Enum.map(input, & &1[property])
   end
 
   @doc """
@@ -276,7 +281,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.prepend("/index.html", "www.example.com")
   "www.example.com/index.html"
   """
-  @spec prepend(any, any) :: String.t
+  @spec prepend(any, any) :: String.t()
   def prepend(input, string), do: "#{string}#{input}"
 
   @doc """
@@ -285,17 +290,18 @@ defmodule Solid.Filter do
   iex> Solid.Filter.remove("I strained to see the train through the rain", "rain")
   "I sted to see the t through the "
   """
-  @spec remove(String.t, String.t) :: String.t
+  @spec remove(String.t(), String.t()) :: String.t()
   def remove(input, string) do
     String.replace(input, string, "")
   end
+
   @doc """
   Removes only the first occurrence of the specified substring from a string.
 
   iex> Solid.Filter.remove_first("I strained to see the train through the rain", "rain")
   "I sted to see the train through the rain"
   """
-  @spec remove_first(String.t, String.t) :: String.t
+  @spec remove_first(String.t(), String.t()) :: String.t()
   def remove_first(input, string) do
     String.replace(input, string, "", global: false)
   end
@@ -306,17 +312,18 @@ defmodule Solid.Filter do
   iex> Solid.Filter.replace("Take my protein pills and put my helmet on", "my", "your")
   "Take your protein pills and put your helmet on"
   """
-  @spec replace(String.t, String.t, String.t) :: String.t
+  @spec replace(String.t(), String.t(), String.t()) :: String.t()
   def replace(input, string, replacement \\ "") do
     input |> to_string |> String.replace(string, replacement)
   end
+
   @doc """
   Replaces only the first occurrence of the first argument in a string with the second argument.
 
   iex> Solid.Filter.replace_first("Take my protein pills and put my helmet on", "my", "your")
   "Take your protein pills and put my helmet on"
   """
-  @spec replace_first(String.t, String.t, String.t) :: String.t
+  @spec replace_first(String.t(), String.t(), String.t()) :: String.t()
   def replace_first(input, string, replacement \\ "") do
     input |> to_string |> String.replace(string, replacement, global: false)
   end
@@ -327,7 +334,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.reverse(["a", "b", "c"])
   ["c", "b", "a"]
   """
-  @spec reverse(list) :: List.t
+  @spec reverse(list) :: List.t()
   def reverse(input), do: Enum.reverse(input)
 
   @doc """
@@ -344,6 +351,7 @@ defmodule Solid.Filter do
   @spec round(number) :: integer
   def round(input, precision \\ nil)
   def round(input, nil), do: Kernel.round(input)
+
   def round(input, precision) do
     p = :math.pow(10, precision)
     Kernel.round(input * p) / p
@@ -355,7 +363,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.rstrip("          So much room for activities!          ")
   "          So much room for activities!"
   """
-  @spec rstrip(String.t) :: String.t
+  @spec rstrip(String.t()) :: String.t()
   def rstrip(input), do: String.trim_trailing(input)
 
   @doc """
@@ -366,7 +374,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.size(~w(ground control to Major Tom.))
   5
   """
-  @spec size(String.t | list) :: non_neg_integer
+  @spec size(String.t() | list) :: non_neg_integer
   def size(input) when is_list(input), do: Enum.count(input)
   def size(input), do: String.length(input)
 
@@ -387,7 +395,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.slice("Liquid", -3, 2)
   "ui"
   """
-  @spec slice(String.t, integer, non_neg_integer) :: String.t
+  @spec slice(String.t(), integer, non_neg_integer) :: String.t()
   def slice(input, offset, length \\ nil)
   def slice(input, offset, nil), do: String.at(input, offset)
   def slice(input, offset, length), do: String.slice(input, offset, length)
@@ -398,7 +406,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.sort(~w(zebra octopus giraffe SallySnake))
   ~w(SallySnake giraffe octopus zebra)
   """
-  @spec sort(List.t) :: List.t
+  @spec sort(List.t()) :: List.t()
   def sort(input), do: Enum.sort(input)
 
   @doc """
@@ -407,7 +415,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.sort_natural(~w(zebra octopus giraffe SallySnake))
   ~w(giraffe octopus SallySnake zebra)
   """
-  @spec sort_natural(List.t) :: List.t
+  @spec sort_natural(List.t()) :: List.t()
   def sort_natural(input) do
     Enum.sort(input, &(String.downcase(&1) <= String.downcase(&2)))
   end
@@ -419,7 +427,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.strip("          So much room for activities!          ")
   "So much room for activities!"
   """
-  @spec strip(String.t) :: String.t
+  @spec strip(String.t()) :: String.t()
   def strip(input), do: String.trim(input)
 
   @doc """
@@ -463,7 +471,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.truncate("Ground control to Major Tom.", 20, "")
   "Ground control to Ma"
   """
-  @spec truncate(String.t, non_neg_integer, String.t) :: String.t
+  @spec truncate(String.t(), non_neg_integer, String.t()) :: String.t()
   def truncate(input, length, ellipsis \\ "...") do
     if String.length(input) > length do
       length = max(0, length - String.length(ellipsis))
@@ -495,15 +503,16 @@ defmodule Solid.Filter do
   iex> Solid.Filter.truncatewords("Ground control to Major Tom.", 3, "")
   "Ground control to"
   """
-  @spec truncatewords(String.t, non_neg_integer, String.t) :: String.t
+  @spec truncatewords(String.t(), non_neg_integer, String.t()) :: String.t()
   def truncatewords(input, max_words, ellipsis \\ "...") do
     words = String.split(input, " ")
-     if length(words) > max_words do
-       Enum.take(words, max_words)
-        |> Enum.intersperse(" ")
-        |> to_string
-        |> Kernel.<>(ellipsis)
-     end
+
+    if length(words) > max_words do
+      Enum.take(words, max_words)
+      |> Enum.intersperse(" ")
+      |> to_string
+      |> Kernel.<>(ellipsis)
+    end
   end
 
   @doc """

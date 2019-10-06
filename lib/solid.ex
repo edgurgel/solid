@@ -17,14 +17,18 @@ defmodule Solid do
 
     @impl true
     def exception([reason, line]) do
-      %__MODULE__{message: "Reason: #{reason}, line: #{elem(line, 0)}", reason: reason, line: line}
+      %__MODULE__{
+        message: "Reason: #{reason}, line: #{elem(line, 0)}",
+        reason: reason,
+        line: line
+      }
     end
   end
 
   @doc """
   It generates the compiled template
   """
-  @spec parse(String.t) :: {:ok, %Template{}} | {:error, %TemplateError{}}
+  @spec parse(String.t()) :: {:ok, %Template{}} | {:error, %TemplateError{}}
   def parse(text) do
     case Solid.Parser.parse(text) do
       {:ok, result, _, _, _, _} -> {:ok, %Template{parsed_template: result}}
@@ -35,7 +39,7 @@ defmodule Solid do
   @doc """
   It generates the compiled template
   """
-  @spec parse!(String.t) :: %Template{} | no_return
+  @spec parse!(String.t()) :: %Template{} | no_return
   def parse!(text) do
     case parse(text) do
       {:ok, template} -> template
@@ -49,18 +53,21 @@ defmodule Solid do
   # @spec render(any, Map.t) :: iolist
   def render(%Template{parsed_template: parsed_template}, hash) do
     context = %Context{vars: hash}
+
     parsed_template
     |> render(context)
     |> elem(0)
   end
+
   def render(text, context = %Context{}) do
-    {result, context} = Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
-      {result, context} = do_render(entry, context)
-      {[result | acc], context}
-    end)
+    {result, context} =
+      Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
+        {result, context} = do_render(entry, context)
+        {[result | acc], context}
+      end)
+
     {Enum.reverse(result), context}
   end
-
 
   defp do_render({:text, string}, context), do: {string, context}
 

@@ -18,15 +18,24 @@ defmodule Solid.Argument do
   iex> Solid.Argument.get([field: [keys: ["key"], accesses: [access: 1]]], %Solid.Context{vars: %{"key" => "a string"}})
   nil
   """
-  @spec get([field: [String.t()]] | {:field, [String.t()], [{:access, non_neg_integer}]} | [value: term], Context.t, [atom]) :: term
+  @spec get(
+          [field: [keys: [String.t()], accesses: [{:access, non_neg_integer}]]]
+          | [value: term],
+          Context.t(),
+          [atom]
+        ) :: term
   def get(field, context, scopes \\ [:vars, :counter_vars])
   def get([value: val], _hash, _scopes), do: val
+
   def get([field: [keys: keys, accesses: accesses]], context, scopes) do
     value = Context.get_in(context, keys, scopes)
-    Enum.reduce(accesses, value,
-                fn {:access, index}, acc when is_list(acc) ->
-                     Enum.at(acc, index)
-                   _, _ -> nil
-                end)
+
+    Enum.reduce(accesses, value, fn
+      {:access, index}, acc when is_list(acc) ->
+        Enum.at(acc, index)
+
+      _, _ ->
+        nil
+    end)
   end
 end

@@ -83,14 +83,23 @@ defmodule Solid.Tag do
   end
 
   defp do_eval([assign_exp: [{:field, [keys: [field_name], accesses: []]}, argument]], context) do
-    context = %{context | vars: Map.put(context.vars, field_name, Argument.get([argument], context))}
+    context = %{
+      context
+      | vars: Map.put(context.vars, field_name, Argument.get([argument], context))
+    }
+
     {nil, context}
   end
 
   defp do_eval([counter_exp: [{operation, default}, field]], context) do
-    value = (Argument.get([field], context, [:counter_vars]) || default)
+    value = Argument.get([field], context, [:counter_vars]) || default
     {:field, [keys: [field_name], accesses: []]} = field
-    context = %{context | counter_vars: Map.put(context.counter_vars, field_name, value + operation)}
+
+    context = %{
+      context
+      | counter_vars: Map.put(context.counter_vars, field_name, value + operation)
+    }
+
     {[text: to_string(value)], context}
   end
 

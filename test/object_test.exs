@@ -10,8 +10,10 @@ defmodule Solid.ObjectTest do
     end
 
     test "value with filter" do
-      assert render([argument: [value: "a"],
-                     filters: [filter: ["upcase", {:arguments, []}]]], %Context{}) == "A"
+      assert render(
+               [argument: [value: "a"], filters: [filter: ["upcase", {:arguments, []}]]],
+               %Context{}
+             ) == "A"
     end
 
     test "field no filter" do
@@ -21,14 +23,26 @@ defmodule Solid.ObjectTest do
 
     test "field with filter" do
       context = %Context{vars: %{"var" => "a"}}
-      assert render([argument: [field: [keys: ["var"], accesses: []]],
-                     filters: [filter: ["upcase", {:arguments, []}]]], context) == "A"
+
+      assert render(
+               [
+                 argument: [field: [keys: ["var"], accesses: []]],
+                 filters: [filter: ["upcase", {:arguments, []}]]
+               ],
+               context
+             ) == "A"
     end
 
     test "field with filter and args" do
       context = %Context{vars: %{"not_var" => "a"}}
-      assert render([argument: [field: [keys: ["var"], accesses: []]],
-                     filters: [filter: ["default", {:arguments, [value: 1]}]]], context) == "1"
+
+      assert render(
+               [
+                 argument: [field: [keys: ["var"], accesses: []]],
+                 filters: [filter: ["default", {:arguments, [value: 1]}]]
+               ],
+               context
+             ) == "1"
     end
   end
 end

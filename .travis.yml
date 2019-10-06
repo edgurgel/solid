@@ -4,6 +4,10 @@ elixir:
 otp_release:
   - 22.0
 
+script:
+  - mix test
+  - mix format --check-formatted
+
 before_install:
   - rvm install 2.3.1
   - rvm use 2.3.1
