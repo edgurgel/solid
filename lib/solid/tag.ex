@@ -10,7 +10,7 @@ defmodule Solid.Tag do
   @doc """
   Evaluate a tag and return the condition that succeeded or nil
   """
-  @spec eval(any, Context.t()) :: {iolist, Context.t()}
+  @spec eval(any, Context.t()) :: {iolist | nil, Context.t()}
   def eval(tag, context) do
     case do_eval(tag, context) do
       {text, context} -> {text, context}
@@ -20,22 +20,22 @@ defmodule Solid.Tag do
 
   defp do_eval([], _context), do: nil
 
-  defp do_eval({:for_exp, exp}, context) do
+  defp do_eval([for_exp: exp], context) do
+    {[keys: [enumerable_value], accesses: []], exp} = Keyword.pop_first(exp, :field)
     {enumerable, exp} = Keyword.pop_first(exp, :field)
-    {[enumerable_value | _], exp} = Keyword.pop_first(exp, :field)
 
-    {exp, _} = Keyword.pop_first(exp, :text)
-    enumerable = Argument.get({:field, enumerable}, context) || []
+    {exp, _} = Keyword.pop_first(exp, :result)
+    enumerable = Argument.get([field: enumerable], context) || []
 
-    result =
+    {result, context} =
       enumerable
-      |> Enum.reduce([], fn v, acc ->
-        context = Map.put(context.vars, enumerable_value, v)
-        [Solid.render(exp, context) | acc]
+      |> Enum.reduce({[], context}, fn v, {acc_result, acc_context} ->
+        acc_context = %{acc_context | vars: Map.put(acc_context.vars, enumerable_value, v)}
+        {result, acc_context} = Solid.render(exp, acc_context)
+        {[result | acc_result], acc_context}
       end)
-      |> Enum.reverse()
 
-    [{:string, result}, []]
+    {[text: Enum.reverse(result)], context}
   end
 
   defp do_eval([{:if_exp, exp} | _] = tag, context) do
@@ -51,7 +51,7 @@ defmodule Solid.Tag do
       else_exp = tag[:else_exp]
       if else_exp, do: throw(else_exp)
     catch
-      result -> result[:text]
+      result -> result[:result]
     end
   end
 
@@ -68,34 +68,40 @@ defmodule Solid.Tag do
       else_exp = tag[:else_exp]
       if else_exp, do: throw(else_exp)
     catch
-      result -> result[:text]
+      result -> result[:result]
     end
   end
 
-  defp do_eval([{:case_exp, [field]} | [{:whens, when_map} | _]] = tag, context) do
+  defp do_eval([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context) do
     result = when_map[Argument.get(field, context)]
 
     if result do
-      result[:text]
+      result
     else
-      tag[:else_exp][:text]
+      tag[:else_exp][:result]
     end
   end
 
-  defp do_eval({:assign_exp, {:field, field}, argument}, context) do
-    [field | _] = field
-    context = %{context | vars: Map.put(context.vars, field, Argument.get(argument, context))}
+  defp do_eval([assign_exp: [{:field, [keys: [field_name], accesses: []]}, argument]], context) do
+    context = %{
+      context
+      | vars: Map.put(context.vars, field_name, Argument.get([argument], context))
+    }
+
     {nil, context}
   end
 
-  defp do_eval({:counter_exp, field, operation, default}, context) do
-    value = (Argument.get(field, context, [:counter_vars]) || default)
-    {:field, [field_name]} = field
-    context = %{context | counter_vars: Map.put(context.counter_vars, field_name, value + operation)}
-    {[{:string, to_string(value)}, []], context}
-  end
+  defp do_eval([counter_exp: [{operation, default}, field]], context) do
+    value = Argument.get([field], context, [:counter_vars]) || default
+    {:field, [keys: [field_name], accesses: []]} = field
 
-  defp do_eval(:comment, _context), do: nil
+    context = %{
+      context
+      | counter_vars: Map.put(context.counter_vars, field_name, value + operation)
+    }
+
+    {[text: to_string(value)], context}
+  end
 
   defp eval_elsif({:elsif_exp, elsif_exp}, context) do
     eval_expression(elsif_exp[:expression], context)

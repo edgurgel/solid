@@ -1,12 +1,13 @@
 # Solid [![Build Status](https://travis-ci.org/edgurgel/solid.svg?branch=master)](https://travis-ci.org/edgurgel/solid)
 
-Solid is an implementation in Elixir of the template engine Liquid. It uses [neotoma](https://github.com/seancribbs/neotoma) to generate the parser.
+Solid is an implementation in Elixir of the template engine Liquid. It uses [nimble_parsec](https://github.com/plataformatec/nimble_parsec) to generate the parser.
 
 ## Basic Usage
 
 ```elixir
 iex> template = "My name is {{ user.name }}"
-iex> Solid.parse(template) |> Solid.render(%{ "user" => %{ "name" => "José" } }) |> to_string
+iex> {:ok, template} = Solid.parse(template)
+iex> Solid.render(template, %{ "user" => %{ "name" => "José" } }) |> to_string
 "My name is José"
 ```
 
@@ -16,7 +17,7 @@ The package can be installed with:
 
 ```elixir
 def deps do
-  [{:solid, "~> 0.1.0"}]
+  [{:solid, "~> 0.2.0"}]
 end
 ```
 

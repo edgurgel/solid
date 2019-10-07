@@ -1,28 +1,26 @@
-defmodule Solid.Integration.CasesTest do
-  use ExUnit.Case, async: true
-  import Solid.Helpers
+cases_dir = "test/cases"
 
-  @cases_dir "test/cases"
+for test_case <- File.ls!(cases_dir) do
+  module_name = Module.concat([Solid.Integration.Cases, :"#{test_case}Test"])
 
-  @test_cases File.ls! @cases_dir
-  for test_case <- @test_cases do
-    for file <- File.ls! "#{@cases_dir}/#{test_case}/" do
-      @external_resource "#{@cases_dir}/#{test_case}/#{file}"
-    end
-  end
+  defmodule module_name do
+    use ExUnit.Case, async: true
+    import Solid.Helpers
+    @moduletag :integration
 
-  for test_case <- @test_cases do
+    @liquid_input_file "#{cases_dir}/#{test_case}/input.liquid"
+    @json_input_file "#{cases_dir}/#{test_case}/input.json"
+    @external_resource @liquid_input_file
+    @external_resource @json_input_file
+
+    @tag case: test_case
     test "case #{test_case}" do
-      input_liquid  = File.read!("test/cases/#{unquote(test_case)}/input.liquid")
-      input_json    = File.read!("test/cases/#{unquote(test_case)}/input.json")
+      liquid_input = File.read!(@liquid_input_file)
+      json_input = File.read!(@json_input_file)
 
-      solid_output       = render(input_liquid, Poison.decode!(input_json)) |> IO.iodata_to_binary
-      {liquid_output, 0} = liquid_render(input_liquid, input_json)
+      solid_output = render(liquid_input, Poison.decode!(json_input)) |> IO.iodata_to_binary()
+      {liquid_output, 0} = liquid_render(liquid_input, json_input)
       assert liquid_output == solid_output
     end
-  end
-
-  defp liquid_render(input_liquid, input_json) do
-    System.cmd("ruby", ["test/liquid.rb", input_liquid, input_json])
   end
 end

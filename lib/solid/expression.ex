@@ -75,18 +75,20 @@ defmodule Solid.Expression do
   """
   @spec eval(list, map) :: boolean
   def eval([exp | exps], context) when is_list(exps) do
-     Enum.reduce(exps, do_eval(exp,context), fn
-       [:bool_and, exp], acc ->
-         do_eval(exp, context) and acc
-       [:bool_or, exp], acc ->
-         do_eval(exp, context) or acc
-     end)
+    Enum.reduce(exps, do_eval(exp, context), fn
+      [:bool_and, exp], acc ->
+        do_eval(exp, context) and acc
+
+      [:bool_or, exp], acc ->
+        do_eval(exp, context) or acc
+    end)
   end
 
-  defp do_eval({v1, op, v2}, context) do
+  defp do_eval([arg1: v1, op: [op], arg2: v2], context) do
     v1 = Argument.get(v1, context)
     v2 = Argument.get(v2, context)
     eval({v1, op, v2})
   end
-  defp do_eval(boolean, _context), do: eval(boolean)
+
+  defp do_eval(boolean, _context) when boolean in [true, false], do: eval(boolean)
 end
