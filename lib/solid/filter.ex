@@ -14,7 +14,7 @@ defmodule Solid.Filter do
   1
   """
   def apply(filter, args) do
-    custom_module = Application.get_env(:solid, :custom_filters)
+    custom_module = Application.get_env(:solid, :custom_filters, __MODULE__)
 
     cond do
       filter_exists?({custom_module, filter, Enum.count(args)}) ->
