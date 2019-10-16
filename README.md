@@ -36,6 +36,7 @@ end
     - [ ] `offset`
     - [ ] Range (3..5)
     - [ ] `reversed`
+    - [ ] `forloop` object
   - [ ] `raw` [#18](https://github.com/edgurgel/solid/issues/18)
   - [ ] `cycle` [#17](https://github.com/edgurgel/solid/issues/17)
   - [ ] `capture` [#19](https://github.com/edgurgel/solid/issues/19)
