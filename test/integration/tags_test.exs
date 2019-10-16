@@ -227,4 +227,26 @@ defmodule Solid.Integration.TagsTest do
              """
     end
   end
+
+  describe "capture" do
+    test "capture" do
+      text = """
+      {% capture value %}
+      the text is here
+      {% endcapture %}
+      Outside of capture
+
+      {{ value }}
+      """
+
+      assert render(text, %{}) == """
+
+             Outside of capture
+
+
+             the text is here
+
+             """
+    end
+  end
 end

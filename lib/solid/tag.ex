@@ -91,6 +91,20 @@ defmodule Solid.Tag do
     {nil, context}
   end
 
+  defp do_eval(
+         [capture_exp: [field: [keys: [field_name], accesses: []], result: result]],
+         context
+       ) do
+    {captured, context} = Solid.render(result, context)
+
+    context = %{
+      context
+      | vars: Map.put(context.vars, field_name, captured)
+    }
+
+    {nil, context}
+  end
+
   defp do_eval([counter_exp: [{operation, default}, field]], context) do
     value = Argument.get([field], context, [:counter_vars]) || default
     {:field, [keys: [field_name], accesses: []]} = field

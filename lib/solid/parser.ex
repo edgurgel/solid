@@ -329,6 +329,23 @@ defmodule Solid.Parser do
     |> ignore(closing_tag)
     |> tag(:for_exp)
 
+  capture_tag =
+    ignore(opening_tag)
+    |> ignore(space)
+    |> ignore(string("capture"))
+    |> ignore(space)
+    |> concat(field)
+    |> ignore(space)
+    |> ignore(space)
+    |> ignore(closing_tag)
+    |> tag(parsec(:liquid_entry), :result)
+    |> ignore(opening_tag)
+    |> ignore(space)
+    |> ignore(string("endcapture"))
+    |> ignore(space)
+    |> ignore(closing_tag)
+    |> tag(:capture_exp)
+
   tags =
     choice([
       counter_tag,
@@ -337,7 +354,8 @@ defmodule Solid.Parser do
       cond_if_tag,
       cond_unless_tag,
       cond_case_tag,
-      for_tag
+      for_tag,
+      capture_tag
     ])
     |> tag(:tag)
 
