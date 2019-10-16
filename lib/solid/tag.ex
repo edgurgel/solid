@@ -30,10 +30,16 @@ defmodule Solid.Tag do
     {result, context} =
       enumerable
       |> Enum.reduce({[], context}, fn v, {acc_result, acc_context} ->
-        acc_context = %{acc_context | vars: Map.put(acc_context.vars, enumerable_value, v)}
+        acc_context = %{
+          acc_context
+          | iteration_vars: Map.put(acc_context.iteration_vars, enumerable_value, v)
+        }
+
         {result, acc_context} = Solid.render(exp, acc_context)
         {[result | acc_result], acc_context}
       end)
+
+    context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_value)}
 
     {[text: Enum.reverse(result)], context}
   end

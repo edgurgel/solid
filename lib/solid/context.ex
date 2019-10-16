@@ -1,7 +1,7 @@
 defmodule Solid.Context do
-  defstruct vars: %{}, counter_vars: %{}
+  defstruct vars: %{}, counter_vars: %{}, iteration_vars: %{}
   @type t :: %__MODULE__{vars: Map.t(), counter_vars: Map.t()}
-  @type scope :: :counter_vars | :vars
+  @type scope :: :counter_vars | :vars | :iteration_vars
 
   @doc """
   Get data from context respecting the scope order provided.
@@ -21,6 +21,10 @@ defmodule Solid.Context do
 
   defp get_from_scope(context, :counter_vars, key, nil) do
     do_get_in(context.counter_vars, key)
+  end
+
+  defp get_from_scope(context, :iteration_vars, key, nil) do
+    do_get_in(context.iteration_vars, key)
   end
 
   defp get_from_scope(_context, _scope, _key, value), do: value
