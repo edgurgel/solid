@@ -24,7 +24,7 @@ defmodule Solid.Argument do
           Context.t(),
           [atom]
         ) :: term
-  def get(field, context, scopes \\ [:vars, :counter_vars])
+  def get(field, context, scopes \\ [:iteration_vars, :vars, :counter_vars])
   def get([value: val], _hash, _scopes), do: val
 
   def get([field: [keys: keys, accesses: accesses]], context, scopes) do

@@ -13,6 +13,11 @@ defmodule Solid.ContextTest do
       assert Context.get_in(context, ["x"], [:vars]) == 1
     end
 
+    test "iteration_vars scope only" do
+      context = %Context{iteration_vars: %{"x" => 1}}
+      assert Context.get_in(context, ["x"], [:iteration_vars]) == 1
+    end
+
     test "nested access" do
       context = %Context{vars: %{"x" => %{"y" => 1}}}
       assert Context.get_in(context, ["x", "y"], [:vars]) == 1
