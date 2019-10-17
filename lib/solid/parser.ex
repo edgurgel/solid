@@ -147,7 +147,7 @@ defmodule Solid.Parser do
     |> ignore(comment)
     |> ignore(space)
     |> ignore(closing_tag)
-    |> ignore(repeat(lookahead_not(opening_tag) |> utf8_char([])))
+    |> ignore(parsec(:liquid_entry))
     |> ignore(opening_tag)
     |> ignore(space)
     |> ignore(end_comment)
