@@ -101,7 +101,7 @@ defmodule Solid.Parser do
 
   text =
     lookahead_not(choice([opening_object, opening_tag]))
-    |> utf8_char([])
+    |> utf8_string([], 1)
     |> times(min: 1)
     |> tag(:text)
 

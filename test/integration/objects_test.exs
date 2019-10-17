@@ -18,6 +18,11 @@ defmodule Solid.Integration.ObjectsTest do
     assert render("Number {{ key }} ! {{ key }}", %{"key" => 123}) == "Number 123 ! 123"
   end
 
+  test "key rendering with list" do
+    assert render("Number {{ key }} ! {{ key }}", %{"key" => [1, [2, "three"]]}) ==
+             "Number 12three ! 12three"
+  end
+
   test "field with access" do
     assert render("Number {{ key[1] }}", %{"key" => [1, 2, 3]}) == "Number 2"
   end

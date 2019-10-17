@@ -9,6 +9,10 @@ defmodule Solid.ObjectTest do
       assert render([argument: [value: 1]], %Context{}) == "1"
     end
 
+    test "list value no filter" do
+      assert render([argument: [value: [1, [2, 3, [4, 5, "six"]]]]], %Context{}) == "12345six"
+    end
+
     test "value with filter" do
       assert render(
                [argument: [value: "a"], filters: [filter: ["upcase", {:arguments, []}]]],

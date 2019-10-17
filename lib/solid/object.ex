@@ -11,8 +11,19 @@ defmodule Solid.Object do
     value = Argument.get(argument, context)
 
     filters = object[:filters]
-    value = value |> apply_filters(filters, context)
 
+    value
+    |> apply_filters(filters, context)
+    |> stringify!()
+  end
+
+  defp stringify!(value) when is_list(value) do
+    value
+    |> List.flatten()
+    |> Enum.join()
+  end
+
+  defp stringify!(value) do
     to_string(value)
   end
 
