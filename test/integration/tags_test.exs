@@ -147,6 +147,18 @@ defmodule Solid.Integration.TagsTest do
       text = "test {% for value in values %}{{ value }}{% endfor %}"
       assert render(text, %{}) == "test "
     end
+
+    test "with no value and an else" do
+      text = """
+      test {% for value in values %}
+        {{ value }}
+      {% else %}
+      else
+      {% endfor %}
+      """
+
+      assert render(text, %{}) == "test \nelse\n\n"
+    end
   end
 
   describe "assign" do
