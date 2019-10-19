@@ -29,8 +29,8 @@ end
 * [ ] Support to custom filters [#11](https://github.com/edgurgel/solid/issues/11)
 * [ ] Tags (if, case, unless, etc)
   - [x] `for`
-    - [ ] `else`
-    - [ ] `break`
+    - [x] `else`
+    - [x] `break`
     - [ ] `continue`
     - [ ] `limit`
     - [ ] `offset`
