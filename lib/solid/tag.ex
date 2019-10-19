@@ -21,27 +21,12 @@ defmodule Solid.Tag do
   defp do_eval([], _context), do: nil
 
   defp do_eval([for_exp: exp], context) do
-    {[keys: [enumerable_value], accesses: []], exp} = Keyword.pop_first(exp, :field)
+    {[keys: [enumerable_key], accesses: []], exp} = Keyword.pop_first(exp, :field)
     {enumerable, exp} = Keyword.pop_first(exp, :field)
 
-    {exp, _} = Keyword.pop_first(exp, :result)
     enumerable = Argument.get([field: enumerable], context) || []
 
-    {result, context} =
-      enumerable
-      |> Enum.reduce({[], context}, fn v, {acc_result, acc_context} ->
-        acc_context = %{
-          acc_context
-          | iteration_vars: Map.put(acc_context.iteration_vars, enumerable_value, v)
-        }
-
-        {result, acc_context} = Solid.render(exp, acc_context)
-        {[result | acc_result], acc_context}
-      end)
-
-    context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_value)}
-
-    {[text: Enum.reverse(result)], context}
+    do_for(enumerable_key, enumerable, exp, context)
   end
 
   defp do_eval([{:if_exp, exp} | _] = tag, context) do
@@ -128,4 +113,28 @@ defmodule Solid.Tag do
   end
 
   defp eval_expression(exps, context), do: Expression.eval(exps, context)
+
+  defp do_for(_, [], exp, context) do
+    exp = Keyword.get(exp, :else_exp)
+    {exp[:result], context}
+  end
+
+  defp do_for(enumerable_key, enumerable, exp, context) do
+    {exp, _} = Keyword.pop_first(exp, :result)
+
+    {result, context} =
+      enumerable
+      |> Enum.reduce({[], context}, fn v, {acc_result, acc_context} ->
+        acc_context = %{
+          acc_context
+          | iteration_vars: Map.put(acc_context.iteration_vars, enumerable_key, v)
+        }
+
+        {result, acc_context} = Solid.render(exp, acc_context)
+        {[result | acc_result], acc_context}
+      end)
+
+    context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
+    {[text: Enum.reverse(result)], context}
+  end
 end

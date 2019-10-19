@@ -103,12 +103,13 @@ defmodule Solid.Parser do
     lookahead_not(choice([opening_object, opening_tag]))
     |> utf8_string([], 1)
     |> times(min: 1)
+    |> reduce({Enum, :join, []})
     |> tag(:text)
 
   filter_name =
     ascii_string([?a..?z, ?A..?Z], 1)
     |> concat(ascii_string([?a..?z, ?A..?Z, ?_], min: 0))
-    |> reduce({Enum, :join, [""]})
+    |> reduce({Enum, :join, []})
 
   arguments =
     argument
@@ -322,6 +323,7 @@ defmodule Solid.Parser do
     |> ignore(space)
     |> ignore(closing_tag)
     |> tag(parsec(:liquid_entry), :result)
+    |> optional(tag(else_tag, :else_exp))
     |> ignore(opening_tag)
     |> ignore(space)
     |> ignore(string("endfor"))
