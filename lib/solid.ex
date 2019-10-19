@@ -57,13 +57,21 @@ defmodule Solid do
     parsed_template
     |> render(context)
     |> elem(0)
+  catch
+    {:break_exp, partial_result, _context} ->
+      partial_result
   end
 
   def render(text, context = %Context{}) do
     {result, context} =
       Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
-        {result, context} = do_render(entry, context)
-        {[result | acc], context}
+        try do
+          {result, context} = do_render(entry, context)
+          {[result | acc], context}
+        catch
+          {:break_exp, partial_result, context} ->
+            throw({:break_exp, Enum.reverse([partial_result | acc]), context})
+        end
       end)
 
     {Enum.reverse(result), context}

@@ -30,37 +30,33 @@ defmodule Solid.Tag do
   end
 
   defp do_eval([{:if_exp, exp} | _] = tag, context) do
-    try do
-      if eval_expression(exp[:expression], context), do: throw(exp)
-      elsif_exps = tag[:elsif_exps]
+    if eval_expression(exp[:expression], context), do: throw({:result, exp})
+    elsif_exps = tag[:elsif_exps]
 
-      if elsif_exps do
-        result = Enum.find(elsif_exps, &eval_elsif(&1, context))
-        if result, do: throw(elem(result, 1))
-      end
-
-      else_exp = tag[:else_exp]
-      if else_exp, do: throw(else_exp)
-    catch
-      result -> result[:result]
+    if elsif_exps do
+      result = Enum.find(elsif_exps, &eval_elsif(&1, context))
+      if result, do: throw({:result, elem(result, 1)})
     end
+
+    else_exp = tag[:else_exp]
+    if else_exp, do: throw({:result, else_exp})
+  catch
+    {:result, result} -> result[:result]
   end
 
   defp do_eval([{:unless_exp, exp} | _] = tag, context) do
-    try do
-      unless eval_expression(exp[:expression], context), do: throw(exp)
-      elsif_exps = tag[:elsif_exps]
+    unless eval_expression(exp[:expression], context), do: throw({:result, exp})
+    elsif_exps = tag[:elsif_exps]
 
-      if elsif_exps do
-        result = Enum.find(elsif_exps, &eval_elsif(&1, context))
-        if result, do: throw(elem(result, 1))
-      end
-
-      else_exp = tag[:else_exp]
-      if else_exp, do: throw(else_exp)
-    catch
-      result -> result[:result]
+    if elsif_exps do
+      result = Enum.find(elsif_exps, &eval_elsif(&1, context))
+      if result, do: throw({:result, elem(result, 1)})
     end
+
+    else_exp = tag[:else_exp]
+    if else_exp, do: throw({:result, else_exp})
+  catch
+    {:result, result} -> result[:result]
   end
 
   defp do_eval([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context) do
@@ -108,6 +104,10 @@ defmodule Solid.Tag do
     {[text: to_string(value)], context}
   end
 
+  defp do_eval([break_exp: _], context) do
+    throw({:break_exp, [], context})
+  end
+
   defp eval_elsif({:elsif_exp, elsif_exp}, context) do
     eval_expression(elsif_exp[:expression], context)
   end
@@ -130,11 +130,20 @@ defmodule Solid.Tag do
           | iteration_vars: Map.put(acc_context.iteration_vars, enumerable_key, v)
         }
 
-        {result, acc_context} = Solid.render(exp, acc_context)
-        {[result | acc_result], acc_context}
+        try do
+          {result, acc_context} = Solid.render(exp, acc_context)
+          {[result | acc_result], acc_context}
+        catch
+          {:break_exp, partial_result, context} ->
+            throw({:result, [partial_result | acc_result], context})
+        end
       end)
 
     context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
     {[text: Enum.reverse(result)], context}
+  catch
+    {:result, result, context} ->
+      context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
+      {[text: Enum.reverse(result)], context}
   end
 end

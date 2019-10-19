@@ -133,6 +133,16 @@ defmodule Solid.Integration.TagsTest do
       assert render(text, %{"values" => [1, 2]}) == "\n  Got: 1\n\n  Got: 2\n\n"
     end
 
+    test "simple for with a break" do
+      text = """
+      {% for value in values %}
+      {% if value == 2 %}{% break %}{% endif %} Got: {{ value }}
+      {% endfor %}
+      """
+
+      assert render(text, %{"values" => [1, 2]}) == "\n Got: 1\n\n\n"
+    end
+
     test "with conditional tag" do
       text = """
       {% for value in values %}
@@ -258,6 +268,20 @@ defmodule Solid.Integration.TagsTest do
 
              the text is here
 
+             """
+    end
+  end
+
+  describe "break" do
+    test "break" do
+      text = """
+      pre-break
+      {% break %}
+      post-break
+      """
+
+      assert render(text, %{}) == """
+             pre-break
              """
     end
   end

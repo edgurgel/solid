@@ -348,6 +348,14 @@ defmodule Solid.Parser do
     |> ignore(closing_tag)
     |> tag(:capture_exp)
 
+  break_tag =
+    ignore(opening_tag)
+    |> ignore(space)
+    |> ignore(string("break"))
+    |> ignore(space)
+    |> ignore(closing_tag)
+    |> tag(:break_exp)
+
   tags =
     choice([
       counter_tag,
@@ -357,7 +365,8 @@ defmodule Solid.Parser do
       cond_unless_tag,
       cond_case_tag,
       for_tag,
-      capture_tag
+      capture_tag,
+      break_tag
     ])
     |> tag(:tag)
 
