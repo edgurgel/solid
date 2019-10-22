@@ -32,15 +32,20 @@ defmodule Solid.Integration.CustomFiltersTest do
     end
 
     test "date format m/d/yyyy", %{date: date} do
-      assert render(~s<{{ date_var | date_format: "m/d/yyyy" }}>, %{"date_var" => date}) == "10/31/2019"
+      assert render(~s<{{ date_var | date_format: "m/d/yyyy" }}>, %{"date_var" => date}) ==
+               "10/31/2019"
     end
 
     test "date format d.m.yyyy", %{date: date} do
-      assert render(~s<{{ date_var | date_format: "d.m.yyyy" }}>, %{"date_var" => date}) == "31.10.2019"
+      assert render(~s<{{ date_var | date_format: "d.m.yyyy" }}>, %{"date_var" => date}) ==
+               "31.10.2019"
     end
 
     test "date format with malformed format", %{date: date} do
-      assert render(~s<{{ date_var | date_format: "x/y/z" }}>, %{"date_var" => date} == "2019-10-31")
+      assert render(
+               ~s<{{ date_var | date_format: "x/y/z" }}>,
+               %{"date_var" => date} == "2019-10-31"
+             )
     end
   end
 end
