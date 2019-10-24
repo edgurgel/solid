@@ -14,17 +14,28 @@ defmodule Solid.Filter do
   1
   """
   def apply(filter, args) do
-    if filter_exists?(filter, Enum.count(args)) do
-      Kernel.apply(__MODULE__, String.to_existing_atom(filter), args)
-    else
-      List.first(args)
+    custom_module = Application.get_env(:solid, :custom_filters, __MODULE__)
+
+    cond do
+      filter_exists?({custom_module, filter, Enum.count(args)}) ->
+        apply_filter({custom_module, filter, args})
+
+      filter_exists?({__MODULE__, filter, Enum.count(args)}) ->
+        apply_filter({__MODULE__, filter, args})
+
+      true ->
+        List.first(args)
     end
   end
 
-  defp filter_exists?(filter, arity) do
+  defp apply_filter({m, f, a}) do
+    Kernel.apply(m, String.to_existing_atom(f), a)
+  end
+
+  defp filter_exists?({module, function, arity}) do
     try do
-      filter = String.to_existing_atom(filter)
-      function_exported?(__MODULE__, filter, arity)
+      function = String.to_existing_atom(function)
+      function_exported?(module, function, arity)
     rescue
       ArgumentError -> false
     end
