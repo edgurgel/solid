@@ -34,12 +34,12 @@ end
     - [ ] `continue`
     - [ ] `limit`
     - [ ] `offset`
-    - [ ] Range (3..5)
+    - [x] Range (3..5)
     - [ ] `reversed`
     - [ ] `forloop` object
   - [ ] `raw` [#18](https://github.com/edgurgel/solid/issues/18)
   - [ ] `cycle` [#17](https://github.com/edgurgel/solid/issues/17)
-  - [ ] `capture` [#19](https://github.com/edgurgel/solid/issues/19)
+  - [x] `capture` [#19](https://github.com/edgurgel/solid/issues/19)
   - [x] `increment` [#16](https://github.com/edgurgel/solid/issues/16)
   - [x] `decrement` [#16](https://github.com/edgurgel/solid/issues/16)
 * [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
