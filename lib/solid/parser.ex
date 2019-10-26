@@ -310,6 +310,14 @@ defmodule Solid.Parser do
     |> ignore(closing_tag)
     |> tag(:assign_exp)
 
+  range =
+    ignore(string("("))
+    |> unwrap_and_tag(choice([integer(min: 1), field]), :first)
+    |> ignore(string(".."))
+    |> unwrap_and_tag(choice([integer(min: 1), field]), :last)
+    |> ignore(string(")"))
+    |> tag(:range)
+
   for_tag =
     ignore(opening_tag)
     |> ignore(space)
@@ -319,7 +327,7 @@ defmodule Solid.Parser do
     |> ignore(space)
     |> ignore(string("in"))
     |> ignore(space)
-    |> concat(field)
+    |> tag(choice([field, range]), :enumerable)
     |> ignore(space)
     |> ignore(closing_tag)
     |> tag(parsec(:liquid_entry), :result)

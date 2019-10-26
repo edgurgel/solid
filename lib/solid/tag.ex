@@ -20,15 +20,6 @@ defmodule Solid.Tag do
 
   defp do_eval([], _context), do: nil
 
-  defp do_eval([for_exp: exp], context) do
-    {[keys: [enumerable_key], accesses: []], exp} = Keyword.pop_first(exp, :field)
-    {enumerable, exp} = Keyword.pop_first(exp, :field)
-
-    enumerable = Argument.get([field: enumerable], context) || []
-
-    do_for(enumerable_key, enumerable, exp, context)
-  end
-
   defp do_eval([{:if_exp, exp} | _] = tag, context) do
     if eval_expression(exp[:expression], context), do: throw({:result, exp})
     elsif_exps = tag[:elsif_exps]
@@ -108,11 +99,16 @@ defmodule Solid.Tag do
     throw({:break_exp, [], context})
   end
 
-  defp eval_elsif({:elsif_exp, elsif_exp}, context) do
-    eval_expression(elsif_exp[:expression], context)
+  defp do_eval(
+         [
+           for_exp:
+             [{:field, [keys: [enumerable_key], accesses: []]}, {:enumerable, enumerable} | _] =
+               exp
+         ],
+         context
+       ) do
+    do_for(enumerable_key, enumerable(enumerable, context), exp, context)
   end
-
-  defp eval_expression(exps, context), do: Expression.eval(exps, context)
 
   defp do_for(_, [], exp, context) do
     exp = Keyword.get(exp, :else_exp)
@@ -120,7 +116,7 @@ defmodule Solid.Tag do
   end
 
   defp do_for(enumerable_key, enumerable, exp, context) do
-    {exp, _} = Keyword.pop_first(exp, :result)
+    exp = Keyword.get(exp, :result)
 
     {result, context} =
       enumerable
@@ -146,4 +142,21 @@ defmodule Solid.Tag do
       context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
       {[text: Enum.reverse(result)], context}
   end
+
+  defp enumerable([range: [first: first, last: last]], context) do
+    first = integer_or_field(first, context)
+    last = integer_or_field(last, context)
+    first..last
+  end
+
+  defp enumerable(field, context), do: Argument.get(field, context) || []
+
+  defp integer_or_field(value, _context) when is_integer(value), do: value
+  defp integer_or_field(field, context), do: Argument.get([field], context)
+
+  defp eval_elsif({:elsif_exp, elsif_exp}, context) do
+    eval_expression(elsif_exp[:expression], context)
+  end
+
+  defp eval_expression(exps, context), do: Expression.eval(exps, context)
 end
