@@ -123,7 +123,7 @@ defmodule Solid.Integration.TagsTest do
   end
 
   describe "for" do
-    test "simple for" do
+    test "for" do
       text = """
       {% for value in values %}
         Got: {{ value }}
@@ -131,6 +131,26 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{"values" => [1, 2]}) == "\n  Got: 1\n\n  Got: 2\n\n"
+    end
+
+    test "for using range literals" do
+      text = """
+      {% for value in (1..2) %}
+        Got: {{ value }}
+      {% endfor %}
+      """
+
+      assert render(text, %{}) == "\n  Got: 1\n\n  Got: 2\n\n"
+    end
+
+    test "for using range variables" do
+      text = """
+      {% for value in (first..last) %}
+        Got: {{ value }}
+      {% endfor %}
+      """
+
+      assert render(text, %{"first" => 1, "last" => 2}) == "\n  Got: 1\n\n  Got: 2\n\n"
     end
 
     test "simple for with a break" do
