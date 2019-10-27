@@ -10,13 +10,18 @@ defmodule Solid.ExpressionTest do
     end
 
     test "expressions 'and' booleans" do
-      exps = [true, [:bool_and, false]]
+      exps = [true, :bool_and, false]
       refute eval(exps, %{})
     end
 
     test "expressions 'or' booleans" do
-      exps = [true, [:bool_or, false]]
+      exps = [true, :bool_or, false]
       assert eval(exps, %{})
+    end
+
+    test "expressions multiple expressions booleans" do
+      exps = [true, :bool_and, false, :bool_and, false, :bool_or, true]
+      refute eval(exps, %{})
     end
   end
 end

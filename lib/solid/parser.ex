@@ -248,7 +248,7 @@ defmodule Solid.Parser do
 
   boolean_expression =
     expression
-    |> repeat(choice([bool_and, bool_or]) |> concat(expression) |> wrap())
+    |> repeat(choice([bool_and, bool_or]) |> concat(expression))
 
   if_tag =
     ignore(opening_tag)
