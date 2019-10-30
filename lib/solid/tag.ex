@@ -102,12 +102,20 @@ defmodule Solid.Tag do
   defp do_eval(
          [
            for_exp:
-             [{:field, [keys: [enumerable_key], accesses: []]}, {:enumerable, enumerable} | _] =
-               exp
+             [
+               {:field, [keys: [enumerable_key], accesses: []]},
+               {:enumerable, enumerable},
+               {:parameters, parameters} | _
+             ] = exp
          ],
          context
        ) do
-    do_for(enumerable_key, enumerable(enumerable, context), exp, context)
+    enumerable =
+      enumerable
+      |> enumerable(context)
+      |> apply_parameters(parameters)
+
+    do_for(enumerable_key, enumerable, exp, context)
   end
 
   defp do_for(_, [], exp, context) do
@@ -150,6 +158,31 @@ defmodule Solid.Tag do
   end
 
   defp enumerable(field, context), do: Argument.get(field, context) || []
+
+  defp apply_parameters(enumerable, parameters) do
+    enumerable
+    |> offset(parameters)
+    |> limit(parameters)
+    |> reversed(parameters)
+  end
+
+  defp offset(enumerable, %{offset: offset}) do
+    Enum.slice(enumerable, offset..-1)
+  end
+
+  defp offset(enumerable, _), do: enumerable
+
+  defp limit(enumerable, %{limit: limit}) do
+    Enum.slice(enumerable, 0..(limit - 1))
+  end
+
+  defp limit(enumerable, _), do: enumerable
+
+  defp reversed(enumerable, %{reversed: _}) do
+    Enum.reverse(enumerable)
+  end
+
+  defp reversed(enumerable, _), do: enumerable
 
   defp integer_or_field(value, _context) when is_integer(value), do: value
   defp integer_or_field(field, context), do: Argument.get([field], context)
