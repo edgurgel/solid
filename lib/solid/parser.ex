@@ -318,6 +318,31 @@ defmodule Solid.Parser do
     |> ignore(string(")"))
     |> tag(:range)
 
+  limit =
+    ignore(string("limit"))
+    |> ignore(space)
+    |> ignore(string(":"))
+    |> ignore(space)
+    |> unwrap_and_tag(integer(min: 1), :limit)
+    |> ignore(space)
+
+  offset =
+    ignore(string("offset"))
+    |> ignore(space)
+    |> ignore(string(":"))
+    |> ignore(space)
+    |> unwrap_and_tag(integer(min: 1), :offset)
+    |> ignore(space)
+
+  reversed =
+    string("reversed")
+    |> replace({:reversed, 0})
+    |> ignore(space)
+
+  for_parameters =
+    repeat(choice([limit, offset, reversed]))
+    |> reduce({Enum, :into, [%{}]})
+
   for_tag =
     ignore(opening_tag)
     |> ignore(space)
@@ -328,6 +353,8 @@ defmodule Solid.Parser do
     |> ignore(string("in"))
     |> ignore(space)
     |> tag(choice([field, range]), :enumerable)
+    |> ignore(space)
+    |> unwrap_and_tag(for_parameters, :parameters)
     |> ignore(space)
     |> ignore(closing_tag)
     |> tag(parsec(:liquid_entry), :result)

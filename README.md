@@ -32,10 +32,10 @@ end
     - [x] `else`
     - [x] `break`
     - [ ] `continue`
-    - [ ] `limit`
-    - [ ] `offset`
+    - [x] `limit`
+    - [x] `offset`
     - [x] Range (3..5)
-    - [ ] `reversed`
+    - [x] `reversed`
     - [ ] `forloop` object
   - [ ] `raw` [#18](https://github.com/edgurgel/solid/issues/18)
   - [ ] `cycle` [#17](https://github.com/edgurgel/solid/issues/17)
