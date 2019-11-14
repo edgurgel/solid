@@ -57,12 +57,19 @@ defmodule Solid.Expression do
   false
   iex> Solid.Expression.eval({"Meat", :contains, nil})
   false
+  iex> Solid.Expression.eval({["Beer", "Pack"], :excludes, "Pack"})
+  false
+  iex> Solid.Expression.eval({"Meat", :excludes, "Pack"})
+  true
+  iex> Solid.Expression.eval({"Beer Pack", :excludes, "Pack"})
+  false
   """
   @spec eval({term, atom, term} | boolean) :: boolean
   def eval({nil, :contains, _v2}), do: false
   def eval({_v1, :contains, nil}), do: false
   def eval({v1, :contains, v2}) when is_list(v1), do: v2 in v1
   def eval({v1, :contains, v2}), do: String.contains?(v1, v2)
+  def eval({v1, :excludes, v2}), do: not eval({v1, :contains, v2})
   def eval({v1, :<=, nil}) when is_number(v1), do: false
   def eval({v1, :<, nil}) when is_number(v1), do: false
   def eval({nil, :>=, v2}) when is_number(v2), do: false
