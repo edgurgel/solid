@@ -99,6 +99,10 @@ defmodule Solid.Tag do
     throw({:break_exp, [], context})
   end
 
+  defp do_eval([continue_exp: _], context) do
+    throw({:continue_exp, [], context})
+  end
+
   defp do_eval(
          [
            for_exp:
@@ -140,6 +144,9 @@ defmodule Solid.Tag do
         catch
           {:break_exp, partial_result, context} ->
             throw({:result, [partial_result | acc_result], context})
+
+          {:continue_exp, partial_result, context} ->
+            {[partial_result | acc_result], context}
         end
       end)
 
