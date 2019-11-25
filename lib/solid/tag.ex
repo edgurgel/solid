@@ -125,14 +125,28 @@ defmodule Solid.Tag do
 
   defp do_for(enumerable_key, enumerable, exp, context) do
     exp = Keyword.get(exp, :result)
+    length = Enum.count(enumerable)
 
     {result, context} =
       enumerable
-      |> Enum.reduce({[], context}, fn v, {acc_result, acc_context} ->
-        acc_context = %{
-          acc_context
-          | iteration_vars: Map.put(acc_context.iteration_vars, enumerable_key, v)
-        }
+      |> Enum.with_index(0)
+      |> Enum.reduce({[], context}, fn {v, index}, {acc_result, acc_context} ->
+        iteration_vars = Map.put(acc_context.iteration_vars, enumerable_key, v)
+
+        iteration_vars =
+          Map.merge(iteration_vars, %{
+            "forloop" => %{
+              "index" => index + 1,
+              "index0" => index,
+              "rindex" => length - index,
+              "rindex0" => length - index - 1,
+              "first" => index == 0,
+              "last" => length == index + 1,
+              "length" => length
+            }
+          })
+
+        acc_context = %{acc_context | iteration_vars: iteration_vars}
 
         try do
           {result, acc_context} = Solid.render(exp, acc_context)
