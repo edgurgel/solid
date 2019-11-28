@@ -60,6 +60,9 @@ defmodule Solid do
   catch
     {:break_exp, partial_result, _context} ->
       partial_result
+
+    {:continue_exp, partial_result, _context} ->
+      partial_result
   end
 
   def render(text, context = %Context{}) do
@@ -71,6 +74,9 @@ defmodule Solid do
         catch
           {:break_exp, partial_result, context} ->
             throw({:break_exp, Enum.reverse([partial_result | acc]), context})
+
+          {:continue_exp, partial_result, context} ->
+            throw({:continue_exp, Enum.reverse([partial_result | acc]), context})
         end
       end)
 
