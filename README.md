@@ -31,7 +31,7 @@ end
   - [x] `for`
     - [x] `else`
     - [x] `break`
-    - [ ] `continue`
+    - [x] `continue`
     - [x] `limit`
     - [x] `offset`
     - [x] Range (3..5)
