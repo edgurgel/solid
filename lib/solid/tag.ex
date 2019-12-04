@@ -133,23 +133,22 @@ defmodule Solid.Tag do
       |> Enum.reduce({[], context}, fn {v, index}, {acc_result, acc_context} ->
         iteration_vars = Map.put(acc_context.iteration_vars, enumerable_key, v)
 
-        iteration_vars =
-          Map.merge(iteration_vars, %{
-            "forloop" => %{
-              "index" => index + 1,
-              "index0" => index,
-              "rindex" => length - index,
-              "rindex0" => length - index - 1,
-              "first" => index == 0,
-              "last" => length == index + 1,
-              "length" => length
-            }
+        iteration_vars_with_forloop =
+          Map.put(iteration_vars, "forloop", %{
+            "index" => index + 1,
+            "index0" => index,
+            "rindex" => length - index,
+            "rindex0" => length - index - 1,
+            "first" => index == 0,
+            "last" => length == index + 1,
+            "length" => length
           })
 
-        acc_context = %{acc_context | iteration_vars: iteration_vars}
+        acc_context = %{acc_context | iteration_vars: iteration_vars_with_forloop}
 
         try do
           {result, acc_context} = Solid.render(exp, acc_context)
+          acc_context = maybe_restore_outer_forloop(acc_context, iteration_vars["forloop"])
           {[result | acc_result], acc_context}
         catch
           {:break_exp, partial_result, context} ->
@@ -163,6 +162,15 @@ defmodule Solid.Tag do
     {:result, result, context} ->
       context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
       {[text: Enum.reverse(result)], context}
+  end
+
+  defp maybe_restore_outer_forloop(acc_context, outer_forloop) when is_map(outer_forloop) do
+    iteration_vars = Map.put(acc_context.iteration_vars, "forloop", outer_forloop)
+    %{acc_context | iteration_vars: iteration_vars}
+  end
+
+  defp maybe_restore_outer_forloop(acc_context, _) do
+    acc_context
   end
 
   defp enumerable([range: [first: first, last: last]], context) do
