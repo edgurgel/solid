@@ -134,15 +134,7 @@ defmodule Solid.Tag do
         iteration_vars = Map.put(acc_context.iteration_vars, enumerable_key, v)
 
         iteration_vars_with_forloop =
-          Map.put(iteration_vars, "forloop", %{
-            "index" => index + 1,
-            "index0" => index,
-            "rindex" => length - index,
-            "rindex0" => length - index - 1,
-            "first" => index == 0,
-            "last" => length == index + 1,
-            "length" => length
-          })
+          Map.put(iteration_vars, "forloop", build_forloop_map(index, length))
 
         acc_context = %{acc_context | iteration_vars: iteration_vars_with_forloop}
 
@@ -162,6 +154,18 @@ defmodule Solid.Tag do
     {:result, result, context} ->
       context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
       {[text: Enum.reverse(result)], context}
+  end
+
+  defp build_forloop_map(index, length) do
+    %{
+      "index" => index + 1,
+      "index0" => index,
+      "rindex" => length - index,
+      "rindex0" => length - index - 1,
+      "first" => index == 0,
+      "last" => length == index + 1,
+      "length" => length
+    }
   end
 
   defp maybe_restore_outer_forloop(acc_context, outer_forloop) when is_map(outer_forloop) do
