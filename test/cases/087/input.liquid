@@ -1,0 +1,7 @@
+{% for _ in (1..5) %}
+    {% if forloop.last == true %}
+        This is the last iteration!
+    {% else %}
+        Keep going...
+    {% endif %}
+{% endfor %}

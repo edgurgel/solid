@@ -129,17 +129,20 @@ defmodule Solid.Tag do
 
   defp do_for(enumerable_key, enumerable, exp, context) do
     exp = Keyword.get(exp, :result)
+    length = Enum.count(enumerable)
 
     {result, context} =
       enumerable
-      |> Enum.reduce({[], context}, fn v, {acc_result, acc_context} ->
-        acc_context = %{
-          acc_context
-          | iteration_vars: Map.put(acc_context.iteration_vars, enumerable_key, v)
-        }
+      |> Enum.with_index(0)
+      |> Enum.reduce({[], context}, fn {v, index}, {acc_result, acc_context_initial} ->
+        acc_context =
+          acc_context_initial
+          |> set_enumerable_value(enumerable_key, v)
+          |> maybe_put_forloop_map(enumerable_key, index, length)
 
         try do
           {result, acc_context} = Solid.render(exp, acc_context)
+          acc_context = restore_initial_forloop_value(acc_context, acc_context_initial)
           {[result | acc_result], acc_context}
         catch
           {:break_exp, partial_result, context} ->
@@ -156,6 +159,44 @@ defmodule Solid.Tag do
     {:result, result, context} ->
       context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
       {[text: Enum.reverse(result)], context}
+  end
+
+  defp set_enumerable_value(acc_context, key, value) do
+    iteration_vars = Map.put(acc_context.iteration_vars, key, value)
+    %{acc_context | iteration_vars: iteration_vars}
+  end
+
+  defp maybe_put_forloop_map(acc_context, key, index, length) when key != "forloop" do
+    map = build_forloop_map(index, length)
+    iteration_vars = Map.put(acc_context.iteration_vars, "forloop", map)
+    %{acc_context | iteration_vars: iteration_vars}
+  end
+
+  defp maybe_put_forloop_map(acc_context, _key, _index, _length) do
+    acc_context
+  end
+
+  defp build_forloop_map(index, length) do
+    %{
+      "index" => index + 1,
+      "index0" => index,
+      "rindex" => length - index,
+      "rindex0" => length - index - 1,
+      "first" => index == 0,
+      "last" => length == index + 1,
+      "length" => length
+    }
+  end
+
+  defp restore_initial_forloop_value(acc_context, %{
+         iteration_vars: %{"forloop" => initial_forloop}
+       }) do
+    iteration_vars = Map.put(acc_context.iteration_vars, "forloop", initial_forloop)
+    %{acc_context | iteration_vars: iteration_vars}
+  end
+
+  defp restore_initial_forloop_value(acc_context, _) do
+    acc_context
   end
 
   defp enumerable([range: [first: first, last: last]], context) do
