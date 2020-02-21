@@ -399,6 +399,20 @@ defmodule Solid.Parser do
     |> ignore(closing_tag)
     |> tag(:continue_exp)
 
+  raw_tag =
+    ignore(opening_tag)
+    |> ignore(space)
+    |> ignore(string("raw"))
+    |> ignore(space)
+    |> ignore(closing_tag)
+    |> repeat(lookahead_not(parsec(:end_raw_tag)) |> utf8_char([]))
+    |> ignore(opening_tag)
+    |> ignore(space)
+    |> ignore(string("endraw"))
+    |> ignore(space)
+    |> ignore(closing_tag)
+    |> tag(:raw_exp)
+
   tags =
     choice([
       counter_tag,
@@ -410,9 +424,15 @@ defmodule Solid.Parser do
       for_tag,
       capture_tag,
       break_tag,
-      continue_tag
+      continue_tag,
+      raw_tag
     ])
     |> tag(:tag)
+
+  defcombinatorp(
+    :end_raw_tag,
+    opening_tag |> ignore(space) |> string("endraw") |> ignore(space) |> concat(closing_tag)
+  )
 
   defcombinatorp(:liquid_entry, repeat(choice([object, tags, text])))
 
