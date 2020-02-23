@@ -122,6 +122,10 @@ defmodule Solid.Tag do
     do_for(enumerable_key, enumerable, exp, context)
   end
 
+  defp do_eval([raw_exp: raw], context) do
+    {[text: raw], context}
+  end
+
   defp do_for(_, [], exp, context) do
     exp = Keyword.get(exp, :else_exp)
     {exp[:result], context}

@@ -305,4 +305,28 @@ defmodule Solid.Integration.TagsTest do
              """
     end
   end
+
+  describe "raw" do
+    test "simple raw" do
+      text = """
+      {% raw %}{{ 5 | plus: 6 }}{% endraw %} equals {{ 5 | plus: 6 }}
+      """
+
+      assert render(text, %{}) == """
+             {{ 5 | plus: 6 }} equals 11
+             """
+    end
+
+    test "raw with nested tag" do
+      text = """
+      {% raw %}{% increment counter %}{{ counter }}{% endraw %}
+      {% increment counter %} {{ counter }}
+      """
+
+      assert render(text, %{}) == """
+             {% increment counter %}{{ counter }}
+             0 1
+             """
+    end
+  end
 end
