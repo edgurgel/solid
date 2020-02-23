@@ -17,7 +17,7 @@ The package can be installed with:
 
 ```elixir
 def deps do
-  [{:solid, "~> 0.2.0"}]
+  [{:solid, "~> 0.4.0"}]
 end
 ```
 
