@@ -37,7 +37,7 @@ end
     - [x] Range (3..5)
     - [x] `reversed`
     - [x] `forloop` object
-  - [ ] `raw` [#18](https://github.com/edgurgel/solid/issues/18)
+  - [x] `raw` [#18](https://github.com/edgurgel/solid/issues/18)
   - [ ] `cycle` [#17](https://github.com/edgurgel/solid/issues/17)
   - [x] `capture` [#19](https://github.com/edgurgel/solid/issues/19)
   - [x] `increment` [#16](https://github.com/edgurgel/solid/issues/16)
