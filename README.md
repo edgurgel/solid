@@ -27,7 +27,7 @@ end
 * [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
 * [ ] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
 * [x] Support to custom filters [#11](https://github.com/edgurgel/solid/issues/11)
-* [ ] Tags (if, case, unless, etc)
+* [x] Tags (if, case, unless, etc)
   - [x] `for`
     - [x] `else`
     - [x] `break`
@@ -38,7 +38,7 @@ end
     - [x] `reversed`
     - [x] `forloop` object
   - [x] `raw` [#18](https://github.com/edgurgel/solid/issues/18)
-  - [ ] `cycle` [#17](https://github.com/edgurgel/solid/issues/17)
+  - [x] `cycle` [#17](https://github.com/edgurgel/solid/issues/17)
   - [x] `capture` [#19](https://github.com/edgurgel/solid/issues/19)
   - [x] `increment` [#16](https://github.com/edgurgel/solid/issues/16)
   - [x] `decrement` [#16](https://github.com/edgurgel/solid/issues/16)
