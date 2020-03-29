@@ -43,4 +43,142 @@ defmodule Solid.ContextTest do
       assert Context.get_in(context, ["x"], [:vars, :counter_vars]) == 2
     end
   end
+
+  describe "run_cycle/2" do
+    test "first run" do
+      cycle = [values: ["one", "two", "three"]]
+
+      context = %Context{cycle_state: %{}}
+
+      new_context = %Context{
+        cycle_state: %{
+          ["one", "two", "three"] => {0, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      assert Context.run_cycle(context, cycle) == {new_context, "one"}
+    end
+
+    test "second run" do
+      cycle = [values: ["one", "two", "three"]]
+
+      context = %Context{
+        cycle_state: %{
+          ["one", "two", "three"] => {0, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      new_context = %Context{
+        cycle_state: %{
+          ["one", "two", "three"] => {1, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      assert Context.run_cycle(context, cycle) == {new_context, "two"}
+    end
+
+    test "third run" do
+      cycle = [values: ["one", "two", "three"]]
+
+      context = %Context{
+        cycle_state: %{
+          ["one", "two", "three"] => {1, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      new_context = %Context{
+        cycle_state: %{
+          ["one", "two", "three"] => {2, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      assert Context.run_cycle(context, cycle) == {new_context, "three"}
+    end
+
+    test "fourth run - loops back" do
+      cycle = [values: ["one", "two", "three"]]
+
+      context = %Context{
+        cycle_state: %{
+          ["one", "two", "three"] => {2, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      new_context = %Context{
+        cycle_state: %{
+          ["one", "two", "three"] => {0, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      assert Context.run_cycle(context, cycle) == {new_context, "one"}
+    end
+
+    test "named first run" do
+      cycle = [name: "first", values: ["one", "two", "three"]]
+
+      context = %Context{cycle_state: %{}}
+
+      new_context = %Context{
+        cycle_state: %{
+          "first" => {0, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      assert Context.run_cycle(context, cycle) == {new_context, "one"}
+    end
+
+    test "named second run" do
+      cycle = [name: "first", values: ["one", "two", "three"]]
+
+      context = %Context{
+        cycle_state: %{
+          "first" => {0, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      new_context = %Context{
+        cycle_state: %{
+          "first" => {1, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      assert Context.run_cycle(context, cycle) == {new_context, "two"}
+    end
+
+    test "named third run" do
+      cycle = [name: "first", values: ["one", "two", "three"]]
+
+      context = %Context{
+        cycle_state: %{
+          "first" => {1, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      new_context = %Context{
+        cycle_state: %{
+          "first" => {2, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      assert Context.run_cycle(context, cycle) == {new_context, "three"}
+    end
+
+    test "named fourth run - loops back" do
+      cycle = [name: "first", values: ["one", "two", "three"]]
+
+      context = %Context{
+        cycle_state: %{
+          "first" => {2, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      new_context = %Context{
+        cycle_state: %{
+          "first" => {0, %{0 => "one", 1 => "two", 2 => "three"}}
+        }
+      }
+
+      assert Context.run_cycle(context, cycle) == {new_context, "one"}
+    end
+  end
 end

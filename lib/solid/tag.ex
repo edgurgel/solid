@@ -20,6 +20,12 @@ defmodule Solid.Tag do
 
   defp do_eval([], _context), do: nil
 
+  defp do_eval([cycle_exp: cycle], context) do
+    {context, result} = Context.run_cycle(context, cycle)
+
+    {[text: result], context}
+  end
+
   defp do_eval([{:if_exp, exp} | _] = tag, context) do
     if eval_expression(exp[:expression], context), do: throw({:result, exp})
     elsif_exps = tag[:elsif_exps]

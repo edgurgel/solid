@@ -416,6 +416,31 @@ defmodule Solid.Parser do
     |> ignore(end_raw_tag)
     |> tag(:raw_exp)
 
+  cycle_tag =
+    ignore(opening_tag)
+    |> ignore(space)
+    |> ignore(string("cycle"))
+    |> ignore(space)
+    |> optional(
+      double_quoted_string
+      |> ignore(string(":"))
+      |> ignore(space)
+      |> unwrap_and_tag(:name)
+    )
+    |> concat(
+      double_quoted_string
+      |> repeat(
+        ignore(space)
+        |> ignore(string(","))
+        |> ignore(space)
+        |> concat(double_quoted_string)
+      )
+      |> tag(:values)
+    )
+    |> ignore(space)
+    |> ignore(closing_tag)
+    |> tag(:cycle_exp)
+
   tags =
     choice([
       counter_tag,
@@ -428,7 +453,8 @@ defmodule Solid.Parser do
       capture_tag,
       break_tag,
       continue_tag,
-      raw_tag
+      raw_tag,
+      cycle_tag
     ])
     |> tag(:tag)
 
