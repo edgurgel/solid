@@ -7,7 +7,7 @@ defmodule Solid.Parser do
     end
   end
 
-  identifier = ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_], min: 1)
+  identifier = ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-], min: 1)
 
   access =
     ignore(string("["))
@@ -36,8 +36,6 @@ defmodule Solid.Parser do
   false_value =
     string("false")
     |> replace(false)
-
-  boolean = choice([true_value, false_value])
 
   null =
     string("nil")
@@ -236,7 +234,7 @@ defmodule Solid.Parser do
 
   expression =
     ignore(space)
-    |> choice([boolean_operation, boolean])
+    |> choice([boolean_operation, argument])
     |> ignore(space)
 
   bool_and =
@@ -392,6 +390,56 @@ defmodule Solid.Parser do
     |> ignore(closing_tag)
     |> tag(:break_exp)
 
+  continue_tag =
+    ignore(opening_tag)
+    |> ignore(space)
+    |> ignore(string("continue"))
+    |> ignore(space)
+    |> ignore(closing_tag)
+    |> tag(:continue_exp)
+
+  end_raw_tag =
+    opening_tag
+    |> ignore(space)
+    |> ignore(string("endraw"))
+    |> ignore(space)
+    |> ignore(closing_tag)
+
+  raw_tag =
+    ignore(opening_tag)
+    |> ignore(space)
+    |> ignore(string("raw"))
+    |> ignore(space)
+    |> ignore(closing_tag)
+    |> repeat(lookahead_not(ignore(end_raw_tag)) |> utf8_char([]))
+    |> ignore(end_raw_tag)
+    |> tag(:raw_exp)
+
+  cycle_tag =
+    ignore(opening_tag)
+    |> ignore(space)
+    |> ignore(string("cycle"))
+    |> ignore(space)
+    |> optional(
+      double_quoted_string
+      |> ignore(string(":"))
+      |> ignore(space)
+      |> unwrap_and_tag(:name)
+    )
+    |> concat(
+      double_quoted_string
+      |> repeat(
+        ignore(space)
+        |> ignore(string(","))
+        |> ignore(space)
+        |> concat(double_quoted_string)
+      )
+      |> tag(:values)
+    )
+    |> ignore(space)
+    |> ignore(closing_tag)
+    |> tag(:cycle_exp)
+
   tags =
     choice([
       counter_tag,
@@ -402,7 +450,10 @@ defmodule Solid.Parser do
       cond_case_tag,
       for_tag,
       capture_tag,
-      break_tag
+      break_tag,
+      continue_tag,
+      raw_tag,
+      cycle_tag
     ])
     |> tag(:tag)
 

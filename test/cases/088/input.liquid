@@ -1,0 +1,6 @@
+{% for i in (1..5) %}
+  {% if forloop.first == true %}
+  <p>This collection has {{ forloop.length }} items:</p>
+  {% endif %}
+  <p>{{ i }}</p>
+{% endfor %}

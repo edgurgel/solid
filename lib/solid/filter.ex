@@ -208,7 +208,7 @@ defmodule Solid.Filter do
   def compact(input, property) when is_list(input), do: Enum.reject(input, &(&1[property] == nil))
 
   @doc """
-  Join a list of strings returning one String glued by `glue
+  Join a list of strings returning one String glued by `glue`
 
   iex> Solid.Filter.join(["a", "b", "c"])
   "a b c"
@@ -514,8 +514,11 @@ defmodule Solid.Filter do
   iex> Solid.Filter.truncatewords("Ground control to Major Tom.", 3, "")
   "Ground control to"
   """
-  @spec truncatewords(String.t(), non_neg_integer, String.t()) :: String.t()
-  def truncatewords(input, max_words, ellipsis \\ "...") do
+  @spec truncatewords(nil | String.t(), non_neg_integer, String.t()) :: String.t()
+  def truncatewords(input, max_words, ellipsis \\ "...")
+  def truncatewords(nil, _max_words, _ellipsis), do: ""
+
+  def truncatewords(input, max_words, ellipsis) do
     words = String.split(input, " ")
 
     if length(words) > max_words do

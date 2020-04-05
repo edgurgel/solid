@@ -20,6 +20,12 @@ defmodule Solid.Tag do
 
   defp do_eval([], _context), do: nil
 
+  defp do_eval([cycle_exp: cycle], context) do
+    {context, result} = Context.run_cycle(context, cycle)
+
+    {[text: result], context}
+  end
+
   defp do_eval([{:if_exp, exp} | _] = tag, context) do
     if eval_expression(exp[:expression], context), do: throw({:result, exp})
     elsif_exps = tag[:elsif_exps]
@@ -99,6 +105,10 @@ defmodule Solid.Tag do
     throw({:break_exp, [], context})
   end
 
+  defp do_eval([continue_exp: _], context) do
+    throw({:continue_exp, [], context})
+  end
+
   defp do_eval(
          [
            for_exp:
@@ -118,6 +128,10 @@ defmodule Solid.Tag do
     do_for(enumerable_key, enumerable, exp, context)
   end
 
+  defp do_eval([raw_exp: raw], context) do
+    {[text: raw], context}
+  end
+
   defp do_for(_, [], exp, context) do
     exp = Keyword.get(exp, :else_exp)
     {exp[:result], context}
@@ -125,21 +139,27 @@ defmodule Solid.Tag do
 
   defp do_for(enumerable_key, enumerable, exp, context) do
     exp = Keyword.get(exp, :result)
+    length = Enum.count(enumerable)
 
     {result, context} =
       enumerable
-      |> Enum.reduce({[], context}, fn v, {acc_result, acc_context} ->
-        acc_context = %{
-          acc_context
-          | iteration_vars: Map.put(acc_context.iteration_vars, enumerable_key, v)
-        }
+      |> Enum.with_index(0)
+      |> Enum.reduce({[], context}, fn {v, index}, {acc_result, acc_context_initial} ->
+        acc_context =
+          acc_context_initial
+          |> set_enumerable_value(enumerable_key, v)
+          |> maybe_put_forloop_map(enumerable_key, index, length)
 
         try do
           {result, acc_context} = Solid.render(exp, acc_context)
+          acc_context = restore_initial_forloop_value(acc_context, acc_context_initial)
           {[result | acc_result], acc_context}
         catch
           {:break_exp, partial_result, context} ->
             throw({:result, [partial_result | acc_result], context})
+
+          {:continue_exp, partial_result, context} ->
+            {[partial_result | acc_result], context}
         end
       end)
 
@@ -149,6 +169,44 @@ defmodule Solid.Tag do
     {:result, result, context} ->
       context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
       {[text: Enum.reverse(result)], context}
+  end
+
+  defp set_enumerable_value(acc_context, key, value) do
+    iteration_vars = Map.put(acc_context.iteration_vars, key, value)
+    %{acc_context | iteration_vars: iteration_vars}
+  end
+
+  defp maybe_put_forloop_map(acc_context, key, index, length) when key != "forloop" do
+    map = build_forloop_map(index, length)
+    iteration_vars = Map.put(acc_context.iteration_vars, "forloop", map)
+    %{acc_context | iteration_vars: iteration_vars}
+  end
+
+  defp maybe_put_forloop_map(acc_context, _key, _index, _length) do
+    acc_context
+  end
+
+  defp build_forloop_map(index, length) do
+    %{
+      "index" => index + 1,
+      "index0" => index,
+      "rindex" => length - index,
+      "rindex0" => length - index - 1,
+      "first" => index == 0,
+      "last" => length == index + 1,
+      "length" => length
+    }
+  end
+
+  defp restore_initial_forloop_value(acc_context, %{
+         iteration_vars: %{"forloop" => initial_forloop}
+       }) do
+    iteration_vars = Map.put(acc_context.iteration_vars, "forloop", initial_forloop)
+    %{acc_context | iteration_vars: iteration_vars}
+  end
+
+  defp restore_initial_forloop_value(acc_context, _) do
+    acc_context
   end
 
   defp enumerable([range: [first: first, last: last]], context) do

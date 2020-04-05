@@ -1,18 +1,56 @@
 defmodule Solid.Context do
-  defstruct vars: %{}, counter_vars: %{}, iteration_vars: %{}
-  @type t :: %__MODULE__{vars: Map.t(), counter_vars: Map.t()}
+  defstruct vars: %{}, counter_vars: %{}, iteration_vars: %{}, cycle_state: %{}
+
+  @type t :: %__MODULE__{
+          vars: Map.t(),
+          counter_vars: Map.t(),
+          iteration_vars: %{optional(String.t()) => term},
+          cycle_state: Map.t()
+        }
   @type scope :: :counter_vars | :vars | :iteration_vars
 
   @doc """
   Get data from context respecting the scope order provided.
 
-  Possible scope values: :counter_vars or :vars
+  Possible scope values: :counter_vars, :vars or :iteration_vars
   """
   @spec get_in(t(), [term()], [scope]) :: term
   def get_in(context, key, scopes) do
     Enum.reduce(scopes, nil, fn scope, value ->
       get_from_scope(context, scope, key, value)
     end)
+  end
+
+  @doc """
+  Find the current value that `cycle` must return
+  """
+  @spec run_cycle(t(), [values: [String.t()]] | [name: String.t(), values: [String.t()]]) ::
+          {t(), String.t()}
+  def run_cycle(%__MODULE__{cycle_state: cycle_state} = context, cycle) do
+    name = Keyword.get(cycle, :name, cycle[:values])
+
+    case cycle_state[name] do
+      {current_index, cycle_map} ->
+        limit = map_size(cycle_map)
+        next_index = if current_index + 1 < limit, do: current_index + 1, else: 0
+
+        {%{context | cycle_state: %{context.cycle_state | name => {next_index, cycle_map}}},
+         cycle_map[next_index]}
+
+      nil ->
+        values = Keyword.fetch!(cycle, :values)
+        cycle_map = cycle_to_map(values)
+        current_index = 0
+
+        {%{context | cycle_state: Map.put_new(cycle_state, name, {current_index, cycle_map})},
+         cycle_map[current_index]}
+    end
+  end
+
+  defp cycle_to_map(cycle) do
+    cycle
+    |> Enum.with_index()
+    |> Enum.into(%{}, fn {value, index} -> {index, value} end)
   end
 
   defp get_from_scope(context, :vars, key, nil) do
