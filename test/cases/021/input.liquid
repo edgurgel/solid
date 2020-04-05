@@ -3,3 +3,17 @@ equal
 {% else %}
 not equal
 {% endif %}
+
+{% if var %}
+true
+{% else %}
+false
+{% endif %}
+
+%{ assign var = true %}
+
+{% if var %}
+true
+{% else %}
+false
+{% endif %}

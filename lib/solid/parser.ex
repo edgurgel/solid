@@ -37,8 +37,6 @@ defmodule Solid.Parser do
     string("false")
     |> replace(false)
 
-  boolean = choice([true_value, false_value])
-
   null =
     string("nil")
     |> replace(nil)
@@ -235,7 +233,7 @@ defmodule Solid.Parser do
 
   expression =
     ignore(space)
-    |> choice([boolean_operation, boolean])
+    |> choice([boolean_operation, argument])
     |> ignore(space)
 
   bool_and =

@@ -7,8 +7,12 @@ defmodule Solid.Expression do
 
   alias Solid.Argument
 
+  @type value :: number | iolist | boolean | nil
+
   @doc """
   Evaluate a single expression
+  iex> Solid.Expression.eval({"Beer Pack", :contains, "Pack"})
+  true
   iex> Solid.Expression.eval({1, :==, 2})
   false
   iex> Solid.Expression.eval({1, :==, 1})
@@ -37,16 +41,6 @@ defmodule Solid.Expression do
   false
   iex> Solid.Expression.eval({1, :<=, 2})
   true
-  iex> Solid.Expression.eval({0, :<=, nil})
-  false
-  iex> Solid.Expression.eval({1.0, :<, nil})
-  false
-  iex> Solid.Expression.eval({nil, :>=, 1.0})
-  false
-  iex> Solid.Expression.eval({nil, :>, 0})
-  false
-  iex> Solid.Expression.eval({"Beer Pack", :contains, "Pack"})
-  true
   iex> Solid.Expression.eval({"Meat", :contains, "Pack"})
   false
   iex> Solid.Expression.eval({["Beer", "Pack"], :contains, "Pack"})
@@ -57,8 +51,26 @@ defmodule Solid.Expression do
   false
   iex> Solid.Expression.eval({"Meat", :contains, nil})
   false
+  iex> Solid.Expression.eval(true)
+  true
+  iex> Solid.Expression.eval(false)
+  false
+  iex> Solid.Expression.eval(nil)
+  false
+  iex> Solid.Expression.eval(1)
+  true
+  iex> Solid.Expression.eval("")
+  true
+  iex> Solid.Expression.eval({0, :<=, nil})
+  false
+  iex> Solid.Expression.eval({1.0, :<, nil})
+  false
+  iex> Solid.Expression.eval({nil, :>=, 1.0})
+  false
+  iex> Solid.Expression.eval({nil, :>, 0})
+  false
   """
-  @spec eval({term, atom, term} | boolean) :: boolean
+  @spec eval({value, atom, value} | value) :: boolean
   def eval({nil, :contains, _v2}), do: false
   def eval({_v1, :contains, nil}), do: false
   def eval({v1, :contains, v2}) when is_list(v1), do: v2 in v1
@@ -68,10 +80,17 @@ defmodule Solid.Expression do
   def eval({nil, :>=, v2}) when is_number(v2), do: false
   def eval({nil, :>, v2}) when is_number(v2), do: false
   def eval({v1, op, v2}), do: apply(Kernel, op, [v1, v2])
-  def eval(boolean), do: boolean
+
+  def eval(value) do
+    if value do
+      true
+    else
+      false
+    end
+  end
 
   @doc """
-  Evaluate a list of expressions combined with `or`, `and
+  Evaluate a list of expressions combined with `or`, `and`
   """
   @spec eval(list, map) :: boolean
   def eval(exps, context) when is_list(exps) do
@@ -96,5 +115,5 @@ defmodule Solid.Expression do
     eval({v1, op, v2})
   end
 
-  defp do_eval(boolean, _context) when boolean in [true, false], do: eval(boolean)
+  defp do_eval(value, context), do: eval(Argument.get([value], context))
 end

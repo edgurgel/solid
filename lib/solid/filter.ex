@@ -208,7 +208,7 @@ defmodule Solid.Filter do
   def compact(input, property) when is_list(input), do: Enum.reject(input, &(&1[property] == nil))
 
   @doc """
-  Join a list of strings returning one String glued by `glue
+  Join a list of strings returning one String glued by `glue`
 
   iex> Solid.Filter.join(["a", "b", "c"])
   "a b c"
