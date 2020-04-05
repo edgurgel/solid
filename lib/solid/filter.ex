@@ -514,8 +514,11 @@ defmodule Solid.Filter do
   iex> Solid.Filter.truncatewords("Ground control to Major Tom.", 3, "")
   "Ground control to"
   """
-  @spec truncatewords(String.t(), non_neg_integer, String.t()) :: String.t()
-  def truncatewords(input, max_words, ellipsis \\ "...") do
+  @spec truncatewords(nil | String.t(), non_neg_integer, String.t()) :: String.t()
+  def truncatewords(input, max_words, ellipsis \\ "...")
+  def truncatewords(nil, _max_words, _ellipsis), do: ""
+
+  def truncatewords(input, max_words, ellipsis) do
     words = String.split(input, " ")
 
     if length(words) > max_words do
