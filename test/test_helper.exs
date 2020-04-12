@@ -11,6 +11,10 @@ defmodule Solid.Helpers do
       {:error, error} ->
         inspect(error)
     end
+  rescue
+    e ->
+      IO.puts(Exception.format(:error, e, __STACKTRACE__))
+      inspect(e)
   end
 
   def liquid_render(input_liquid, input_json) do

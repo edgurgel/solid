@@ -74,5 +74,9 @@ defmodule Solid.Context do
     do_get_in(data[key], keys)
   end
 
+  defp do_get_in(data, [key | keys]) when is_integer(key) and is_list(data) do
+    do_get_in(Enum.at(data, key), keys)
+  end
+
   defp do_get_in(_, _), do: nil
 end

@@ -12,7 +12,7 @@ defmodule Solid.TagTest do
       context = %Context{vars: %{"x" => "1"}}
 
       assert eval(
-               [case_exp: [field: [keys: ["x"], accesses: []]], whens: %{"1" => "one"}],
+               [case_exp: [field: ["x"]], whens: %{"1" => "one"}],
                context
              ) == {"one", context}
     end
@@ -21,7 +21,7 @@ defmodule Solid.TagTest do
       context = %Context{vars: %{"x" => "1"}}
 
       assert eval(
-               [case_exp: [field: [keys: ["x"], accesses: []]], whens: %{"2" => "two"}],
+               [case_exp: [field: ["x"]], whens: %{"2" => "two"}],
                context
              ) == {nil, context}
     end
@@ -32,7 +32,7 @@ defmodule Solid.TagTest do
 
       assert eval(
                [
-                 case_exp: [field: [keys: ["x"], accesses: []]],
+                 case_exp: [field: ["x"]],
                  whens: %{"2" => "two"},
                  else_exp: else_exp
                ],
@@ -184,7 +184,7 @@ defmodule Solid.TagTest do
       context = %Context{vars: %{"x" => "1"}}
       new_context = %Context{vars: %{"x" => "1", "y" => "abc"}}
 
-      assert eval([assign_exp: [{:field, [keys: ["y"], accesses: []]}, {:value, "abc"}]], context) ==
+      assert eval([assign_exp: [{:field, ["y"]}, {:value, "abc"}]], context) ==
                {nil, new_context}
     end
 
@@ -195,8 +195,8 @@ defmodule Solid.TagTest do
       assert eval(
                [
                  assign_exp: [
-                   {:field, [keys: ["z"], accesses: []]},
-                   {:field, [keys: ["x", "y"], accesses: []]}
+                   {:field, ["z"]},
+                   {:field, ["x", "y"]}
                  ]
                ],
                context
@@ -207,7 +207,7 @@ defmodule Solid.TagTest do
       context = %Context{counter_vars: %{"x" => 1}}
       new_context = %Context{counter_vars: %{"x" => 2}}
 
-      assert eval([counter_exp: [{1, 0}, {:field, [keys: ["x"], accesses: []]}]], context) ==
+      assert eval([counter_exp: [{1, 0}, {:field, ["x"]}]], context) ==
                {[text: "1"], new_context}
     end
 
@@ -215,7 +215,7 @@ defmodule Solid.TagTest do
       context = %Context{counter_vars: %{"x" => "1"}}
       new_context = %Context{counter_vars: %{"x" => "1", "y" => 1}}
 
-      assert eval([counter_exp: [{1, 0}, {:field, [keys: ["y"], accesses: []]}]], context) ==
+      assert eval([counter_exp: [{1, 0}, {:field, ["y"]}]], context) ==
                {[text: "0"], new_context}
     end
 
@@ -223,7 +223,7 @@ defmodule Solid.TagTest do
       context = %Context{counter_vars: %{"x" => 1}}
       new_context = %Context{counter_vars: %{"x" => 0}}
 
-      assert eval([counter_exp: [{-1, -1}, {:field, [keys: ["x"], accesses: []]}]], context) ==
+      assert eval([counter_exp: [{-1, -1}, {:field, ["x"]}]], context) ==
                {[text: "1"], new_context}
     end
 
@@ -231,7 +231,7 @@ defmodule Solid.TagTest do
       context = %Context{counter_vars: %{"x" => "1"}}
       new_context = %Context{counter_vars: %{"x" => "1", "y" => -2}}
 
-      assert eval([counter_exp: [{-1, -1}, {:field, [keys: ["y"], accesses: []]}]], context) ==
+      assert eval([counter_exp: [{-1, -1}, {:field, ["y"]}]], context) ==
                {[text: "-1"], new_context}
     end
   end
