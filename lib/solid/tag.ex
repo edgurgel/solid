@@ -66,7 +66,7 @@ defmodule Solid.Tag do
     end
   end
 
-  defp do_eval([assign_exp: [{:field, [keys: [field_name], accesses: []]}, argument]], context) do
+  defp do_eval([assign_exp: [{:field, [field_name]}, argument]], context) do
     context = %{
       context
       | vars: Map.put(context.vars, field_name, Argument.get([argument], context))
@@ -76,7 +76,7 @@ defmodule Solid.Tag do
   end
 
   defp do_eval(
-         [capture_exp: [field: [keys: [field_name], accesses: []], result: result]],
+         [capture_exp: [field: [field_name], result: result]],
          context
        ) do
     {captured, context} = Solid.render(result, context)
@@ -91,7 +91,7 @@ defmodule Solid.Tag do
 
   defp do_eval([counter_exp: [{operation, default}, field]], context) do
     value = Argument.get([field], context, [:counter_vars]) || default
-    {:field, [keys: [field_name], accesses: []]} = field
+    {:field, [field_name]} = field
 
     context = %{
       context
@@ -113,7 +113,7 @@ defmodule Solid.Tag do
          [
            for_exp:
              [
-               {:field, [keys: [enumerable_key], accesses: []]},
+               {:field, [enumerable_key]},
                {:enumerable, enumerable},
                {:parameters, parameters} | _
              ] = exp

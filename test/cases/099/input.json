@@ -1,0 +1,8 @@
+{
+  "pages": {
+    "about-us" : {
+      "title" : "About Us"
+    }
+  },
+  "list" : [{ "key" : "about-us" }, { "key" : "sitemap" }]
+}

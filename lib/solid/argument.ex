@@ -7,35 +7,24 @@ defmodule Solid.Argument do
   alias Solid.Context
 
   @doc """
-  iex> Solid.Argument.get([field: [keys: ["key"], accesses: []]], %Solid.Context{vars: %{"key" => 123}})
+  iex> Solid.Argument.get([field: ["key"]], %Solid.Context{vars: %{"key" => 123}})
   123
-  iex> Solid.Argument.get([field: [keys: ["key1", "key2"], accesses: []]], %Solid.Context{vars: %{"key1" => %{"key2" => 123}}})
+  iex> Solid.Argument.get([field: ["key1", "key2"]], %Solid.Context{vars: %{"key1" => %{"key2" => 123}}})
   123
   iex> Solid.Argument.get([value: "value"], %Solid.Context{})
   "value"
-  iex> Solid.Argument.get([field: [keys: ["key"], accesses: [access: 1, access: 1]]], %Solid.Context{vars: %{"key" => [1, [1,2,3], 3]}})
+  iex> Solid.Argument.get([field: ["key", 1, 1]], %Solid.Context{vars: %{"key" => [1, [1,2,3], 3]}})
   2
-  iex> Solid.Argument.get([field: [keys: ["key"], accesses: [access: 1]]], %Solid.Context{vars: %{"key" => "a string"}})
+  iex> Solid.Argument.get([field: ["key", 1]], %Solid.Context{vars: %{"key" => "a string"}})
   nil
+  iex> Solid.Argument.get([field: ["key", 1, "foo"]], %Solid.Context{vars: %{"key" => [%{"foo" => "bar1"}, %{"foo" => "bar2"}]}})
+  "bar2"
   """
-  @spec get(
-          [field: [keys: [String.t()], accesses: [{:access, non_neg_integer}]]]
-          | [value: term],
-          Context.t(),
-          [atom]
-        ) :: term
+  @spec get([field: [String.t() | integer]] | [value: term], Context.t(), [atom]) :: term
   def get(field, context, scopes \\ [:iteration_vars, :vars, :counter_vars])
   def get([value: val], _hash, _scopes), do: val
 
-  def get([field: [keys: keys, accesses: accesses]], context, scopes) do
-    value = Context.get_in(context, keys, scopes)
-
-    Enum.reduce(accesses, value, fn
-      {:access, index}, acc when is_list(acc) ->
-        Enum.at(acc, index)
-
-      _, _ ->
-        nil
-    end)
+  def get([field: keys], context, scopes) do
+    Context.get_in(context, keys, scopes)
   end
 end

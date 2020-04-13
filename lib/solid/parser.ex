@@ -9,23 +9,6 @@ defmodule Solid.Parser do
 
   identifier = ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-], min: 1)
 
-  access =
-    ignore(string("["))
-    |> integer(min: 1)
-    |> ignore(string("]"))
-    |> unwrap_and_tag(:access)
-
-  field =
-    identifier
-    |> repeat(
-      string(".")
-      |> ignore()
-      |> concat(identifier)
-    )
-    |> tag(:keys)
-    |> tag(repeat(access), :accesses)
-    |> tag(:field)
-
   plus = string("+")
   minus = string("-")
 
@@ -80,6 +63,20 @@ defmodule Solid.Parser do
     )
     |> ignore(string(~s(")))
     |> reduce({List, :to_string, []})
+
+  bracket_access =
+    ignore(string("["))
+    |> choice([int, single_quoted_string, double_quoted_string])
+    |> ignore(string("]"))
+
+  dot_access =
+    ignore(string("."))
+    |> concat(identifier)
+
+  field =
+    identifier
+    |> repeat(choice([dot_access, bracket_access]))
+    |> tag(:field)
 
   value =
     choice([float, int, true_value, false_value, null, single_quoted_string, double_quoted_string])
