@@ -4,7 +4,7 @@ defmodule Solid.Argument do
   a value (String, Integer, etc)
   """
 
-  alias Solid.Context
+  alias Solid.{Context, Filter}
 
   @doc """
   iex> Solid.Argument.get([field: ["key"]], %Solid.Context{vars: %{"key" => 123}})
@@ -20,11 +20,28 @@ defmodule Solid.Argument do
   iex> Solid.Argument.get([field: ["key", 1, "foo"]], %Solid.Context{vars: %{"key" => [%{"foo" => "bar1"}, %{"foo" => "bar2"}]}})
   "bar2"
   """
-  @spec get([field: [String.t() | integer]] | [value: term], Context.t(), [atom]) :: term
-  def get(field, context, scopes \\ [:iteration_vars, :vars, :counter_vars])
-  def get([value: val], _hash, _scopes), do: val
+  @spec get([field: [String.t() | integer]] | [value: term], Context.t(), Keyword.t()) :: term
+  def get(arg, context, opts \\ []) do
+    scopes = Keyword.get(opts, :scopes, [:iteration_vars, :vars, :counter_vars])
+    filters = Keyword.get(opts, :filters, [])
 
-  def get([field: keys], context, scopes) do
-    Context.get_in(context, keys, scopes)
+    arg
+    |> do_get(context, scopes)
+    |> apply_filters(filters, context)
+  end
+
+  defp do_get([value: val], _hash, _scopes), do: val
+
+  defp do_get([field: keys], context, scopes), do: Context.get_in(context, keys, scopes)
+
+  defp apply_filters(input, nil, _), do: input
+  defp apply_filters(input, [], _), do: input
+
+  defp apply_filters(input, [{:filter, [filter, {:arguments, args}]} | filters], context) do
+    values = for arg <- args, do: get([arg], context)
+
+    filter
+    |> Filter.apply([input | values])
+    |> apply_filters(filters, context)
   end
 end
