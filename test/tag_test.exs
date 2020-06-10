@@ -184,7 +184,33 @@ defmodule Solid.TagTest do
       context = %Context{vars: %{"x" => "1"}}
       new_context = %Context{vars: %{"x" => "1", "y" => "abc"}}
 
-      assert eval([assign_exp: [{:field, ["y"]}, {:value, "abc"}]], context) ==
+      assert eval(
+               [
+                 assign_exp: [
+                   field: ["y"],
+                   argument: [value: "abc"],
+                   filters: []
+                 ]
+               ],
+               context
+             ) ==
+               {nil, new_context}
+    end
+
+    test "eval assign_exp with literal value and filters" do
+      context = %Context{vars: %{"x" => "1"}}
+      new_context = %Context{vars: %{"x" => "1", "y" => "ABC"}}
+
+      assert eval(
+               [
+                 assign_exp: [
+                   field: ["y"],
+                   argument: [value: "abc"],
+                   filters: [filter: ["upcase", {:arguments, []}]]
+                 ]
+               ],
+               context
+             ) ==
                {nil, new_context}
     end
 
@@ -195,8 +221,25 @@ defmodule Solid.TagTest do
       assert eval(
                [
                  assign_exp: [
-                   {:field, ["z"]},
-                   {:field, ["x", "y"]}
+                   field: ["z"],
+                   argument: [field: ["x", "y"]],
+                   filters: []
+                 ]
+               ],
+               context
+             ) == {nil, new_context}
+    end
+
+    test "eval assign_exp with field and filters" do
+      context = %Context{vars: %{"x" => %{"y" => "abc"}}}
+      new_context = %Context{vars: %{"x" => %{"y" => "abc"}, "z" => "ABC"}}
+
+      assert eval(
+               [
+                 assign_exp: [
+                   field: ["z"],
+                   argument: [field: ["x", "y"]],
+                   filters: [filter: ["upcase", {:arguments, []}]]
                  ]
                ],
                context

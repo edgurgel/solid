@@ -1,9 +1,9 @@
 defmodule Solid.Filter do
-  import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1]
-
   @moduledoc """
   Standard filters
   """
+
+  import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1, apply: 2]
 
   @doc """
   Apply `filter` if it exists. Otherwise return the first input.
@@ -280,11 +280,30 @@ defmodule Solid.Filter do
   6
   iex> Solid.Filter.plus(16, 4)
   20
+  iex> Solid.Filter.plus("16", 4)
+  20
   iex> Solid.Filter.plus(183.357, 12)
   195.357
+  iex> Solid.Filter.plus("183.357", 12)
+  195.357
+  iex> Solid.Filter.plus("183.ABC357", 12)
+  nil
   """
   @spec plus(number, number) :: number
-  def plus(input, number), do: input + number
+  def plus(input, number) when is_number(input), do: input + number
+
+  def plus(input, number) when is_binary(input) do
+    try do
+      plus(String.to_integer(input), number)
+    rescue
+      ArgumentError ->
+        plus(String.to_float(input), number)
+    end
+  rescue
+    ArgumentError -> nil
+  end
+
+  def plus(_input, number), do: number
 
   @doc """
   Adds the specified string to the beginning of another string.
