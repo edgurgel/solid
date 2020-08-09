@@ -51,11 +51,13 @@ defmodule Solid do
   It renders the compiled template using a `hash` with vars
   """
   # @spec render(any, Map.t) :: iolist
-  def render(%Template{parsed_template: parsed_template}, hash) do
+  def render(template_or_text, values, options \\ [])
+
+  def render(%Template{parsed_template: parsed_template}, hash, options) do
     context = %Context{vars: hash}
 
     parsed_template
-    |> render(context)
+    |> render(context, options)
     |> elem(0)
   catch
     {:break_exp, partial_result, _context} ->
@@ -65,11 +67,11 @@ defmodule Solid do
       partial_result
   end
 
-  def render(text, context = %Context{}) do
+  def render(text, context = %Context{}, options) do
     {result, context} =
       Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
         try do
-          {result, context} = do_render(entry, context)
+          {result, context} = do_render(entry, context, options)
           {[result | acc], context}
         catch
           {:break_exp, partial_result, context} ->
@@ -83,23 +85,23 @@ defmodule Solid do
     {Enum.reverse(result), context}
   end
 
-  defp do_render({:text, string}, context), do: {string, context}
+  defp do_render({:text, string}, context, _options), do: {string, context}
 
-  defp do_render({:object, object}, context) do
-    object_text = Object.render(object, context)
+  defp do_render({:object, object}, context, options) do
+    object_text = Object.render(object, context, options)
     {object_text, context}
   end
 
-  defp do_render({:tag, tag}, context) do
-    {tag_text, context} = render_tag(tag, context)
+  defp do_render({:tag, tag}, context, options) do
+    {tag_text, context} = render_tag(tag, context, options)
     {tag_text, context}
   end
 
-  defp render_tag(tag, context) do
-    {result, context} = Tag.eval(tag, context)
+  defp render_tag(tag, context, options) do
+    {result, context} = Tag.eval(tag, context, options)
 
     if result do
-      render(result, context)
+      render(result, context, options)
     else
       {"", context}
     end

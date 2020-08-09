@@ -10,23 +10,37 @@ defmodule Solid.Tag do
   @doc """
   Evaluate a tag and return the condition that succeeded or nil
   """
-  @spec eval(any, Context.t()) :: {iolist | nil, Context.t()}
-  def eval(tag, context) do
-    case do_eval(tag, context) do
+  @spec eval(any, Context.t(), keyword()) :: {iolist | nil, Context.t()}
+  def eval(tag, context, options) do
+    case do_eval(tag, context, options) do
       {text, context} -> {text, context}
       text -> {text, context}
     end
   end
 
-  defp do_eval([], _context), do: nil
+  defp do_eval([], _context, _options), do: nil
 
-  defp do_eval([cycle_exp: cycle], context) do
+  defp do_eval([cycle_exp: cycle], context, _options) do
     {context, result} = Context.run_cycle(context, cycle)
 
     {[text: result], context}
   end
 
-  defp do_eval([{:if_exp, exp} | _] = tag, context) do
+  defp do_eval([custom_tag: tag], context, options) do
+    [tag_name | tag_data] = tag
+    tags = Keyword.get(options, :tags, %{})
+
+    result =
+      if(Map.has_key?(tags, tag_name)) do
+        [text: tags[tag_name].render(context, tag_data)]
+      else
+        nil
+      end
+
+    {result, context}
+  end
+
+  defp do_eval([{:if_exp, exp} | _] = tag, context, _options) do
     if eval_expression(exp[:expression], context), do: throw({:result, exp})
     elsif_exps = tag[:elsif_exps]
 
@@ -41,7 +55,7 @@ defmodule Solid.Tag do
     {:result, result} -> result[:result]
   end
 
-  defp do_eval([{:unless_exp, exp} | _] = tag, context) do
+  defp do_eval([{:unless_exp, exp} | _] = tag, context, _options) do
     unless eval_expression(exp[:expression], context), do: throw({:result, exp})
     elsif_exps = tag[:elsif_exps]
 
@@ -56,7 +70,7 @@ defmodule Solid.Tag do
     {:result, result} -> result[:result]
   end
 
-  defp do_eval([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context) do
+  defp do_eval([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context, _options) do
     result = when_map[Argument.get(field, context)]
 
     if result do
@@ -66,7 +80,11 @@ defmodule Solid.Tag do
     end
   end
 
-  defp do_eval([assign_exp: [field: [field_name], argument: argument, filters: filters]], context) do
+  defp do_eval(
+         [assign_exp: [field: [field_name], argument: argument, filters: filters]],
+         context,
+         _options
+       ) do
     new_value = Argument.get(argument, context, filters: filters)
 
     context = %{context | vars: Map.put(context.vars, field_name, new_value)}
@@ -76,7 +94,8 @@ defmodule Solid.Tag do
 
   defp do_eval(
          [capture_exp: [field: [field_name], result: result]],
-         context
+         context,
+         _options
        ) do
     {captured, context} = Solid.render(result, context)
 
@@ -88,7 +107,7 @@ defmodule Solid.Tag do
     {nil, context}
   end
 
-  defp do_eval([counter_exp: [{operation, default}, field]], context) do
+  defp do_eval([counter_exp: [{operation, default}, field]], context, _options) do
     value = Argument.get([field], context, scopes: [:counter_vars]) || default
     {:field, [field_name]} = field
 
@@ -100,11 +119,11 @@ defmodule Solid.Tag do
     {[text: to_string(value)], context}
   end
 
-  defp do_eval([break_exp: _], context) do
+  defp do_eval([break_exp: _], context, _options) do
     throw({:break_exp, [], context})
   end
 
-  defp do_eval([continue_exp: _], context) do
+  defp do_eval([continue_exp: _], context, _options) do
     throw({:continue_exp, [], context})
   end
 
@@ -117,7 +136,8 @@ defmodule Solid.Tag do
                {:parameters, parameters} | _
              ] = exp
          ],
-         context
+         context,
+         _options
        ) do
     enumerable =
       enumerable
@@ -127,7 +147,7 @@ defmodule Solid.Tag do
     do_for(enumerable_key, enumerable, exp, context)
   end
 
-  defp do_eval([raw_exp: raw], context) do
+  defp do_eval([raw_exp: raw], context, _options) do
     {[text: raw], context}
   end
 
