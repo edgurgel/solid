@@ -28,9 +28,11 @@ defmodule Solid do
   @doc """
   It generates the compiled template
   """
-  @spec parse(String.t()) :: {:ok, %Template{}} | {:error, %TemplateError{}}
-  def parse(text) do
-    case Solid.Parser.parse(text) do
+  @spec parse(String.t(), Keyword.t()) :: {:ok, %Template{}} | {:error, %TemplateError{}}
+  def parse(text, opts \\ []) do
+    parser = Keyword.get(opts, :parser, Solid.Parser)
+
+    case parser.parse(text) do
       {:ok, result, _, _, _, _} -> {:ok, %Template{parsed_template: result}}
       {:error, reason, _, _, line, _} -> {:error, TemplateError.exception([reason, line])}
     end
@@ -39,9 +41,9 @@ defmodule Solid do
   @doc """
   It generates the compiled template
   """
-  @spec parse!(String.t()) :: %Template{} | no_return
-  def parse!(text) do
-    case parse(text) do
+  @spec parse!(String.t(), Keyword.t()) :: %Template{} | no_return
+  def parse!(text, opts \\ []) do
+    case parse(text, opts) do
       {:ok, template} -> template
       {:error, template_error} -> raise template_error
     end
