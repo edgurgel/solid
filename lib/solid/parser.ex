@@ -106,6 +106,14 @@ defmodule Solid.Parser do
     |> concat(ascii_string([?a..?z, ?A..?Z, ?_], min: 0))
     |> reduce({Enum, :join, []})
 
+  inbuilt_tags =
+    choice(
+      Enum.map(
+        ~w(if else endif while unless endunless endfor when case endcase raw counter assign increment decrement capture endcapture for comment endcomment break and)s,
+        &string/1
+      )
+    )
+
   arguments =
     argument
     |> repeat(
@@ -136,6 +144,16 @@ defmodule Solid.Parser do
   comment = string("comment")
 
   end_comment = string("endcomment")
+
+  custom_tag =
+    ignore(opening_tag)
+    |> ignore(space)
+    |> lookahead_not(inbuilt_tags)
+    |> concat(filter_name)
+    |> tag(optional(ignore(space) |> concat(arguments)), :arguments)
+    |> ignore(space)
+    |> ignore(closing_tag)
+    |> tag(:custom_tag)
 
   comment_tag =
     ignore(opening_tag)
@@ -450,7 +468,8 @@ defmodule Solid.Parser do
       break_tag,
       continue_tag,
       raw_tag,
-      cycle_tag
+      cycle_tag,
+      custom_tag
     ])
     |> tag(:tag)
 
