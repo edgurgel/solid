@@ -2,7 +2,7 @@ ExUnit.start()
 
 defmodule Solid.Helpers do
   def render(text, hash \\ %{}, options \\ []) do
-    case Solid.parse(text) do
+    case Solid.parse(text, options) do
       {:ok, template} ->
         template
         |> Solid.render(hash, options)

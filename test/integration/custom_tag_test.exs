@@ -19,13 +19,17 @@ defmodule Solid.Integration.CustomTagsTest do
 
   describe "custom tags" do
     test "pass in custom tag that needs no arguments" do
-      assert render("{% current_date %}", %{}, tags: %{"current_date" => CustomTags.CurrentDate}) ==
+      assert render("{% current_date %}", %{},
+               tags: %{"current_date" => CustomTags.CurrentDate},
+               parser: CustomDateParser
+             ) ==
                "2020"
     end
 
     test "pass in custom tag that needs arguments" do
       assert render(~s({% get_year_of_date "2020-08-06T06:23:48Z" %}), %{},
-               tags: %{"get_year_of_date" => CustomTags.GetYearOfDate}
+               tags: %{"get_year_of_date" => CustomTags.GetYearOfDate},
+               parser: CustomDateParser
              ) ==
                "2020-8-6"
     end
