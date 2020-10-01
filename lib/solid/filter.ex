@@ -69,6 +69,28 @@ defmodule Solid.Filter do
   def append(input, string), do: "#{input}#{string}"
 
   @doc """
+  Limits a number to a minimum value.
+
+  iex> Solid.Filter.at_least(5, 3)
+  5
+  iex> Solid.Filter.at_least(2, 4)
+  4
+  """
+  @spec at_least(number, number) :: number
+  def at_least(input, minimum), do: max(input, minimum)
+
+  @doc """
+  Limits a number to a maximum value.
+
+  iex> Solid.Filter.at_most(5, 3)
+  3
+  iex> Solid.Filter.at_most(2, 4)
+  2
+  """
+  @spec at_most(number, number) :: number
+  def at_most(input, maximum), do: min(input, maximum)
+
+  @doc """
   Makes the first character of a string capitalized.
 
   iex> Solid.Filter.capitalize("my great title")
@@ -425,7 +447,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.slice("Liquid", -3, 2)
   "ui"
   """
-  @spec slice(String.t(), integer, non_neg_integer) :: String.t()
+  @spec slice(String.t(), integer, non_neg_integer | nil) :: String.t()
   def slice(input, offset, length \\ nil)
   def slice(input, offset, nil), do: String.at(input, offset)
   def slice(input, offset, length), do: String.slice(input, offset, length)
