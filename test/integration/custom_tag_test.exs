@@ -33,5 +33,15 @@ defmodule Solid.Integration.CustomTagsTest do
              ) ==
                "2020-8-6"
     end
+
+    test "uses custom tags in loops" do
+      assert render(
+               ~w[{% for index in (1..3) %}{% get_year_of_date "202{{index}}-08-30T03:41:37Z" %} {% endfor %}]s,
+               %{},
+               tags: %{"get_year_of_date" => CustomTags.GetYearOfDate},
+               parser: CustomDateParser
+             ) ==
+               "2021-8-6 2022-8-6 2023-8-6"
+    end
   end
 end
