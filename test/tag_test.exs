@@ -1,5 +1,5 @@
 defmodule Solid.TagTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import Solid.Tag
   alias Solid.Context
   doctest Solid.Tag

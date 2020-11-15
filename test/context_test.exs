@@ -1,5 +1,5 @@
 defmodule Solid.ContextTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias Solid.Context
 
   describe "get_in/3" do
