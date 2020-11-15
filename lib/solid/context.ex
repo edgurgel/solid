@@ -16,8 +16,8 @@ defmodule Solid.Context do
   """
   @spec get_in(t(), [term()], [scope]) :: term
   def get_in(context, key, scopes) do
-    Enum.reduce(scopes, nil, fn scope, value ->
-      get_from_scope(context, scope, key, value)
+    Enum.find_value(scopes, fn scope ->
+      get_from_scope(context, scope, key)
     end)
   end
 
@@ -53,22 +53,28 @@ defmodule Solid.Context do
     |> Enum.into(%{}, fn {value, index} -> {index, value} end)
   end
 
-  defp get_from_scope(context, :vars, key, nil) do
+  defp get_from_scope(context, :vars, key) do
     do_get_in(context.vars, key)
   end
 
-  defp get_from_scope(context, :counter_vars, key, nil) do
+  defp get_from_scope(context, :counter_vars, key) do
     do_get_in(context.counter_vars, key)
   end
 
-  defp get_from_scope(context, :iteration_vars, key, nil) do
+  defp get_from_scope(context, :iteration_vars, key) do
     do_get_in(context.iteration_vars, key)
   end
 
-  defp get_from_scope(_context, _scope, _key, value), do: value
-
   defp do_get_in(nil, _), do: nil
   defp do_get_in(data, []), do: data
+
+  defp do_get_in(data, ["size"]) when is_list(data) do
+    Enum.count(data)
+  end
+
+  defp do_get_in(data, ["size"]) when is_map(data) do
+    Map.get(data, "size", Enum.count(data))
+  end
 
   defp do_get_in(data, [key | keys]) when is_map(data) do
     do_get_in(data[key], keys)
