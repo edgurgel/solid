@@ -1,5 +1,5 @@
 defmodule Solid.ContextTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias Solid.Context
 
   describe "get_in/3" do
@@ -41,6 +41,26 @@ defmodule Solid.ContextTest do
     test "counter_vars & vars scopes with counter_vars key existing" do
       context = %Context{counter_vars: %{"x" => 2}}
       assert Context.get_in(context, ["x"], [:vars, :counter_vars]) == 2
+    end
+
+    test "list access" do
+      context = %Context{vars: %{"x" => ["a", "b", "c"]}}
+      assert Context.get_in(context, ["x", 1], [:vars]) == "b"
+    end
+
+    test "list size" do
+      context = %Context{vars: %{"x" => ["a", "b", "c"]}}
+      assert Context.get_in(context, ["x", "size"], [:vars]) == 3
+    end
+
+    test "map size" do
+      context = %Context{vars: %{"x" => %{ "a" => 1, "b" => 2}}}
+      assert Context.get_in(context, ["x", "size"], [:vars]) == 2
+    end
+
+    test "map size key" do
+      context = %Context{vars: %{"x" => %{ "a" => 1, "b" => 2, "size" => 42}}}
+      assert Context.get_in(context, ["x", "size"], [:vars]) == 42
     end
   end
 
