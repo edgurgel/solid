@@ -1,6 +1,11 @@
+defmodule Solid.StackLevelError do
+  defexception [:message]
+end
+
 defmodule Solid.Parser.Base do
   defmacro __using__(opts) do
     custom_tags = Keyword.get(opts, :custom_tags, [])
+    max_depth = Keyword.get(opts, :max_depth, 100)
 
     quote do
       import NimbleParsec
@@ -490,8 +495,27 @@ defmodule Solid.Parser.Base do
         end
 
       tags =
-        choice(all_tags)
+        empty()
+        |> post_traverse(:increase_depth)
+        |> choice(all_tags)
+        |> post_traverse(:decrease_depth)
         |> tag(:tag)
+
+      defp increase_depth(rest, args, context, _line, _offset) do
+        context = update_in(context, [:depth], fn value -> (value || 0) + 1 end)
+
+        if context.depth > unquote(max_depth) do
+          IO.inspect [rest, context]
+          raise Solid.StackLevelError, "Nesting too deep"
+        end
+
+        {args, context}
+      end
+
+      defp decrease_depth(rest, args, context, _line, _offset) do
+        context = update_in(context, [:depth], fn value -> (value || 1) - 1 end)
+        {args, context}
+      end
 
       defcombinatorp(:liquid_entry, repeat(choice([object, tags, text])))
 
