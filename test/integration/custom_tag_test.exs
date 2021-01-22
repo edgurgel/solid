@@ -23,7 +23,7 @@ defmodule Solid.Integration.CustomTagsTest do
                tags: %{"current_date" => CustomTags.CurrentDate},
                parser: CustomDateParser
              ) ==
-               "2020"
+               to_string(DateTime.utc_now().year)
     end
 
     test "pass in custom tag that needs arguments" do
