@@ -54,12 +54,12 @@ defmodule Solid.ContextTest do
     end
 
     test "map size" do
-      context = %Context{vars: %{"x" => %{ "a" => 1, "b" => 2}}}
+      context = %Context{vars: %{"x" => %{"a" => 1, "b" => 2}}}
       assert Context.get_in(context, ["x", "size"], [:vars]) == 2
     end
 
     test "map size key" do
-      context = %Context{vars: %{"x" => %{ "a" => 1, "b" => 2, "size" => 42}}}
+      context = %Context{vars: %{"x" => %{"a" => 1, "b" => 2, "size" => 42}}}
       assert Context.get_in(context, ["x", "size"], [:vars]) == 42
     end
   end

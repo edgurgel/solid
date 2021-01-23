@@ -9,7 +9,7 @@ defmodule Solid.Mixfile do
     [
       app: :solid,
       version: "0.6.1",
-      elixir: "~> 1.9",
+      elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,

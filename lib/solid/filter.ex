@@ -114,6 +114,44 @@ defmodule Solid.Filter do
   def ceil(input), do: Float.ceil(input) |> trunc
 
   @doc """
+  Converts a `DateTime`/`NaiveDateTime` struct into another date format.
+  The input may also be a Unix timestamp or an ISO 8601 date string.
+
+  The format for this syntax is the same as `Calendar.strftime/2`.
+
+  To get the current time, pass the special word `"now"` (or `"today"`) to `date`.
+  """
+  @spec date(DateTime.t() | NaiveDateTime.t() | integer() | String.t(), String.t()) :: String.t()
+  def date(date, format) when is_map(date) and is_binary(format) do
+    try do
+      Calendar.strftime(date, format)
+    rescue
+      KeyError -> ""
+      ArgumentError -> ""
+    end
+  end
+
+  def date(date, format) when is_integer(date) do
+    case DateTime.from_unix(date) do
+      {:ok, datetime} -> date(datetime, format)
+      _ -> ""
+    end
+  end
+
+  def date(date, format) when date in ["now", "today"] do
+    date(NaiveDateTime.local_now(), format)
+  end
+
+  def date(date, format) when is_binary(date) do
+    case DateTime.from_iso8601(date) do
+      {:ok, datetime, _} -> date(datetime, format)
+      _ -> date
+    end
+  end
+
+  def date(_, _), do: ""
+
+  @doc """
   Allows you to specify a fallback in case a value doesn’t exist.
   `default` will show its value if the left side is nil, false, or empty
 
