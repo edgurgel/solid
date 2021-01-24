@@ -596,4 +596,21 @@ defmodule Solid.Filter do
     pattern = :binary.compile_pattern(["\r\n", "\n"])
     String.replace(binary, pattern, "")
   end
+
+  @doc """
+  Replaces every newline in a string with an HTML line break (<br />).
+
+  Output
+  iex> Solid.Filter.newline_to_br("Test \\ntext\\r\\n with line breaks.")
+  "Test <br />\\ntext<br />\\r\\n with line breaks."
+
+  iex> Solid.Filter.newline_to_br([[["Test \\ntext\\r\\n with "] | "line breaks."]])
+  "Test <br />\\ntext<br />\\r\\n with line breaks."
+  """
+  @spec newline_to_br(iodata()) :: String.t()
+  def newline_to_br(iodata) do
+    binary = IO.iodata_to_binary(iodata)
+    pattern = :binary.compile_pattern(["\r\n", "\n"])
+    String.replace(binary, pattern, fn x -> "<br />#{x}" end)
+  end
 end
