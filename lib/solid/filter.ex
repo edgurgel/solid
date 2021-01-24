@@ -579,4 +579,21 @@ defmodule Solid.Filter do
   """
   @spec uniq(list) :: list
   def uniq(input), do: Enum.uniq(input)
+
+  @doc """
+  Removes any newline characters (line breaks) from a string.
+
+  Output
+  iex> Solid.Filter.strip_newlines("Test \\ntext\\r\\n with line breaks.")
+  "Test text with line breaks."
+
+  iex> Solid.Filter.strip_newlines([[["Test \\ntext\\r\\n with "] | "line breaks."]])
+  "Test text with line breaks."
+  """
+  @spec strip_newlines(iodata()) :: String.t()
+  def strip_newlines(iodata) do
+    binary = IO.iodata_to_binary(iodata)
+    pattern = :binary.compile_pattern(["\r\n", "\n"])
+    String.replace(binary, pattern, "")
+  end
 end
