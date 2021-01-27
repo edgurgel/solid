@@ -19,5 +19,9 @@ defmodule Solid.Object do
     |> Enum.join()
   end
 
+  defp stringify!(value) when is_map(value) and not is_struct(value) do
+    "#{inspect(value)}"
+  end
+
   defp stringify!(value), do: to_string(value)
 end
