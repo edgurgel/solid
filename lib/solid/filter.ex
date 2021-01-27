@@ -607,4 +607,38 @@ defmodule Solid.Filter do
   """
   @spec uniq(list) :: list
   def uniq(input), do: Enum.uniq(input)
+
+  @doc """
+  Removes any newline characters (line breaks) from a string.
+
+  Output
+  iex> Solid.Filter.strip_newlines("Test \\ntext\\r\\n with line breaks.")
+  "Test text with line breaks."
+
+  iex> Solid.Filter.strip_newlines([[["Test \\ntext\\r\\n with "] | "line breaks."]])
+  "Test text with line breaks."
+  """
+  @spec strip_newlines(iodata()) :: String.t()
+  def strip_newlines(iodata) do
+    binary = IO.iodata_to_binary(iodata)
+    pattern = :binary.compile_pattern(["\r\n", "\n"])
+    String.replace(binary, pattern, "")
+  end
+
+  @doc """
+  Replaces every newline in a string with an HTML line break (<br />).
+
+  Output
+  iex> Solid.Filter.newline_to_br("Test \\ntext\\r\\n with line breaks.")
+  "Test <br />\\ntext<br />\\r\\n with line breaks."
+
+  iex> Solid.Filter.newline_to_br([[["Test \\ntext\\r\\n with "] | "line breaks."]])
+  "Test <br />\\ntext<br />\\r\\n with line breaks."
+  """
+  @spec newline_to_br(iodata()) :: String.t()
+  def newline_to_br(iodata) do
+    binary = IO.iodata_to_binary(iodata)
+    pattern = :binary.compile_pattern(["\r\n", "\n"])
+    String.replace(binary, pattern, fn x -> "<br />#{x}" end)
+  end
 end
