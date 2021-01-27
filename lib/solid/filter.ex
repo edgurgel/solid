@@ -296,6 +296,34 @@ defmodule Solid.Filter do
   def minus(input, number), do: input - number
 
   @doc """
+  Subtracts a number from another number.
+
+  iex> Solid.Filter.modulo(3, 2)
+  1
+  iex> Solid.Filter.modulo(24, 7)
+  3
+  iex> Solid.Filter.modulo(183.357, 12)
+  3.357
+  """
+  @spec modulo(number, number) :: number
+  def modulo(dividend, divisor)
+      when is_integer(dividend) and is_integer(divisor),
+      do: Integer.mod(dividend, divisor)
+
+  # OTP 20+
+  def modulo(dividend, divisor) do
+    dividend
+    |> :math.fmod(divisor)
+    |> Float.round(decimal_places(dividend))
+  end
+
+  defp decimal_places(float) do
+    string = float |> Float.to_string()
+    {start, _} = :binary.match(string, ".")
+    byte_size(string) - start - 1
+  end
+
+  @doc """
   Adds a number to another number.
 
   iex> Solid.Filter.plus(4, 2)
