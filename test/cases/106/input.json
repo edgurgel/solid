@@ -1,0 +1,16 @@
+{
+  "products": [
+    {
+      "title": "glas",
+      "type": "kitchen"
+    },
+    {
+      "title": "pan",
+      "type": "kitchen"
+    },
+    {
+      "title": "vase",
+      "type": "livingroom"
+    }
+  ]
+}

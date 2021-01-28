@@ -641,4 +641,35 @@ defmodule Solid.Filter do
     pattern = :binary.compile_pattern(["\r\n", "\n"])
     String.replace(binary, pattern, fn x -> "<br />#{x}" end)
   end
+
+  @doc """
+  Creates an array including only the objects with a given property value,
+  or any truthy value by default.
+
+  Output
+  iex> input = [
+  ...>   %{"id" => 1, "type" => "kitchen"},
+  ...>   %{"id" => 2, "type" => "bath"},
+  ...>   %{"id" => 3, "type" => "kitchen"}
+  ...> ]
+  iex> Solid.Filter.where(input, "type", "kitchen")
+  [%{"id" => 1, "type" => "kitchen"}, %{"id" => 3, "type" => "kitchen"}]
+
+  iex> input = [
+  ...>   %{"id" => 1, "available" => true},
+  ...>   %{"id" => 2, "type" => false},
+  ...>   %{"id" => 3, "available" => true}
+  ...> ]
+  iex> Solid.Filter.where(input, "available")
+  [%{"id" => 1, "available" => true}, %{"id" => 3, "available" => true}]
+  """
+  @spec where(list, String.t(), String.t()) :: list
+  def where(input, key, value) do
+    for %{} = map <- input, map[key] == value, do: map
+  end
+
+  @spec where(list, String.t()) :: list
+  def where(input, key) do
+    for %{} = map <- input, Map.has_key?(map, key), do: map
+  end
 end
