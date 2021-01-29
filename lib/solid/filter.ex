@@ -672,4 +672,23 @@ defmodule Solid.Filter do
   def where(input, key) do
     for %{} = map <- input, Map.has_key?(map, key), do: map
   end
+
+  @doc """
+  Removes any HTML tags from a string.
+
+  This mimics the regex based approach of the ruby library.
+
+  Output
+  iex> Solid.Filter.strip_html("Have <em>you</em> read <strong>Ulysses</strong>?")
+  "Have you read Ulysses?"
+  """
+  @html_blocks ~r{(<script.*?</script>)|(<!--.*?-->)|(<style.*?</style>)}m
+  @html_tags ~r|<.*?>|m
+  @spec strip_html(iodata()) :: String.t()
+  def strip_html(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> String.replace(@html_blocks, "")
+    |> String.replace(@html_tags, "")
+  end
 end
