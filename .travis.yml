@@ -11,7 +11,7 @@ script:
 before_install:
   - rvm install 2.3.1
   - rvm use 2.3.1
-  - gem install liquid -v 4.0.0
+  - gem install liquid -v 4.0.2
 script:
   - MIX_ENV=test mix test --trace
 sudo: false
