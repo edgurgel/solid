@@ -1,4 +1,4 @@
-# Solid [![Build Status](https://travis-ci.org/edgurgel/solid.svg?branch=master)](https://travis-ci.org/edgurgel/solid)
+# Solid [![Build Status](https://github.com/edgurgel/httpoison/workflows/CI/badge.svg?branch=master)](https://github.com/edgurgel/httpoison/actions?query=workflow%3ACI)
 
 Solid is an implementation in Elixir of the template engine Liquid. It uses [nimble_parsec](https://github.com/plataformatec/nimble_parsec) to generate the parser.
 
