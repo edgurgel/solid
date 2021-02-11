@@ -13,6 +13,10 @@ defmodule Solid.ObjectTest do
       assert render([argument: [value: [1, [2, 3, [4, 5, "six"]]]]], %Context{}, []) == "12345six"
     end
 
+    test "map value no filter" do
+      assert render([argument: [value: %{"a" => "b"}]], %Context{}, []) == "%{\"a\" => \"b\"}"
+    end
+
     test "value with filter" do
       assert render(
                [argument: [value: "a"], filters: [filter: ["upcase", {:arguments, []}]]],

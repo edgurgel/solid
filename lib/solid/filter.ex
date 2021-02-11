@@ -334,6 +334,34 @@ defmodule Solid.Filter do
   def minus(input, number), do: input - number
 
   @doc """
+  Subtracts a number from another number.
+
+  iex> Solid.Filter.modulo(3, 2)
+  1
+  iex> Solid.Filter.modulo(24, 7)
+  3
+  iex> Solid.Filter.modulo(183.357, 12)
+  3.357
+  """
+  @spec modulo(number, number) :: number
+  def modulo(dividend, divisor)
+      when is_integer(dividend) and is_integer(divisor),
+      do: Integer.mod(dividend, divisor)
+
+  # OTP 20+
+  def modulo(dividend, divisor) do
+    dividend
+    |> :math.fmod(divisor)
+    |> Float.round(decimal_places(dividend))
+  end
+
+  defp decimal_places(float) do
+    string = float |> Float.to_string()
+    {start, _} = :binary.match(string, ".")
+    byte_size(string) - start - 1
+  end
+
+  @doc """
   Adds a number to another number.
 
   iex> Solid.Filter.plus(4, 2)
@@ -617,4 +645,88 @@ defmodule Solid.Filter do
   """
   @spec uniq(list) :: list
   def uniq(input), do: Enum.uniq(input)
+
+  @doc """
+  Removes any newline characters (line breaks) from a string.
+
+  Output
+  iex> Solid.Filter.strip_newlines("Test \\ntext\\r\\n with line breaks.")
+  "Test text with line breaks."
+
+  iex> Solid.Filter.strip_newlines([[["Test \\ntext\\r\\n with "] | "line breaks."]])
+  "Test text with line breaks."
+  """
+  @spec strip_newlines(iodata()) :: String.t()
+  def strip_newlines(iodata) do
+    binary = IO.iodata_to_binary(iodata)
+    pattern = :binary.compile_pattern(["\r\n", "\n"])
+    String.replace(binary, pattern, "")
+  end
+
+  @doc """
+  Replaces every newline in a string with an HTML line break (<br />).
+
+  Output
+  iex> Solid.Filter.newline_to_br("Test \\ntext\\r\\n with line breaks.")
+  "Test <br />\\ntext<br />\\r\\n with line breaks."
+
+  iex> Solid.Filter.newline_to_br([[["Test \\ntext\\r\\n with "] | "line breaks."]])
+  "Test <br />\\ntext<br />\\r\\n with line breaks."
+  """
+  @spec newline_to_br(iodata()) :: String.t()
+  def newline_to_br(iodata) do
+    binary = IO.iodata_to_binary(iodata)
+    pattern = :binary.compile_pattern(["\r\n", "\n"])
+    String.replace(binary, pattern, fn x -> "<br />#{x}" end)
+  end
+
+  @doc """
+  Creates an array including only the objects with a given property value,
+  or any truthy value by default.
+
+  Output
+  iex> input = [
+  ...>   %{"id" => 1, "type" => "kitchen"},
+  ...>   %{"id" => 2, "type" => "bath"},
+  ...>   %{"id" => 3, "type" => "kitchen"}
+  ...> ]
+  iex> Solid.Filter.where(input, "type", "kitchen")
+  [%{"id" => 1, "type" => "kitchen"}, %{"id" => 3, "type" => "kitchen"}]
+
+  iex> input = [
+  ...>   %{"id" => 1, "available" => true},
+  ...>   %{"id" => 2, "type" => false},
+  ...>   %{"id" => 3, "available" => true}
+  ...> ]
+  iex> Solid.Filter.where(input, "available")
+  [%{"id" => 1, "available" => true}, %{"id" => 3, "available" => true}]
+  """
+  @spec where(list, String.t(), String.t()) :: list
+  def where(input, key, value) do
+    for %{} = map <- input, map[key] == value, do: map
+  end
+
+  @spec where(list, String.t()) :: list
+  def where(input, key) do
+    for %{} = map <- input, Map.has_key?(map, key), do: map
+  end
+
+  @doc """
+  Removes any HTML tags from a string.
+
+  This mimics the regex based approach of the ruby library.
+
+  Output
+  iex> Solid.Filter.strip_html("Have <em>you</em> read <strong>Ulysses</strong>?")
+  "Have you read Ulysses?"
+  """
+  @html_blocks ~r{(<script.*?</script>)|(<!--.*?-->)|(<style.*?</style>)}m
+  @html_tags ~r|<.*?>|m
+  @spec strip_html(iodata()) :: String.t()
+  def strip_html(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> String.replace(@html_blocks, "")
+    |> String.replace(@html_tags, "")
+  end
 end
