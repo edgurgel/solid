@@ -30,8 +30,8 @@ defmodule Solid.Mixfile do
 
   defp deps do
     [
-      {:nimble_parsec, "~> 0.5.1"},
-      {:poison, "~> 4.0", only: :test},
+      {:nimble_parsec, "~> 1.0"},
+      {:jason, "~> 1.0", only: :test},
       {:earmark, "~> 1.3", only: :dev},
       {:ex_doc, "~> 0.21", only: :dev}
     ]
