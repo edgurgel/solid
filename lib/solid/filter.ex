@@ -774,4 +774,37 @@ defmodule Solid.Filter do
     |> IO.iodata_to_binary()
     |> URI.decode_www_form()
   end
+
+  @doc """
+  HTML encodes the string.
+
+  Output
+  iex> Solid.Filter.escape("Have you read 'James & the Giant Peach'?")
+  "Have you read &#39;James &amp; the Giant Peach&#39;?"
+  """
+  @spec escape(iodata()) :: String.t()
+  def escape(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> Solid.HTML.html_escape()
+  end
+
+  @doc """
+  HTML encodes the string without encoding already encoded characters again.
+
+  This mimics the regex based approach of the ruby library.
+
+  Output
+  "1 &lt; 2 &amp; 3"
+
+  iex> Solid.Filter.escape_once("1 &lt; 2 &amp; 3")
+  "1 &lt; 2 &amp; 3"
+  """
+  @escape_once_regex ~r{["><']|&(?!([a-zA-Z]+|(#\d+));)}
+  @spec escape_once(iodata()) :: String.t()
+  def escape_once(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> String.replace(@escape_once_regex, &Solid.HTML.replacements/1)
+  end
 end
