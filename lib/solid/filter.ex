@@ -268,6 +268,18 @@ defmodule Solid.Filter do
   def compact(input, property) when is_list(input), do: Enum.reject(input, &(&1[property] == nil))
 
   @doc """
+  Concatenates (joins together) multiple arrays.
+  The resulting array contains all the items from the input arrays.
+
+  iex> Solid.Filter.concat([1, 2], [3, 4])
+  [1, 2, 3, 4]
+  """
+  @spec concat(list, list) :: list
+  def concat(input, list) when is_list(input) and is_list(list) do
+    input ++ list
+  end
+
+  @doc """
   Join a list of strings returning one String glued by `glue`
 
   iex> Solid.Filter.join(["a", "b", "c"])
