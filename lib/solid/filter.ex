@@ -729,4 +729,37 @@ defmodule Solid.Filter do
     |> String.replace(@html_blocks, "")
     |> String.replace(@html_tags, "")
   end
+
+  @doc """
+  Removes any HTML tags from a string.
+
+  This mimics the regex based approach of the ruby library.
+
+  Output
+  iex> Solid.Filter.url_encode("john@liquid.com")
+  "john%40liquid.com"
+
+  iex> Solid.Filter.url_encode("Tetsuro Takara")
+  "Tetsuro+Takara"
+  """
+  def url_encode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> URI.encode_www_form()
+  end
+
+  @doc """
+  Removes any HTML tags from a string.
+
+  This mimics the regex based approach of the ruby library.
+
+  Output
+  iex> Solid.Filter.url_decode("%27Stop%21%27+said+Fred")
+  "'Stop!' said Fred"
+  """
+  def url_decode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> URI.decode_www_form()
+  end
 end
