@@ -743,9 +743,7 @@ defmodule Solid.Filter do
   end
 
   @doc """
-  Removes any HTML tags from a string.
-
-  This mimics the regex based approach of the ruby library.
+  URL encodes the string.
 
   Output
   iex> Solid.Filter.url_encode("john@liquid.com")
@@ -761,9 +759,7 @@ defmodule Solid.Filter do
   end
 
   @doc """
-  Removes any HTML tags from a string.
-
-  This mimics the regex based approach of the ruby library.
+  URL decodes the string.
 
   Output
   iex> Solid.Filter.url_decode("%27Stop%21%27+said+Fred")
