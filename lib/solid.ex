@@ -74,6 +74,7 @@ defmodule Solid do
       Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
         try do
           {result, context} = do_render(entry, context, options)
+          {result, acc, context} = maybe_trim(entry, result, acc, context)
           {[result | acc], context}
         catch
           {:break_exp, partial_result, context} ->
@@ -87,6 +88,53 @@ defmodule Solid do
     {Enum.reverse(result), context}
   end
 
+  defp maybe_trim({:text, _data}, result, acc, context) do
+    result = maybe_trim_current(result, context)
+    context = %{context | trim_next: false}
+    {result, acc, context}
+  end
+
+  defp maybe_trim({:object, data}, result, acc, context) do
+    trim_previous = Keyword.get(data, :trim_previous)
+    acc = maybe_trim_previous(acc, trim_previous)
+
+    result = maybe_trim_current(result, context)
+
+    trim_next = Keyword.get(data, :trim_next)
+    context = %{context | trim_next: trim_next}
+
+    {result, acc, context}
+  end
+
+  defp maybe_trim({:tag, _data}, result, acc, context) do
+    context = %{context | trim_next: false}
+    {result, acc, context}
+  end
+
+  defp maybe_trim_current(result, context) do
+    if context.trim_next do
+      trim_leading(result)
+    else
+      result
+    end
+  end
+
+  defp maybe_trim_previous(acc, false), do: acc
+  defp maybe_trim_previous(acc = [], _), do: acc
+
+  defp maybe_trim_previous([prev | tail], true) do
+    trimmed_prev = trim_trailing(prev)
+    [trimmed_prev | tail]
+  end
+
+  defp trim_trailing([value]) do
+    [String.trim_trailing(value)]
+  end
+
+  defp trim_leading([value]) do
+    [String.trim_leading(value)]
+  end
+
   defp do_render({:text, string}, context, _options), do: {string, context}
 
   defp do_render({:object, object}, context, options) do
@@ -95,11 +143,6 @@ defmodule Solid do
   end
 
   defp do_render({:tag, tag}, context, options) do
-    {tag_text, context} = render_tag(tag, context, options)
-    {tag_text, context}
-  end
-
-  defp render_tag(tag, context, options) do
     {result, context} = Tag.eval(tag, context, options)
 
     if result do
