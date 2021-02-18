@@ -25,7 +25,7 @@ end
 ## TODO
 
 * [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
-* [ ] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
+* [x] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
 * [x] Support to custom filters [#11](https://github.com/edgurgel/solid/issues/11)
 * [x] Tags (if, case, unless, etc)
   - [x] `for`
