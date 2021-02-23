@@ -7,7 +7,7 @@ defmodule Solid.Parser do
     end
   end
 
-  identifier = ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-], min: 1)
+  identifier = ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-, ??], min: 1)
 
   plus = string("+")
   minus = string("-")
