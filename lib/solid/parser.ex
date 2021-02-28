@@ -96,18 +96,27 @@ defmodule Solid.Parser.Base do
 
       argument = choice([value, field])
 
-      opening_object = string("{{")
-      closing_object = string("}}")
-
       opening_tag = string("{%")
       closing_tag = string("%}")
+
+      opening_objects =
+        choice([
+          string("{{-") |> replace(true) |> unwrap_and_tag(:trim_previous),
+          string("{{") |> replace(false) |> unwrap_and_tag(:trim_previous)
+        ])
+
+      closing_objects =
+        choice([
+          string("-}}") |> replace(true) |> unwrap_and_tag(:trim_next),
+          string("}}") |> replace(false) |> unwrap_and_tag(:trim_next)
+        ])
 
       space =
         string(" ")
         |> times(min: 0)
 
       text =
-        lookahead_not(choice([opening_object, opening_tag]))
+        lookahead_not(choice([opening_objects, opening_tag]))
         |> utf8_string([], 1)
         |> times(min: 1)
         |> reduce({Enum, :join, []})
@@ -136,13 +145,13 @@ defmodule Solid.Parser.Base do
         |> tag(:filter)
 
       object =
-        ignore(opening_object)
+        opening_objects
         |> ignore(space)
-        |> lookahead_not(closing_object)
+        |> lookahead_not(closing_objects)
         |> tag(argument, :argument)
         |> optional(tag(repeat(filter), :filters))
         |> ignore(space)
-        |> ignore(closing_object)
+        |> concat(closing_objects)
         |> tag(:object)
 
       comment = string("comment")
