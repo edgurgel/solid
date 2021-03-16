@@ -329,4 +329,39 @@ defmodule Solid.Integration.TagsTest do
              """
     end
   end
+
+  describe "custom tag" do
+    defmodule FoobarTag do
+      def render(_context, _arguments) do
+        "barbaz"
+      end
+    end
+
+    defmodule FoobarValTag do
+      def render(_context, arguments: [value: string]) do
+        "barbaz#{string}"
+      end
+    end
+
+    test "with no arguments" do
+      text = """
+      {% foobar %}
+      """
+
+      assert render(text, %{}, tags: %{"foobar" => FoobarTag}, parser: CustomFooParser) == """
+             barbaz
+             """
+    end
+
+    test "with an argument" do
+      text = """
+      {% foobarval "-show-me" %}
+      """
+
+      assert render(text, %{}, tags: %{"foobarval" => FoobarValTag}, parser: CustomFooParser) ==
+               """
+               barbaz-show-me
+               """
+    end
+  end
 end

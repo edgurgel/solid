@@ -41,4 +41,18 @@ defmodule Solid.Integration.FiltersTest do
            ) ==
              "Take your protein pills and put your helmet on"
   end
+
+  test "concat" do
+    assert render(
+             """
+             {% assign fruits = "apples, oranges" | split: ", " %}
+             {% assign vegetables = "kale, cucumbers" | split: ", " %}
+             {% assign everything = fruits | concat: vegetables %}
+             {% for item in everything %}
+             - {{ item }}
+             {% endfor %}
+             """,
+             %{}
+           ) == "\n\n\n\n- apples\n\n- oranges\n\n- kale\n\n- cucumbers\n\n"
+  end
 end

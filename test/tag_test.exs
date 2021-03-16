@@ -1,5 +1,5 @@
 defmodule Solid.TagTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import Solid.Tag
   alias Solid.Context
   doctest Solid.Tag
@@ -13,7 +13,8 @@ defmodule Solid.TagTest do
 
       assert eval(
                [case_exp: [field: ["x"]], whens: %{"1" => "one"}],
-               context
+               context,
+               []
              ) == {"one", context}
     end
 
@@ -22,7 +23,8 @@ defmodule Solid.TagTest do
 
       assert eval(
                [case_exp: [field: ["x"]], whens: %{"2" => "two"}],
-               context
+               context,
+               []
              ) == {nil, context}
     end
 
@@ -36,20 +38,21 @@ defmodule Solid.TagTest do
                  whens: %{"2" => "two"},
                  else_exp: else_exp
                ],
-               context
+               context,
+               []
              ) == {"else", context}
     end
 
     test "eval if_exp true" do
       context = %Context{}
       exp = [expression: @true_exp, result: "if"]
-      assert eval([{:if_exp, exp}], %Context{}) == {"if", context}
+      assert eval([{:if_exp, exp}], %Context{}, []) == {"if", context}
     end
 
     test "eval if_exp false" do
       context = %Context{}
       exp = [expression: @false_exp, result: "if"]
-      assert eval([{:if_exp, exp}], context) == {nil, context}
+      assert eval([{:if_exp, exp}], context, []) == {nil, context}
     end
 
     test "eval if_exp true else" do
@@ -59,7 +62,8 @@ defmodule Solid.TagTest do
 
       assert eval(
                [{:if_exp, exp}, {:else_exp, else_exp}],
-               context
+               context,
+               []
              ) == {"if", context}
     end
 
@@ -70,7 +74,8 @@ defmodule Solid.TagTest do
 
       assert eval(
                [{:if_exp, exp}, {:else_exp, else_exp}],
-               context
+               context,
+               []
              ) == {"else", context}
     end
 
@@ -81,7 +86,8 @@ defmodule Solid.TagTest do
 
       assert eval(
                [{:if_exp, exp}, {:elsif_exps, [{:elsif_exp, elsif_exp}]}],
-               context
+               context,
+               []
              ) == {"elsif", context}
     end
 
@@ -92,7 +98,8 @@ defmodule Solid.TagTest do
 
       assert eval(
                [{:if_exp, exp}, {:elsif_exps, [{:elsif_exp, elsif_exp}]}],
-               context
+               context,
+               []
              ) == {nil, context}
     end
 
@@ -104,20 +111,21 @@ defmodule Solid.TagTest do
 
       assert eval(
                [{:if_exp, exp}, {:elsif_exps, [{:elsif_exp, elsif_exp}]}, {:else_exp, else_exp}],
-               context
+               context,
+               []
              ) == {"else", context}
     end
 
     test "eval unless_exp true" do
       context = %Context{}
       exp = [expression: @false_exp, result: "unless"]
-      assert eval([{:unless_exp, exp}], context) == {"unless", context}
+      assert eval([{:unless_exp, exp}], context, []) == {"unless", context}
     end
 
     test "eval unless_exp false" do
       context = %Context{}
       exp = %{expression: @true_exp, result: "unless"}
-      assert eval([{:unless_exp, exp}], context) == {nil, context}
+      assert eval([{:unless_exp, exp}], context, []) == {nil, context}
     end
 
     test "eval unless_exp true else" do
@@ -127,7 +135,8 @@ defmodule Solid.TagTest do
 
       assert eval(
                [{:unless_exp, exp}, {:else_exp, else_exp}],
-               context
+               context,
+               []
              ) == {"else", context}
     end
 
@@ -138,7 +147,8 @@ defmodule Solid.TagTest do
 
       assert eval(
                [{:unless_exp, exp}, {:else_exp, else_exp}],
-               context
+               context,
+               []
              ) == {"unless", context}
     end
 
@@ -149,7 +159,8 @@ defmodule Solid.TagTest do
 
       assert eval(
                [{:unless_exp, exp}, {:elsif_exps, [{:elsif_exp, elsif_exp}]}],
-               context
+               context,
+               []
              ) == {"elsif", context}
     end
 
@@ -160,7 +171,8 @@ defmodule Solid.TagTest do
 
       assert eval(
                [{:unless_exp, exp}, {:elsif_exps, [{:elsif_exp, elsif_exp}]}],
-               context
+               context,
+               []
              ) == {nil, context}
     end
 
@@ -176,7 +188,8 @@ defmodule Solid.TagTest do
                  {:elsif_exps, [{:elsif_exp, elsif_exp}]},
                  {:else_exp, else_exp}
                ],
-               context
+               context,
+               []
              ) == {"else", context}
     end
 
@@ -184,7 +197,35 @@ defmodule Solid.TagTest do
       context = %Context{vars: %{"x" => "1"}}
       new_context = %Context{vars: %{"x" => "1", "y" => "abc"}}
 
-      assert eval([assign_exp: [{:field, ["y"]}, {:value, "abc"}]], context) ==
+      assert eval(
+               [
+                 assign_exp: [
+                   field: ["y"],
+                   argument: [value: "abc"],
+                   filters: []
+                 ]
+               ],
+               context,
+               []
+             ) ==
+               {nil, new_context}
+    end
+
+    test "eval assign_exp with literal value and filters" do
+      context = %Context{vars: %{"x" => "1"}}
+      new_context = %Context{vars: %{"x" => "1", "y" => "ABC"}}
+
+      assert eval(
+               [
+                 assign_exp: [
+                   field: ["y"],
+                   argument: [value: "abc"],
+                   filters: [filter: ["upcase", {:arguments, []}]]
+                 ]
+               ],
+               context,
+               []
+             ) ==
                {nil, new_context}
     end
 
@@ -195,11 +236,30 @@ defmodule Solid.TagTest do
       assert eval(
                [
                  assign_exp: [
-                   {:field, ["z"]},
-                   {:field, ["x", "y"]}
+                   field: ["z"],
+                   argument: [field: ["x", "y"]],
+                   filters: []
                  ]
                ],
-               context
+               context,
+               []
+             ) == {nil, new_context}
+    end
+
+    test "eval assign_exp with field and filters" do
+      context = %Context{vars: %{"x" => %{"y" => "abc"}}}
+      new_context = %Context{vars: %{"x" => %{"y" => "abc"}, "z" => "ABC"}}
+
+      assert eval(
+               [
+                 assign_exp: [
+                   field: ["z"],
+                   argument: [field: ["x", "y"]],
+                   filters: [filter: ["upcase", {:arguments, []}]]
+                 ]
+               ],
+               context,
+               []
              ) == {nil, new_context}
     end
 
@@ -207,7 +267,7 @@ defmodule Solid.TagTest do
       context = %Context{counter_vars: %{"x" => 1}}
       new_context = %Context{counter_vars: %{"x" => 2}}
 
-      assert eval([counter_exp: [{1, 0}, {:field, ["x"]}]], context) ==
+      assert eval([counter_exp: [{1, 0}, {:field, ["x"]}]], context, []) ==
                {[text: "1"], new_context}
     end
 
@@ -215,7 +275,7 @@ defmodule Solid.TagTest do
       context = %Context{counter_vars: %{"x" => "1"}}
       new_context = %Context{counter_vars: %{"x" => "1", "y" => 1}}
 
-      assert eval([counter_exp: [{1, 0}, {:field, ["y"]}]], context) ==
+      assert eval([counter_exp: [{1, 0}, {:field, ["y"]}]], context, []) ==
                {[text: "0"], new_context}
     end
 
@@ -223,7 +283,7 @@ defmodule Solid.TagTest do
       context = %Context{counter_vars: %{"x" => 1}}
       new_context = %Context{counter_vars: %{"x" => 0}}
 
-      assert eval([counter_exp: [{-1, -1}, {:field, ["x"]}]], context) ==
+      assert eval([counter_exp: [{-1, -1}, {:field, ["x"]}]], context, []) ==
                {[text: "1"], new_context}
     end
 
@@ -231,8 +291,14 @@ defmodule Solid.TagTest do
       context = %Context{counter_vars: %{"x" => "1"}}
       new_context = %Context{counter_vars: %{"x" => "1", "y" => -2}}
 
-      assert eval([counter_exp: [{-1, -1}, {:field, ["y"]}]], context) ==
+      assert eval([counter_exp: [{-1, -1}, {:field, ["y"]}]], context, []) ==
                {[text: "-1"], new_context}
+    end
+
+    test "eval custom tag invocation" do
+      context = %Context{}
+      exp = [expression: @true_exp, result: "if"]
+      assert eval([{:if_exp, exp}], %Context{}, []) == {"if", context}
     end
   end
 end

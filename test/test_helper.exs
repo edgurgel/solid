@@ -1,11 +1,11 @@
 ExUnit.start()
 
 defmodule Solid.Helpers do
-  def render(text, hash \\ %{}) do
-    case Solid.parse(text) do
+  def render(text, hash \\ %{}, options \\ []) do
+    case Solid.parse(text, options) do
       {:ok, template} ->
         template
-        |> Solid.render(hash)
+        |> Solid.render(hash, options)
         |> to_string()
 
       {:error, error} ->

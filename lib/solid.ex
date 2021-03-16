@@ -28,9 +28,11 @@ defmodule Solid do
   @doc """
   It generates the compiled template
   """
-  @spec parse(String.t()) :: {:ok, %Template{}} | {:error, %TemplateError{}}
-  def parse(text) do
-    case Solid.Parser.parse(text) do
+  @spec parse(String.t(), Keyword.t()) :: {:ok, %Template{}} | {:error, %TemplateError{}}
+  def parse(text, opts \\ []) do
+    parser = Keyword.get(opts, :parser, Solid.Parser)
+
+    case parser.parse(text) do
       {:ok, result, _, _, _, _} -> {:ok, %Template{parsed_template: result}}
       {:error, reason, _, _, line, _} -> {:error, TemplateError.exception([reason, line])}
     end
@@ -39,9 +41,9 @@ defmodule Solid do
   @doc """
   It generates the compiled template
   """
-  @spec parse!(String.t()) :: %Template{} | no_return
-  def parse!(text) do
-    case parse(text) do
+  @spec parse!(String.t(), Keyword.t()) :: %Template{} | no_return
+  def parse!(text, opts \\ []) do
+    case parse(text, opts) do
       {:ok, template} -> template
       {:error, template_error} -> raise template_error
     end
@@ -51,11 +53,13 @@ defmodule Solid do
   It renders the compiled template using a `hash` with vars
   """
   # @spec render(any, Map.t) :: iolist
-  def render(%Template{parsed_template: parsed_template}, hash) do
+  def render(template_or_text, values, options \\ [])
+
+  def render(%Template{parsed_template: parsed_template}, hash, options) do
     context = %Context{vars: hash}
 
     parsed_template
-    |> render(context)
+    |> render(context, options)
     |> elem(0)
   catch
     {:break_exp, partial_result, _context} ->
@@ -65,11 +69,12 @@ defmodule Solid do
       partial_result
   end
 
-  def render(text, context = %Context{}) do
+  def render(text, context = %Context{}, options) do
     {result, context} =
       Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
         try do
-          {result, context} = do_render(entry, context)
+          {result, context} = do_render(entry, context, options)
+          {result, acc, context} = maybe_trim(entry, result, acc, context)
           {[result | acc], context}
         catch
           {:break_exp, partial_result, context} ->
@@ -83,23 +88,65 @@ defmodule Solid do
     {Enum.reverse(result), context}
   end
 
-  defp do_render({:text, string}, context), do: {string, context}
+  defp maybe_trim({:text, _data}, result, acc, context) do
+    result = maybe_trim_current(result, context)
+    context = %{context | trim_next: false}
+    {result, acc, context}
+  end
 
-  defp do_render({:object, object}, context) do
-    object_text = Object.render(object, context)
+  defp maybe_trim({:object, data}, result, acc, context) do
+    trim_previous = Keyword.get(data, :trim_previous)
+    acc = maybe_trim_previous(acc, trim_previous)
+
+    result = maybe_trim_current(result, context)
+
+    trim_next = Keyword.get(data, :trim_next)
+    context = %{context | trim_next: trim_next}
+
+    {result, acc, context}
+  end
+
+  defp maybe_trim({:tag, _data}, result, acc, context) do
+    context = %{context | trim_next: false}
+    {result, acc, context}
+  end
+
+  defp maybe_trim_current(result, context) do
+    if context.trim_next do
+      trim_leading(result)
+    else
+      result
+    end
+  end
+
+  defp maybe_trim_previous(acc, false), do: acc
+  defp maybe_trim_previous(acc = [], _), do: acc
+
+  defp maybe_trim_previous([prev | tail], true) do
+    trimmed_prev = trim_trailing(prev)
+    [trimmed_prev | tail]
+  end
+
+  defp trim_trailing([value]) do
+    [String.trim_trailing(value)]
+  end
+
+  defp trim_leading([value]) do
+    [String.trim_leading(value)]
+  end
+
+  defp do_render({:text, string}, context, _options), do: {string, context}
+
+  defp do_render({:object, object}, context, options) do
+    object_text = Object.render(object, context, options)
     {object_text, context}
   end
 
-  defp do_render({:tag, tag}, context) do
-    {tag_text, context} = render_tag(tag, context)
-    {tag_text, context}
-  end
-
-  defp render_tag(tag, context) do
-    {result, context} = Tag.eval(tag, context)
+  defp do_render({:tag, tag}, context, options) do
+    {result, context} = Tag.eval(tag, context, options)
 
     if result do
-      render(result, context)
+      render(result, context, options)
     else
       {"", context}
     end

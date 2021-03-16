@@ -1,4 +1,4 @@
-# Solid [![Build Status](https://travis-ci.org/edgurgel/solid.svg?branch=master)](https://travis-ci.org/edgurgel/solid)
+# Solid [![Build Status](https://github.com/edgurgel/httpoison/workflows/CI/badge.svg?branch=master)](https://github.com/edgurgel/httpoison/actions?query=workflow%3ACI)
 
 Solid is an implementation in Elixir of the template engine Liquid. It uses [nimble_parsec](https://github.com/plataformatec/nimble_parsec) to generate the parser.
 
@@ -25,7 +25,7 @@ end
 ## TODO
 
 * [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
-* [ ] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
+* [x] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
 * [x] Support to custom filters [#11](https://github.com/edgurgel/solid/issues/11)
 * [x] Tags (if, case, unless, etc)
   - [x] `for`

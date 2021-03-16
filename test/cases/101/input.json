@@ -1,0 +1,10 @@
+{
+  "site": {
+    "pages": [1, 2, 3, 4, 5],
+    "size" : 5,
+    "page_refs": {
+      "ref1" : "http://",
+      "ref2" : "http://"
+    }
+  }
+}

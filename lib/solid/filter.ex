@@ -1,9 +1,9 @@
 defmodule Solid.Filter do
-  import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1]
-
   @moduledoc """
   Standard filters
   """
+
+  import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1, apply: 2]
 
   @doc """
   Apply `filter` if it exists. Otherwise return the first input.
@@ -69,6 +69,28 @@ defmodule Solid.Filter do
   def append(input, string), do: "#{input}#{string}"
 
   @doc """
+  Limits a number to a minimum value.
+
+  iex> Solid.Filter.at_least(5, 3)
+  5
+  iex> Solid.Filter.at_least(2, 4)
+  4
+  """
+  @spec at_least(number, number) :: number
+  def at_least(input, minimum), do: max(input, minimum)
+
+  @doc """
+  Limits a number to a maximum value.
+
+  iex> Solid.Filter.at_most(5, 3)
+  3
+  iex> Solid.Filter.at_most(2, 4)
+  2
+  """
+  @spec at_most(number, number) :: number
+  def at_most(input, maximum), do: min(input, maximum)
+
+  @doc """
   Makes the first character of a string capitalized.
 
   iex> Solid.Filter.capitalize("my great title")
@@ -90,6 +112,44 @@ defmodule Solid.Filter do
 
   def ceil(input) when is_integer(input), do: input
   def ceil(input), do: Float.ceil(input) |> trunc
+
+  @doc """
+  Converts a `DateTime`/`NaiveDateTime` struct into another date format.
+  The input may also be a Unix timestamp or an ISO 8601 date string.
+
+  The format for this syntax is the same as `Calendar.strftime/2`.
+
+  To get the current time, pass the special word `"now"` (or `"today"`) to `date`.
+  """
+  @spec date(DateTime.t() | NaiveDateTime.t() | integer() | String.t(), String.t()) :: String.t()
+  def date(date, format) when is_map(date) and is_binary(format) do
+    try do
+      Calendar.strftime(date, format)
+    rescue
+      KeyError -> ""
+      ArgumentError -> ""
+    end
+  end
+
+  def date(date, format) when is_integer(date) do
+    case DateTime.from_unix(date) do
+      {:ok, datetime} -> date(datetime, format)
+      _ -> ""
+    end
+  end
+
+  def date(date, format) when date in ["now", "today"] do
+    date(NaiveDateTime.local_now(), format)
+  end
+
+  def date(date, format) when is_binary(date) do
+    case DateTime.from_iso8601(date) do
+      {:ok, datetime, _} -> date(datetime, format)
+      _ -> date
+    end
+  end
+
+  def date(_, _), do: ""
 
   @doc """
   Allows you to specify a fallback in case a value doesn’t exist.
@@ -208,6 +268,18 @@ defmodule Solid.Filter do
   def compact(input, property) when is_list(input), do: Enum.reject(input, &(&1[property] == nil))
 
   @doc """
+  Concatenates (joins together) multiple arrays.
+  The resulting array contains all the items from the input arrays.
+
+  iex> Solid.Filter.concat([1, 2], [3, 4])
+  [1, 2, 3, 4]
+  """
+  @spec concat(list, list) :: list
+  def concat(input, list) when is_list(input) and is_list(list) do
+    input ++ list
+  end
+
+  @doc """
   Join a list of strings returning one String glued by `glue`
 
   iex> Solid.Filter.join(["a", "b", "c"])
@@ -274,17 +346,64 @@ defmodule Solid.Filter do
   def minus(input, number), do: input - number
 
   @doc """
+  Subtracts a number from another number.
+
+  iex> Solid.Filter.modulo(3, 2)
+  1
+  iex> Solid.Filter.modulo(24, 7)
+  3
+  iex> Solid.Filter.modulo(183.357, 12)
+  3.357
+  """
+  @spec modulo(number, number) :: number
+  def modulo(dividend, divisor)
+      when is_integer(dividend) and is_integer(divisor),
+      do: Integer.mod(dividend, divisor)
+
+  # OTP 20+
+  def modulo(dividend, divisor) do
+    dividend
+    |> :math.fmod(divisor)
+    |> Float.round(decimal_places(dividend))
+  end
+
+  defp decimal_places(float) do
+    string = float |> Float.to_string()
+    {start, _} = :binary.match(string, ".")
+    byte_size(string) - start - 1
+  end
+
+  @doc """
   Adds a number to another number.
 
   iex> Solid.Filter.plus(4, 2)
   6
   iex> Solid.Filter.plus(16, 4)
   20
+  iex> Solid.Filter.plus("16", 4)
+  20
   iex> Solid.Filter.plus(183.357, 12)
   195.357
+  iex> Solid.Filter.plus("183.357", 12)
+  195.357
+  iex> Solid.Filter.plus("183.ABC357", 12)
+  nil
   """
   @spec plus(number, number) :: number
-  def plus(input, number), do: input + number
+  def plus(input, number) when is_number(input), do: input + number
+
+  def plus(input, number) when is_binary(input) do
+    try do
+      plus(String.to_integer(input), number)
+    rescue
+      ArgumentError ->
+        plus(String.to_float(input), number)
+    end
+  rescue
+    ArgumentError -> nil
+  end
+
+  def plus(_input, number), do: number
 
   @doc """
   Adds the specified string to the beginning of another string.
@@ -406,7 +525,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.slice("Liquid", -3, 2)
   "ui"
   """
-  @spec slice(String.t(), integer, non_neg_integer) :: String.t()
+  @spec slice(String.t(), integer, non_neg_integer | nil) :: String.t()
   def slice(input, offset, length \\ nil)
   def slice(input, offset, nil), do: String.at(input, offset)
   def slice(input, offset, length), do: String.slice(input, offset, length)
@@ -538,4 +657,150 @@ defmodule Solid.Filter do
   """
   @spec uniq(list) :: list
   def uniq(input), do: Enum.uniq(input)
+
+  @doc """
+  Removes any newline characters (line breaks) from a string.
+
+  Output
+  iex> Solid.Filter.strip_newlines("Test \\ntext\\r\\n with line breaks.")
+  "Test text with line breaks."
+
+  iex> Solid.Filter.strip_newlines([[["Test \\ntext\\r\\n with "] | "line breaks."]])
+  "Test text with line breaks."
+  """
+  @spec strip_newlines(iodata()) :: String.t()
+  def strip_newlines(iodata) do
+    binary = IO.iodata_to_binary(iodata)
+    pattern = :binary.compile_pattern(["\r\n", "\n"])
+    String.replace(binary, pattern, "")
+  end
+
+  @doc """
+  Replaces every newline in a string with an HTML line break (<br />).
+
+  Output
+  iex> Solid.Filter.newline_to_br("Test \\ntext\\r\\n with line breaks.")
+  "Test <br />\\ntext<br />\\r\\n with line breaks."
+
+  iex> Solid.Filter.newline_to_br([[["Test \\ntext\\r\\n with "] | "line breaks."]])
+  "Test <br />\\ntext<br />\\r\\n with line breaks."
+  """
+  @spec newline_to_br(iodata()) :: String.t()
+  def newline_to_br(iodata) do
+    binary = IO.iodata_to_binary(iodata)
+    pattern = :binary.compile_pattern(["\r\n", "\n"])
+    String.replace(binary, pattern, fn x -> "<br />#{x}" end)
+  end
+
+  @doc """
+  Creates an array including only the objects with a given property value,
+  or any truthy value by default.
+
+  Output
+  iex> input = [
+  ...>   %{"id" => 1, "type" => "kitchen"},
+  ...>   %{"id" => 2, "type" => "bath"},
+  ...>   %{"id" => 3, "type" => "kitchen"}
+  ...> ]
+  iex> Solid.Filter.where(input, "type", "kitchen")
+  [%{"id" => 1, "type" => "kitchen"}, %{"id" => 3, "type" => "kitchen"}]
+
+  iex> input = [
+  ...>   %{"id" => 1, "available" => true},
+  ...>   %{"id" => 2, "type" => false},
+  ...>   %{"id" => 3, "available" => true}
+  ...> ]
+  iex> Solid.Filter.where(input, "available")
+  [%{"id" => 1, "available" => true}, %{"id" => 3, "available" => true}]
+  """
+  @spec where(list, String.t(), String.t()) :: list
+  def where(input, key, value) do
+    for %{} = map <- input, map[key] == value, do: map
+  end
+
+  @spec where(list, String.t()) :: list
+  def where(input, key) do
+    for %{} = map <- input, Map.has_key?(map, key), do: map
+  end
+
+  @doc """
+  Removes any HTML tags from a string.
+
+  This mimics the regex based approach of the ruby library.
+
+  Output
+  iex> Solid.Filter.strip_html("Have <em>you</em> read <strong>Ulysses</strong>?")
+  "Have you read Ulysses?"
+  """
+  @html_blocks ~r{(<script.*?</script>)|(<!--.*?-->)|(<style.*?</style>)}m
+  @html_tags ~r|<.*?>|m
+  @spec strip_html(iodata()) :: String.t()
+  def strip_html(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> String.replace(@html_blocks, "")
+    |> String.replace(@html_tags, "")
+  end
+
+  @doc """
+  URL encodes the string.
+
+  Output
+  iex> Solid.Filter.url_encode("john@liquid.com")
+  "john%40liquid.com"
+
+  iex> Solid.Filter.url_encode("Tetsuro Takara")
+  "Tetsuro+Takara"
+  """
+  def url_encode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> URI.encode_www_form()
+  end
+
+  @doc """
+  URL decodes the string.
+
+  Output
+  iex> Solid.Filter.url_decode("%27Stop%21%27+said+Fred")
+  "'Stop!' said Fred"
+  """
+  def url_decode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> URI.decode_www_form()
+  end
+
+  @doc """
+  HTML encodes the string.
+
+  Output
+  iex> Solid.Filter.escape("Have you read 'James & the Giant Peach'?")
+  "Have you read &#39;James &amp; the Giant Peach&#39;?"
+  """
+  @spec escape(iodata()) :: String.t()
+  def escape(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> Solid.HTML.html_escape()
+  end
+
+  @doc """
+  HTML encodes the string without encoding already encoded characters again.
+
+  This mimics the regex based approach of the ruby library.
+
+  Output
+  "1 &lt; 2 &amp; 3"
+
+  iex> Solid.Filter.escape_once("1 &lt; 2 &amp; 3")
+  "1 &lt; 2 &amp; 3"
+  """
+  @escape_once_regex ~r{["><']|&(?!([a-zA-Z]+|(#\d+));)}
+  @spec escape_once(iodata()) :: String.t()
+  def escape_once(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> String.replace(@escape_once_regex, &Solid.HTML.replacements/1)
+  end
 end
