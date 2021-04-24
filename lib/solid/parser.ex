@@ -6,8 +6,9 @@ defmodule Solid.Parser.Base do
       import NimbleParsec
 
       defp when_join(whens) do
-        for {:when, [value: value, result: result]} <- whens, into: %{} do
-          {value, result}
+        # TODO: Do we need to care about trims here? At which point would we process them?
+        for {:when, mapping} <- whens, into: %{} do
+          {Keyword.get(mapping, :value), Keyword.get(mapping, :result)}
         end
       end
 
@@ -96,8 +97,19 @@ defmodule Solid.Parser.Base do
 
       argument = choice([value, field])
 
-      opening_tag = string("{%")
-      closing_tag = string("%}")
+      non_trim_opening_tag = string("{%") |> replace(false) |> unwrap_and_tag(:trim_previous)
+
+      opening_tags =
+        choice([
+          string("{%-") |> replace(true) |> unwrap_and_tag(:trim_previous),
+          non_trim_opening_tag
+        ])
+
+      closing_tags =
+        choice([
+          string("-%}") |> replace(true) |> unwrap_and_tag(:trim_next),
+          string("%}") |> replace(false) |> unwrap_and_tag(:trim_next)
+        ])
 
       opening_objects =
         choice([
@@ -116,7 +128,7 @@ defmodule Solid.Parser.Base do
         |> times(min: 0)
 
       text =
-        lookahead_not(choice([opening_objects, opening_tag]))
+        lookahead_not(choice([opening_objects, opening_tags]))
         |> utf8_string([], 1)
         |> times(min: 1)
         |> reduce({Enum, :join, []})
@@ -159,17 +171,18 @@ defmodule Solid.Parser.Base do
       end_comment = string("endcomment")
 
       comment_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(comment)
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> ignore(closing_tags)
         |> ignore(parsec(:liquid_entry))
-        |> ignore(opening_tag)
+        |> ignore(opening_tags)
         |> ignore(space)
         |> ignore(end_comment)
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
+        |> tag(:comment)
 
       increment =
         string("increment")
@@ -180,41 +193,42 @@ defmodule Solid.Parser.Base do
         |> replace({-1, -1})
 
       counter_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> concat(choice([increment, decrement]))
         |> ignore(space)
         |> concat(field)
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
         |> tag(:counter_exp)
 
       case_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("case"))
         |> ignore(space)
         |> concat(argument)
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
 
       when_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("when"))
         |> ignore(space)
         |> concat(value)
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
         |> tag(parsec(:liquid_entry), :result)
         |> tag(:when)
 
       else_tag =
-        ignore(opening_tag)
+        ignore(opening_tags)
         |> ignore(space)
         |> ignore(string("else"))
         |> ignore(space)
-        |> ignore(closing_tag)
+        # TODO: Add custom trim tag for else body?
+        |> concat(closing_tags)
         |> tag(parsec(:liquid_entry), :result)
 
       cond_case_tag =
@@ -223,11 +237,11 @@ defmodule Solid.Parser.Base do
         |> ignore(parsec(:liquid_entry))
         |> unwrap_and_tag(reduce(times(when_tag, min: 1), :when_join), :whens)
         |> optional(tag(else_tag, :else_exp))
-        |> ignore(opening_tag)
+        |> concat(opening_tags)
         |> ignore(space)
         |> ignore(string("endcase"))
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
 
       operator =
         choice([
@@ -267,53 +281,56 @@ defmodule Solid.Parser.Base do
         |> repeat(choice([bool_and, bool_or]) |> concat(expression))
 
       if_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("if"))
         |> tag(boolean_expression, :expression)
-        |> ignore(closing_tag)
+        # TODO: Add custom trim tag for if body?
+        |> concat(closing_tags)
         |> tag(parsec(:liquid_entry), :result)
 
       elsif_tag =
-        ignore(opening_tag)
+        ignore(opening_tags)
         |> ignore(space)
         |> ignore(string("elsif"))
         |> tag(boolean_expression, :expression)
-        |> ignore(closing_tag)
+        # TODO: Add custom trim tag for elsif body?
+        |> concat(closing_tags)
         |> tag(parsec(:liquid_entry), :result)
         |> tag(:elsif_exp)
 
       unless_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("unless"))
         |> tag(boolean_expression, :expression)
         |> ignore(space)
-        |> ignore(closing_tag)
+        # TODO: Add custom trim tag for unless body?
+        |> concat(closing_tags)
         |> tag(parsec(:liquid_entry), :result)
 
       cond_if_tag =
         tag(if_tag, :if_exp)
         |> tag(times(elsif_tag, min: 0), :elsif_exps)
         |> optional(tag(else_tag, :else_exp))
-        |> ignore(opening_tag)
+        |> concat(opening_tags)
         |> ignore(space)
         |> ignore(string("endif"))
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
 
       cond_unless_tag =
         tag(unless_tag, :unless_exp)
         |> tag(times(elsif_tag, min: 0), :elsif_exps)
         |> optional(tag(else_tag, :else_exp))
-        |> ignore(opening_tag)
+        |> concat(opening_tags)
         |> ignore(space)
         |> ignore(string("endunless"))
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
 
       assign_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("assign"))
         |> ignore(space)
@@ -324,7 +341,7 @@ defmodule Solid.Parser.Base do
         |> tag(argument, :argument)
         |> optional(tag(repeat(filter), :filters))
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
         |> tag(:assign_exp)
 
       range =
@@ -361,7 +378,7 @@ defmodule Solid.Parser.Base do
         |> reduce({Enum, :into, [%{}]})
 
       for_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("for"))
         |> ignore(space)
@@ -373,68 +390,73 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> unwrap_and_tag(for_parameters, :parameters)
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
         |> tag(parsec(:liquid_entry), :result)
         |> optional(tag(else_tag, :else_exp))
-        |> ignore(opening_tag)
+        |> concat(opening_tags)
         |> ignore(space)
         |> ignore(string("endfor"))
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
         |> tag(:for_exp)
 
       capture_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("capture"))
         |> ignore(space)
         |> concat(field)
         |> ignore(space)
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
         |> tag(parsec(:liquid_entry), :result)
-        |> ignore(opening_tag)
+        |> concat(opening_tags)
         |> ignore(space)
         |> ignore(string("endcapture"))
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
         |> tag(:capture_exp)
 
       break_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("break"))
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
         |> tag(:break_exp)
 
       continue_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("continue"))
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
         |> tag(:continue_exp)
 
+      # NOTE: For most tags Liquid does allow whitespace controll for the previous element even if this will result in a no-op (see comment tag).
+      # However, for some reason it's not valid for endraw tags.
+      # See: https://github.com/Shopify/liquid/issues/1430
       end_raw_tag =
-        opening_tag
+        ignore(non_trim_opening_tag)
         |> ignore(space)
         |> ignore(string("endraw"))
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> ignore(closing_tags)
 
       raw_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("raw"))
         |> ignore(space)
-        |> ignore(closing_tag)
+        # NOTE: Liquid only uses the raw tag to controll whitespace for before and after the whole raw tag block.
+        # TODO: MAKE SURE WE DO NOT TRUNCATE THE RAW TEXT INSIDE!
+        |> concat(closing_tags)
         |> repeat(lookahead_not(ignore(end_raw_tag)) |> utf8_char([]))
         |> ignore(end_raw_tag)
         |> tag(:raw_exp)
 
       cycle_tag =
-        ignore(opening_tag)
+        opening_tags
         |> ignore(space)
         |> ignore(string("cycle"))
         |> ignore(space)
@@ -455,7 +477,7 @@ defmodule Solid.Parser.Base do
           |> tag(:values)
         )
         |> ignore(space)
-        |> ignore(closing_tag)
+        |> concat(closing_tags)
         |> tag(:cycle_exp)
 
       base_tags = [
@@ -484,13 +506,13 @@ defmodule Solid.Parser.Base do
       all_tags =
         if custom_tags != [] do
           custom_tag =
-            ignore(opening_tag)
+            opening_tags
             |> ignore(space)
             |> concat(choice(custom_tags))
             |> ignore(space)
             |> tag(optional(arguments), :arguments)
             |> ignore(space)
-            |> ignore(closing_tag)
+            |> concat(closing_tags)
             |> tag(:custom_tag)
 
           base_tags ++ [custom_tag]
