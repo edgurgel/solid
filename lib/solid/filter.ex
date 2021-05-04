@@ -236,7 +236,8 @@ defmodule Solid.Filter do
   nil
   """
   @spec first(list) :: any
-  def first(input), do: List.first(input)
+  def first(input) when is_list(input), do: List.first(input)
+  def first(_), do: nil
 
   @doc """
   Rounds a number down to the nearest whole number.
@@ -299,7 +300,8 @@ defmodule Solid.Filter do
   nil
   """
   @spec last(list) :: any
-  def last(input), do: List.last(input)
+  def last(input) when is_list(input), do: List.last(input)
+  def last(_), do: nil
 
   @doc """
   Removes all whitespaces (tabs, spaces, and newlines) from the beginning of a string.
