@@ -95,9 +95,9 @@ defmodule Solid.Tag do
   defp do_eval(
          [capture_exp: [field: [field_name], result: result]],
          context,
-         _options
+         options
        ) do
-    {captured, context} = Solid.render(result, context)
+    {captured, context} = Solid.render(result, context, options)
 
     context = %{
       context
@@ -137,26 +137,26 @@ defmodule Solid.Tag do
              ] = exp
          ],
          context,
-         _options
+         options
        ) do
     enumerable =
       enumerable
       |> enumerable(context)
       |> apply_parameters(parameters)
 
-    do_for(enumerable_key, enumerable, exp, context)
+    do_for(enumerable_key, enumerable, exp, context, options)
   end
 
   defp do_eval([raw_exp: raw], context, _options) do
     {[text: raw], context}
   end
 
-  defp do_for(_, [], exp, context) do
+  defp do_for(_, [], exp, context, _options) do
     exp = Keyword.get(exp, :else_exp)
     {exp[:result], context}
   end
 
-  defp do_for(enumerable_key, enumerable, exp, context) do
+  defp do_for(enumerable_key, enumerable, exp, context, options) do
     exp = Keyword.get(exp, :result)
     length = Enum.count(enumerable)
 
@@ -170,7 +170,7 @@ defmodule Solid.Tag do
           |> maybe_put_forloop_map(enumerable_key, index, length)
 
         try do
-          {result, acc_context} = Solid.render(exp, acc_context)
+          {result, acc_context} = Solid.render(exp, acc_context, options)
           acc_context = restore_initial_forloop_value(acc_context, acc_context_initial)
           {[result | acc_result], acc_context}
         catch
