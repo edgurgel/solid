@@ -239,7 +239,7 @@ defmodule Solid.Parser.Base do
           string("<"),
           string("contains")
         ])
-        |> map({:erlang, :binary_to_existing_atom, [:utf8]})
+        |> map({:erlang, :binary_to_atom, [:utf8]})
 
       boolean_operation =
         tag(argument, :arg1)
