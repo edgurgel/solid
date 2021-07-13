@@ -19,6 +19,12 @@ defmodule Solid.Argument do
   nil
   iex> Solid.Argument.get([field: ["key", 1, "foo"]], %Solid.Context{vars: %{"key" => [%{"foo" => "bar1"}, %{"foo" => "bar2"}]}})
   "bar2"
+  iex> Solid.Argument.get([field: ["value"]], %Solid.Context{vars: %{"value" => nil}})
+  nil
+  iex> Solid.Argument.get([field: ["value"]], %Solid.Context{vars: %{"value" => false}})
+  false
+  iex> Solid.Argument.get([field: ["value"]], %Solid.Context{vars: %{"value" => true}})
+  true
   """
   @spec get([field: [String.t() | integer]] | [value: term], Context.t(), Keyword.t()) :: term
   def get(arg, context, opts \\ []) do

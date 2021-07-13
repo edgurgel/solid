@@ -13,6 +13,16 @@ defmodule Solid.ContextTest do
       assert Context.get_in(context, ["x"], [:vars]) == 1
     end
 
+    test "var scope with false value" do
+      context = %Context{vars: %{"x" => false}}
+      assert Context.get_in(context, ["x"], [:vars]) == false
+    end
+
+    test "var scope with nil value" do
+      context = %Context{vars: %{"x" => nil}}
+      assert Context.get_in(context, ["x"], [:vars]) == nil
+    end
+
     test "iteration_vars scope only" do
       context = %Context{iteration_vars: %{"x" => 1}}
       assert Context.get_in(context, ["x"], [:iteration_vars]) == 1
