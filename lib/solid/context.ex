@@ -18,12 +18,12 @@ defmodule Solid.Context do
   @spec get_in(t(), [term()], [scope]) :: term
   def get_in(context, key, scopes) do
     {:ok, result} =
-    scopes
-    |> Enum.map(&get_from_scope(context, &1, key))
-    |> Enum.find({:ok, nil}, fn
-      {:ok, _} -> true
-      _ -> false
-    end)
+      scopes
+      |> Enum.map(&get_from_scope(context, &1, key))
+      |> Enum.find({:ok, nil}, fn
+        {:ok, _} -> true
+        _ -> false
+      end)
 
     result
   end
