@@ -5,25 +5,28 @@ defmodule Solid.Tag do
   More info: https://shopify.github.io/liquid/tags/control-flow/
   """
 
-  alias Solid.{Expression, Argument, Context}
+  alias Solid.{Expression, Argument, Context, Trimmer}
 
   @doc """
   Evaluate a tag and return the condition that succeeded or nil
   """
-  @spec eval(any, Context.t(), keyword()) :: {iolist | nil, Context.t()}
+  @spec eval(any, Context.t(), keyword()) :: {iolist | nil, Context.t(), boolean()}
   def eval(tag, context, options) do
-    case do_eval(tag, context, options) do
-      {text, context} -> {text, context}
-      text -> {text, context}
-    end
+    do_eval(tag, context, options)
   end
 
-  defp do_eval([], _context, _options), do: nil
+  defp do_eval([comment: [trim_previous: trim_previous, trim_next: trim_next]], context, _options) do
+    {nil, %{context | trim_current: trim_next}, trim_previous}
+  end
 
   defp do_eval([cycle_exp: cycle], context, _options) do
-    {context, result} = Context.run_cycle(context, cycle)
+    {trim_previous, cycle} = Keyword.pop!(cycle, :trim_previous)
+    {trim_next, cycle} = Keyword.pop!(cycle, :trim_next)
 
-    {[text: result], context}
+    {context, result} = Context.run_cycle(context, cycle)
+    result = Trimmer.trim_current(result, context.trim_current)
+
+    {[raw_text: result], %{context | trim_current: trim_next}, trim_previous}
   end
 
   defp do_eval([custom_tag: tag], context, options) do
@@ -37,7 +40,8 @@ defmodule Solid.Tag do
         nil
       end
 
-    {result, context}
+    # TODO: ADJUST
+    {result, context, false}
   end
 
   defp do_eval([{:if_exp, exp} | _] = tag, context, _options) do
@@ -51,8 +55,11 @@ defmodule Solid.Tag do
 
     else_exp = tag[:else_exp]
     if else_exp, do: throw({:result, else_exp})
+
+    throw({:result, nil})
   catch
-    {:result, result} -> result[:result]
+    # TODO: ADJUST
+    {:result, result} -> {result[:result], context, false}
   end
 
   defp do_eval([{:unless_exp, exp} | _] = tag, context, _options) do
@@ -66,18 +73,26 @@ defmodule Solid.Tag do
 
     else_exp = tag[:else_exp]
     if else_exp, do: throw({:result, else_exp})
+
+    throw({:result, nil})
   catch
-    {:result, result} -> result[:result]
+    # TODO: ADJUST
+    {:result, result} -> {result[:result], context, false}
   end
 
+  # TODO: Explore how trims work here: Is the `case` trim used or the `case` trim or all of them?
   defp do_eval([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context, _options) do
     result = when_map[Argument.get(field, context)]
 
-    if result do
-      result
-    else
-      tag[:else_exp][:result]
-    end
+    result =
+      if result do
+        result
+      else
+        tag[:else_exp][:result]
+      end
+
+    # TODO: ADJUST
+    {result, context, false}
   end
 
   defp do_eval(
@@ -89,7 +104,8 @@ defmodule Solid.Tag do
 
     context = %{context | vars: Map.put(context.vars, field_name, new_value)}
 
-    {nil, context}
+    # TODO: ADJUST
+    {nil, context, false}
   end
 
   defp do_eval(
@@ -104,7 +120,8 @@ defmodule Solid.Tag do
       | vars: Map.put(context.vars, field_name, captured)
     }
 
-    {nil, context}
+    # TODO: ADJUST
+    {nil, context, false}
   end
 
   defp do_eval([counter_exp: [{operation, default}, field]], context, _options) do
@@ -116,13 +133,16 @@ defmodule Solid.Tag do
       | counter_vars: Map.put(context.counter_vars, field_name, value + operation)
     }
 
-    {[text: to_string(value)], context}
+    # TODO: ADJUST
+    {[text: to_string(value)], context, false}
   end
 
+  # TODO: SPECIAL TRIM?
   defp do_eval([break_exp: _], context, _options) do
     throw({:break_exp, [], context})
   end
 
+  # TODO: SPECIAL TRIM?
   defp do_eval([continue_exp: _], context, _options) do
     throw({:continue_exp, [], context})
   end
@@ -147,8 +167,13 @@ defmodule Solid.Tag do
     do_for(enumerable_key, enumerable, exp, context, options)
   end
 
-  defp do_eval([raw_exp: raw], context, _options) do
-    {[text: raw], context}
+  defp do_eval(
+         [raw_exp: [{:trim_previous, trim_previous}, {:trim_next, trim_next} | raw]],
+         context,
+         _options
+       ) do
+    # Note: We do not want to trim raw text.
+    {[raw_text: raw], %{context | trim_current: trim_next}, trim_previous}
   end
 
   defp do_for(_, [], exp, context, _options) do
@@ -187,7 +212,8 @@ defmodule Solid.Tag do
   catch
     {:result, result, context} ->
       context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
-      {[text: Enum.reverse(result)], context}
+      # TODO: ADJUST
+      {[text: Enum.reverse(result)], context, false}
   end
 
   defp set_enumerable_value(acc_context, key, value) do

@@ -5,7 +5,7 @@ defmodule Solid do
   iex> Solid.parse("{{ variable }}") |> elem(1) |> Solid.render(%{ "variable" => "value" }) |> to_string
   "value"
   """
-  alias Solid.{Object, Tag, Context}
+  alias Solid.{Object, Tag, Context, Trimmer}
 
   defmodule Template do
     @enforce_keys [:parsed_template]
@@ -73,9 +73,7 @@ defmodule Solid do
     {result, context} =
       Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
         try do
-          {result, context} = do_render(entry, context, options)
-          {result, acc, context} = maybe_trim(entry, result, acc, context)
-          {[result | acc], context}
+          do_render(entry, acc, context, options)
         catch
           {:break_exp, partial_result, context} ->
             throw({:break_exp, Enum.reverse([partial_result | acc]), context})
@@ -88,67 +86,41 @@ defmodule Solid do
     {Enum.reverse(result), context}
   end
 
-  defp maybe_trim({:text, _data}, result, acc, context) do
-    result = maybe_trim_current(result, context)
-    context = %{context | trim_next: false}
-    {result, acc, context}
+  defp do_render({:text, string}, acc, context, _options) do
+    string = Trimmer.trim_current(string, context.trim_current)
+    {[string | acc], %{context | trim_current: false}}
   end
 
-  defp maybe_trim({:object, data}, result, acc, context) do
-    trim_previous = Keyword.get(data, :trim_previous)
-    acc = maybe_trim_previous(acc, trim_previous)
-
-    result = maybe_trim_current(result, context)
-
-    trim_next = Keyword.get(data, :trim_next)
-    context = %{context | trim_next: trim_next}
-
-    {result, acc, context}
+  # TODO: Here to prevent trimming from inner text of other tags.
+  defp do_render({:raw_text, string}, acc, context, _options) do
+    {[string | acc], context}
   end
 
-  defp maybe_trim({:tag, _data}, result, acc, context) do
-    context = %{context | trim_next: false}
-    {result, acc, context}
+  defp do_render({:object, object}, acc, context, options) do
+    {trim_previous, object} = Keyword.pop!(object, :trim_previous)
+    {trim_next, object} = Keyword.pop!(object, :trim_next)
+
+    object_text =
+      Object.render(object, context, options)
+      |> Trimmer.trim_current(context.trim_current)
+
+    acc = Trimmer.trim_previous(acc, trim_previous)
+
+    {[object_text | acc], %{context | trim_current: trim_next}}
   end
 
-  defp maybe_trim_current(result, context) do
-    if context.trim_next do
-      trim_leading(result)
-    else
-      result
-    end
-  end
+  defp do_render({:tag, tag}, acc, context, options) do
+    # IO.inspect(tag, label: "TAG")
+    {result, context, trim_previous} = Tag.eval(tag, context, options)
 
-  defp maybe_trim_previous(acc, false), do: acc
-  defp maybe_trim_previous(acc = [], _), do: acc
+    {out, context} =
+      if result do
+        render(result, context, options)
+      else
+        {"", context}
+      end
 
-  defp maybe_trim_previous([prev | tail], true) do
-    trimmed_prev = trim_trailing(prev)
-    [trimmed_prev | tail]
-  end
-
-  defp trim_trailing([value]) do
-    [String.trim_trailing(value)]
-  end
-
-  defp trim_leading([value]) do
-    [String.trim_leading(value)]
-  end
-
-  defp do_render({:text, string}, context, _options), do: {string, context}
-
-  defp do_render({:object, object}, context, options) do
-    object_text = Object.render(object, context, options)
-    {object_text, context}
-  end
-
-  defp do_render({:tag, tag}, context, options) do
-    {result, context} = Tag.eval(tag, context, options)
-
-    if result do
-      render(result, context, options)
-    else
-      {"", context}
-    end
+    acc = Trimmer.trim_previous(acc, trim_previous)
+    {[out | acc], context}
   end
 end
