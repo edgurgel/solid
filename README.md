@@ -21,7 +21,9 @@ def deps do
 end
 ```
 
+## Contributing
 
+When adding new functionality or fixing bugs consider adding a new test case here inside `test/cases`. These cases are tested against the Ruby gem so we can try to stay as close as possible to the original implementation.
 ## TODO
 
 * [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
