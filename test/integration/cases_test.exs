@@ -13,6 +13,18 @@ for test_case <- File.ls!(cases_dir) do
     @external_resource @liquid_input_file
     @external_resource @json_input_file
 
+    defmodule Solid.CustomFilters do
+      def substitute(message, bindings \\ %{}) do
+        Regex.replace(~r/%\{(\w+)\}/, message, fn _, key -> Map.get(bindings, key) end)
+      end
+    end
+
+    setup do
+      Application.put_env(:solid, :custom_filters, Solid.CustomFilters)
+
+      :ok
+    end
+
     @tag case: test_case
     test "case #{test_case}" do
       liquid_input = File.read!(@liquid_input_file)

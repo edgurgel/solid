@@ -37,11 +37,30 @@ defmodule Solid.Argument do
   defp apply_filters(input, nil, _), do: input
   defp apply_filters(input, [], _), do: input
 
+  defp apply_filters(
+         input,
+         [{:filter, [filter, {:arguments, [{:named_arguments, args}]}]} | filters],
+         context
+       ) do
+    values = parse_named_arguments(args, context)
+
+    filter
+    |> Filter.apply([input | values])
+    |> apply_filters(filters, context)
+  end
+
   defp apply_filters(input, [{:filter, [filter, {:arguments, args}]} | filters], context) do
     values = for arg <- args, do: get([arg], context)
 
     filter
     |> Filter.apply([input | values])
     |> apply_filters(filters, context)
+  end
+
+  defp parse_named_arguments(ast, context) do
+    ast
+    |> Enum.chunk_every(2)
+    |> Map.new(fn [key, value_or_field] -> {key, get([value_or_field], context)} end)
+    |> List.wrap()
   end
 end
