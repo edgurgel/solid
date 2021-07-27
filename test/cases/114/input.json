@@ -1,3 +1,1 @@
-{
-  "enabled?": false
-}
+{ "input": "hello %{first_name}, %{last_name}", "surname": "john" }

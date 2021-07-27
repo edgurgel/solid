@@ -1,5 +1,1 @@
-{% if enabled? == false %}
-ON
-{% else %}
-OFF
-{% endif %}
+{{ input | substitute: first_name: surname, last_name: 'doe' }}
