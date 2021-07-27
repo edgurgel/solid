@@ -11,7 +11,6 @@ defmodule Solid.Parser.Base do
         end
       end
 
-      space = string(" ") |> times(min: 0)
       identifier = ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-, ??], min: 1)
 
       plus = string("+")
@@ -95,18 +94,7 @@ defmodule Solid.Parser.Base do
         ])
         |> unwrap_and_tag(:value)
 
-      argument_name =
-        ascii_string([?a..?z, ?A..?Z], 1)
-        |> concat(ascii_string([?a..?z, ?A..?Z, ?_], min: 0))
-        |> reduce({Enum, :join, []})
-
       argument = choice([value, field])
-
-      named_argument =
-        argument_name
-        |> ignore(string(":"))
-        |> ignore(space)
-        |> choice([value, field])
 
       opening_tag = string("{%")
       closing_tag = string("%}")
@@ -123,6 +111,10 @@ defmodule Solid.Parser.Base do
           string("}}") |> replace(false) |> unwrap_and_tag(:trim_next)
         ])
 
+      space =
+        string(" ")
+        |> times(min: 0)
+
       text =
         lookahead_not(choice([opening_objects, opening_tag]))
         |> utf8_string([], 1)
@@ -135,7 +127,7 @@ defmodule Solid.Parser.Base do
         |> concat(ascii_string([?a..?z, ?A..?Z, ?_], min: 0))
         |> reduce({Enum, :join, []})
 
-      positional_arguments =
+      arguments =
         argument
         |> repeat(
           ignore(space)
@@ -143,18 +135,6 @@ defmodule Solid.Parser.Base do
           |> ignore(space)
           |> concat(argument)
         )
-
-      named_arguments =
-        named_argument
-        |> repeat(
-          ignore(space)
-          |> ignore(string(","))
-          |> ignore(space)
-          |> concat(named_argument)
-        )
-        |> tag(:named_arguments)
-
-      arguments = choice([named_arguments, positional_arguments])
 
       filter =
         ignore(space)

@@ -19,10 +19,6 @@ defmodule Solid.Integration.CustomFiltersTest do
 
     def date_format(date, _format),
       do: to_string(date)
-
-    def substitute(message, bindings \\ %{}) do
-      Regex.replace(~r/%\{(\w+)\}/, message, fn _, key -> Map.get(bindings, key) end)
-    end
   end
 
   setup do
@@ -46,19 +42,10 @@ defmodule Solid.Integration.CustomFiltersTest do
     end
 
     test "date format with malformed format", %{date: date} do
-      assert render(~s<{{ date_var | date_format: "x/y/z" }}>, %{"date_var" => date}) ==
-               "2019-10-31"
-    end
-
-    test "substitute without bindings" do
-      assert render(~s<{{ "hello world" | substitute }}>)
-    end
-
-    test "substitute with bindings", %{date: date} do
-      assert render(~s<{{ "today is %{today}" | substitute: today: date_var }}>, %{
-               "date_var" => date
-             }) ==
-               "today is 2019-10-31"
+      assert render(
+               ~s<{{ date_var | date_format: "x/y/z" }}>,
+               %{"date_var" => date} == "2019-10-31"
+             )
     end
   end
 end
