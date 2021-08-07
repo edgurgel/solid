@@ -83,6 +83,10 @@ defmodule Solid.Context do
     {:ok, Map.get(data, "size", Enum.count(data))}
   end
 
+  defp do_get_in(data, ["size"]) when is_binary(data) do
+    {:ok, byte_size(data)}
+  end
+
   defp do_get_in(data, [key | keys]) when is_map(data) do
     do_get_in(data[key], keys)
   end
