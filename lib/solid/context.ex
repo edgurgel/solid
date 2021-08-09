@@ -84,7 +84,7 @@ defmodule Solid.Context do
   end
 
   defp do_get_in(data, ["size"]) when is_binary(data) do
-    {:ok, byte_size(data)}
+    {:ok, String.length(data)}
   end
 
   defp do_get_in(data, [key | keys]) when is_map(data) do
