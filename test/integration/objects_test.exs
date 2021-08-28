@@ -31,4 +31,21 @@ defmodule Solid.Integration.ObjectsTest do
     hash = %{"key1" => %{"key2" => %{"key3" => 123}}}
     assert render("Number {{ key1.key2.key3 }} !", hash) == "Number 123 !"
   end
+
+  test "whitespace control" do
+    template = """
+    Hi
+
+    :
+     {{-  name  -}}
+
+    !
+    """
+
+    assert render(template, %{"name" => "Hans"}) == """
+           Hi
+
+           :Hans!
+           """
+  end
 end
