@@ -300,5 +300,44 @@ defmodule Solid.TagTest do
       exp = [expression: @true_exp, result: "if"]
       assert eval([{:if_exp, exp}], %Context{}, []) == {"if", context}
     end
+
+    test "eval capture_exp with literal value" do
+      context = %Context{vars: %{}}
+      new_context = %Context{vars: %{"y" => "ABC"}}
+
+      assert eval(
+               [
+                 capture_exp: [
+                   field: ["y"],
+                   result: [text: ["ABC"]]
+                 ]
+               ],
+               context,
+               []
+             ) ==
+               {nil, new_context}
+    end
+
+    test "eval capture_exp with if" do
+      context = %Context{vars: %{}}
+      new_context = %Context{vars: %{"y" => "ABC"}}
+
+      assert eval(
+               [
+                 capture_exp: [
+                   field: ["y"],
+                   result: [
+                     tag: [
+                       if_exp: [expression: [value: true], result: [text: ["ABC"]]],
+                       elsif_exps: []
+                     ]
+                   ]
+                 ]
+               ],
+               context,
+               []
+             ) ==
+               {nil, new_context}
+    end
   end
 end
