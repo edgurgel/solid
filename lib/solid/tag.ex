@@ -101,7 +101,7 @@ defmodule Solid.Tag do
 
     context = %{
       context
-      | vars: Map.put(context.vars, field_name, captured)
+      | vars: Map.put(context.vars, field_name, IO.iodata_to_binary(captured))
     }
 
     {nil, context}
