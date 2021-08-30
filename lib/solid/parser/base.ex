@@ -5,7 +5,6 @@ defmodule Solid.Parser.Base do
     quote do
       import NimbleParsec
       alias Solid.Parser.Literal
-      alias Solid.Parser.Tag
 
       defp when_join(whens) do
         for {:when, [value: value, result: result]} <- whens, into: %{} do
@@ -13,7 +12,7 @@ defmodule Solid.Parser.Base do
         end
       end
 
-      space = utf8_string([?\s, ?\n, ?\r, ?\t], min: 0)
+      space = Literal.whitespace(min: 0)
       identifier = ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-, ??], min: 1)
 
       bracket_access =
@@ -47,12 +46,23 @@ defmodule Solid.Parser.Base do
       opening_wc_object = string("{{-")
       closing_object = string("}}")
       closing_wc_object = string("-}}")
-      opening_tag = string("{%")
-      closing_tag = string("%}")
 
-      space =
-        string(" ")
-        |> times(min: 0)
+      opening_tag =
+        string("{%")
+        |> concat(optional(string("-")))
+        |> concat(space)
+
+      opening_wc_tag = string("{%-")
+      closing_wc_tag = string("-%}")
+
+      closing_wc_tag_and_whitespace =
+        closing_wc_tag
+        |> concat(space)
+        |> ignore()
+
+      closing_tag =
+        space
+        |> concat(choice([closing_wc_tag_and_whitespace, string("%}")]))
 
       filter_name =
         ascii_string([?a..?z, ?A..?Z], 1)
@@ -265,7 +275,6 @@ defmodule Solid.Parser.Base do
 
       assign_tag =
         ignore(opening_tag)
-        |> ignore(space)
         |> ignore(string("assign"))
         |> ignore(space)
         |> concat(field)
@@ -274,7 +283,6 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> tag(argument, :argument)
         |> optional(tag(repeat(filter), :filters))
-        |> ignore(space)
         |> ignore(closing_tag)
         |> tag(:assign_exp)
 
@@ -328,7 +336,6 @@ defmodule Solid.Parser.Base do
         |> tag(parsec(:liquid_entry), :result)
         |> optional(tag(else_tag, :else_exp))
         |> ignore(opening_tag)
-        |> ignore(space)
         |> ignore(string("endfor"))
         |> ignore(space)
         |> ignore(closing_tag)
@@ -336,49 +343,36 @@ defmodule Solid.Parser.Base do
 
       capture_tag =
         ignore(opening_tag)
-        |> ignore(space)
         |> ignore(string("capture"))
         |> ignore(space)
         |> concat(field)
-        |> ignore(space)
-        |> ignore(space)
         |> ignore(closing_tag)
         |> tag(parsec(:liquid_entry), :result)
         |> ignore(opening_tag)
-        |> ignore(space)
         |> ignore(string("endcapture"))
-        |> ignore(space)
         |> ignore(closing_tag)
         |> tag(:capture_exp)
 
       break_tag =
         ignore(opening_tag)
-        |> ignore(space)
         |> ignore(string("break"))
-        |> ignore(space)
         |> ignore(closing_tag)
         |> tag(:break_exp)
 
       continue_tag =
         ignore(opening_tag)
-        |> ignore(space)
         |> ignore(string("continue"))
-        |> ignore(space)
         |> ignore(closing_tag)
         |> tag(:continue_exp)
 
       end_raw_tag =
         opening_tag
-        |> ignore(space)
         |> ignore(string("endraw"))
-        |> ignore(space)
         |> ignore(closing_tag)
 
       raw_tag =
         ignore(opening_tag)
-        |> ignore(space)
         |> ignore(string("raw"))
-        |> ignore(space)
         |> ignore(closing_tag)
         |> repeat(lookahead_not(ignore(end_raw_tag)) |> utf8_char([]))
         |> ignore(end_raw_tag)
@@ -386,7 +380,6 @@ defmodule Solid.Parser.Base do
 
       cycle_tag =
         ignore(opening_tag)
-        |> ignore(space)
         |> ignore(string("cycle"))
         |> ignore(space)
         |> optional(
@@ -405,7 +398,6 @@ defmodule Solid.Parser.Base do
           )
           |> tag(:values)
         )
-        |> ignore(space)
         |> ignore(closing_tag)
         |> tag(:cycle_exp)
 
@@ -436,7 +428,6 @@ defmodule Solid.Parser.Base do
         if custom_tags != [] do
           custom_tag =
             ignore(opening_tag)
-            |> ignore(space)
             |> concat(choice(custom_tags))
             |> ignore(space)
             |> tag(optional(arguments), :arguments)
@@ -458,6 +449,8 @@ defmodule Solid.Parser.Base do
           choice([
             Literal.whitespace(min: 1)
             |> concat(opening_wc_object),
+            Literal.whitespace(min: 1)
+            |> concat(opening_wc_tag),
             opening_object,
             opening_tag
           ])
@@ -469,7 +462,7 @@ defmodule Solid.Parser.Base do
 
       leading_whitespace =
         Literal.whitespace(min: 1)
-        |> lookahead(opening_wc_object)
+        |> lookahead(choice([opening_wc_object, opening_wc_tag]))
         |> ignore()
 
       defcombinatorp(:liquid_entry, repeat(choice([object, tags, text, leading_whitespace])))
