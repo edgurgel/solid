@@ -2,8 +2,9 @@ defmodule Solid.Parser.Base do
   defmacro __using__(opts) do
     custom_tags = Keyword.get(opts, :custom_tags, [])
 
-    quote do
+    quote location: :keep do
       import NimbleParsec
+      @before_compile Solid.Parser.Base
 
       defp when_join(whens) do
         for {:when, [value: value, result: result]} <- whens, into: %{} do
@@ -78,35 +79,32 @@ defmodule Solid.Parser.Base do
         ignore(string("."))
         |> concat(identifier)
 
-      field =
-        identifier
-        |> repeat(choice([dot_access, bracket_access]))
-        |> tag(:field)
+      @field identifier
+             |> repeat(choice([dot_access, bracket_access]))
+             |> tag(:field)
 
-      value =
-        choice([
-          float,
-          int,
-          true_value,
-          false_value,
-          null,
-          single_quoted_string,
-          double_quoted_string
-        ])
-        |> unwrap_and_tag(:value)
+      @value choice([
+               float,
+               int,
+               true_value,
+               false_value,
+               null,
+               single_quoted_string,
+               double_quoted_string
+             ])
+             |> unwrap_and_tag(:value)
 
       argument_name =
         ascii_string([?a..?z, ?A..?Z], 1)
         |> concat(ascii_string([?a..?z, ?A..?Z, ?_], min: 0))
         |> reduce({Enum, :join, []})
 
-      argument = choice([value, field])
+      @argument choice([@value, @field])
 
-      named_argument =
-        argument_name
-        |> ignore(string(":"))
-        |> ignore(space)
-        |> choice([value, field])
+      @named_argument argument_name
+                      |> ignore(string(":"))
+                      |> ignore(space)
+                      |> choice([@value, @field])
 
       opening_tag = string("{%")
       closing_tag = string("%}")
@@ -123,56 +121,52 @@ defmodule Solid.Parser.Base do
           string("}}") |> replace(false) |> unwrap_and_tag(:trim_next)
         ])
 
-      text =
-        lookahead_not(choice([opening_objects, opening_tag]))
-        |> utf8_string([], 1)
-        |> times(min: 1)
-        |> reduce({Enum, :join, []})
-        |> tag(:text)
+      @text lookahead_not(choice([opening_objects, opening_tag]))
+            |> utf8_string([], 1)
+            |> times(min: 1)
+            |> reduce({Enum, :join, []})
+            |> tag(:text)
 
       filter_name =
         ascii_string([?a..?z, ?A..?Z], 1)
         |> concat(ascii_string([?a..?z, ?A..?Z, ?_], min: 0))
         |> reduce({Enum, :join, []})
 
-      positional_arguments =
-        argument
-        |> repeat(
-          ignore(space)
-          |> ignore(string(","))
-          |> ignore(space)
-          |> concat(argument)
-        )
+      @positional_arguments @argument
+                            |> repeat(
+                              ignore(space)
+                              |> ignore(string(","))
+                              |> ignore(space)
+                              |> concat(@argument)
+                            )
 
-      named_arguments =
-        named_argument
-        |> repeat(
-          ignore(space)
-          |> ignore(string(","))
-          |> ignore(space)
-          |> concat(named_argument)
-        )
-        |> tag(:named_arguments)
+      @named_arguments @named_argument
+                       |> repeat(
+                         ignore(space)
+                         |> ignore(string(","))
+                         |> ignore(space)
+                         |> concat(@named_argument)
+                       )
+                       |> tag(:named_arguments)
 
-      arguments = choice([named_arguments, positional_arguments])
+      @arguments choice([@named_arguments, @positional_arguments])
 
       filter =
         ignore(space)
         |> ignore(string("|"))
         |> ignore(space)
         |> concat(filter_name)
-        |> tag(optional(ignore(string(":")) |> ignore(space) |> concat(arguments)), :arguments)
+        |> tag(optional(ignore(string(":")) |> ignore(space) |> concat(@arguments)), :arguments)
         |> tag(:filter)
 
-      object =
-        opening_objects
-        |> ignore(space)
-        |> lookahead_not(closing_objects)
-        |> tag(argument, :argument)
-        |> optional(tag(repeat(filter), :filters))
-        |> ignore(space)
-        |> concat(closing_objects)
-        |> tag(:object)
+      @object opening_objects
+              |> ignore(space)
+              |> lookahead_not(closing_objects)
+              |> tag(@argument, :argument)
+              |> optional(tag(repeat(filter), :filters))
+              |> ignore(space)
+              |> concat(closing_objects)
+              |> tag(:object)
 
       comment = string("comment")
 
@@ -204,7 +198,7 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> concat(choice([increment, decrement]))
         |> ignore(space)
-        |> concat(field)
+        |> concat(@field)
         |> ignore(space)
         |> ignore(closing_tag)
         |> tag(:counter_exp)
@@ -214,7 +208,7 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> ignore(string("case"))
         |> ignore(space)
-        |> concat(argument)
+        |> concat(@argument)
         |> ignore(space)
         |> ignore(closing_tag)
 
@@ -223,7 +217,7 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> ignore(string("when"))
         |> ignore(space)
-        |> concat(value)
+        |> concat(@value)
         |> ignore(space)
         |> ignore(closing_tag)
         |> tag(parsec(:liquid_entry), :result)
@@ -262,16 +256,16 @@ defmodule Solid.Parser.Base do
         |> map({:erlang, :binary_to_atom, [:utf8]})
 
       boolean_operation =
-        tag(argument, :arg1)
+        tag(@argument, :arg1)
         |> ignore(space)
         |> tag(operator, :op)
         |> ignore(space)
-        |> tag(argument, :arg2)
+        |> tag(@argument, :arg2)
         |> wrap()
 
       expression =
         ignore(space)
-        |> choice([boolean_operation, argument])
+        |> choice([boolean_operation, @argument])
         |> ignore(space)
 
       bool_and =
@@ -337,11 +331,11 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> ignore(string("assign"))
         |> ignore(space)
-        |> concat(field)
+        |> concat(@field)
         |> ignore(space)
         |> ignore(string("="))
         |> ignore(space)
-        |> tag(argument, :argument)
+        |> tag(@argument, :argument)
         |> optional(tag(repeat(filter), :filters))
         |> ignore(space)
         |> ignore(closing_tag)
@@ -349,9 +343,9 @@ defmodule Solid.Parser.Base do
 
       range =
         ignore(string("("))
-        |> unwrap_and_tag(choice([integer(min: 1), field]), :first)
+        |> unwrap_and_tag(choice([integer(min: 1), @field]), :first)
         |> ignore(string(".."))
-        |> unwrap_and_tag(choice([integer(min: 1), field]), :last)
+        |> unwrap_and_tag(choice([integer(min: 1), @field]), :last)
         |> ignore(string(")"))
         |> tag(:range)
 
@@ -385,11 +379,11 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> ignore(string("for"))
         |> ignore(space)
-        |> concat(argument)
+        |> concat(@argument)
         |> ignore(space)
         |> ignore(string("in"))
         |> ignore(space)
-        |> tag(choice([field, range]), :enumerable)
+        |> tag(choice([@field, range]), :enumerable)
         |> ignore(space)
         |> unwrap_and_tag(for_parameters, :parameters)
         |> ignore(space)
@@ -408,7 +402,7 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> ignore(string("capture"))
         |> ignore(space)
-        |> concat(field)
+        |> concat(@field)
         |> ignore(space)
         |> ignore(space)
         |> ignore(closing_tag)
@@ -478,7 +472,7 @@ defmodule Solid.Parser.Base do
         |> ignore(closing_tag)
         |> tag(:cycle_exp)
 
-      base_tags = [
+      @base_tags [
         counter_tag,
         comment_tag,
         assign_tag,
@@ -493,36 +487,42 @@ defmodule Solid.Parser.Base do
         cycle_tag
       ]
 
-      # We must try to parse longer strings first so if
-      # foo and foobar are custom tags foobar must be tried to be parsed first
       custom_tags =
         unquote(custom_tags)
         |> Enum.uniq()
         |> Enum.sort_by(&String.length/1, &Kernel.>=/2)
         |> Enum.map(fn custom_tag -> string(custom_tag) end)
 
-      all_tags =
-        if custom_tags != [] do
+      custom_tag =
+        if(custom_tags != []) do
           custom_tag =
             ignore(opening_tag)
             |> ignore(space)
             |> concat(choice(custom_tags))
             |> ignore(space)
-            |> tag(optional(arguments), :arguments)
+            |> tag(optional(@arguments), :arguments)
             |> ignore(space)
             |> ignore(closing_tag)
             |> tag(:custom_tag)
 
-          base_tags ++ [custom_tag]
+          [custom_tag]
         else
-          base_tags
+          []
         end
+
+      @custom_tags custom_tag
+    end
+  end
+
+  defmacro __before_compile__(_env) do
+    quote do
+      all_tags = @base_tags ++ @custom_tags
 
       tags =
         choice(all_tags)
         |> tag(:tag)
 
-      defcombinatorp(:liquid_entry, repeat(choice([object, tags, text])))
+      defcombinatorp(:liquid_entry, repeat(choice([@object, tags, @text])))
 
       defparsec(:parse, parsec(:liquid_entry) |> eos())
     end

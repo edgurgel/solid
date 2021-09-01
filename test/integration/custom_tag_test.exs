@@ -21,6 +21,25 @@ defmodule Solid.Integration.CustomTagsTest do
         "#{dt.year}-#{dt.month}-#{dt.day}"
       end
     end
+
+    defmodule IncludeTag do
+      @template %{
+        "one" => "Hi!",
+        "greeting" => "Hi, %{name}!"
+      }
+
+      def render(_context,
+            template: [value: template_name],
+            arguments: [named_arguments: ["name", {:value, name}]]
+          ) do
+        Map.get(@template, template_name, "")
+        |> String.replace("%{name}", name)
+      end
+
+      def render(_context, template: [value: template_name]) do
+        Map.get(@template, template_name)
+      end
+    end
   end
 
   describe "custom tags" do
@@ -74,6 +93,30 @@ defmodule Solid.Integration.CustomTagsTest do
         )
 
       assert String.trim(rendered) == "<span>2020-8-6</span><span>2021-5-3</span>"
+    end
+
+    test "render custom include tag with no argument" do
+      rendered =
+        render(
+          "{% include 'one' %}",
+          %{},
+          tags: %{"include" => CustomTags.IncludeTag},
+          parser: CustomIncludeParser
+        )
+
+      assert String.trim(rendered) == "Hi!"
+    end
+
+    test "render custom include tag with arguent" do
+      rendered =
+        render(
+          "{% include 'greeting', name: 'Jose'  %}",
+          %{},
+          tags: %{"include" => CustomTags.IncludeTag},
+          parser: CustomIncludeParser
+        )
+
+      assert String.trim(rendered) == "Hi, Jose!"
     end
   end
 end
