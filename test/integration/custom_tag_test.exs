@@ -21,6 +21,21 @@ defmodule Solid.Integration.CustomTagsTest do
         "#{dt.year}-#{dt.month}-#{dt.day}"
       end
     end
+
+    defmodule PaddingText do
+      def render(context, arguments: [value: text, value: pad_str, named_arguments: args]) do
+        %{"times" => time} = parse_named_arguments(args, context)
+        "#{text}#{String.duplicate(pad_str, time)}"
+      end
+
+      defp parse_named_arguments(ast, context) do
+        ast
+        |> Enum.chunk_every(2)
+        |> Map.new(fn [key, value_or_field] ->
+          {key, Solid.Argument.get([value_or_field], context)}
+        end)
+      end
+    end
   end
 
   describe "custom tags" do
@@ -74,6 +89,18 @@ defmodule Solid.Integration.CustomTagsTest do
         )
 
       assert String.trim(rendered) == "<span>2020-8-6</span><span>2021-5-3</span>"
+    end
+
+    test "custom tag with mix positional and named argument" do
+      rendered =
+        render(
+          "{% pad 'its so c', 'o', times: count %}",
+          %{"count" => 10},
+          tags: %{"pad" => CustomTags.PaddingText},
+          parser: CustomPaddingParser
+        )
+
+      assert String.trim(rendered) == "its so coooooooooo"
     end
   end
 end

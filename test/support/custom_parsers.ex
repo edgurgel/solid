@@ -5,3 +5,7 @@ end
 defmodule CustomFooParser do
   use Solid.Parser.Base, custom_tags: ["foobar", "foobarval"]
 end
+
+defmodule CustomPaddingParser do
+  use Solid.Parser.Base, custom_tags: ["padding", "pad"]
+end
