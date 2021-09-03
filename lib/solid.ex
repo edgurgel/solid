@@ -95,8 +95,7 @@ defmodule Solid do
   end
 
   defp do_render({:tag, tag}, context, options) do
-    {tag_text, context} = render_tag(tag, context, options)
-    {tag_text, context}
+    render_tag(tag, context, options)
   end
 
   defp render_tag(tag, context, options) do
