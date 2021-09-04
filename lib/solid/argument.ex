@@ -63,7 +63,7 @@ defmodule Solid.Argument do
     |> apply_filters(filters, context)
   end
 
-  defp parse_named_arguments(ast, context) do
+  def parse_named_arguments(ast, context) do
     ast
     |> Enum.chunk_every(2)
     |> Map.new(fn [key, value_or_field] -> {key, get([value_or_field], context)} end)

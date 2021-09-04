@@ -151,6 +151,36 @@ defmodule Solid.Tag do
     {[text: raw], context}
   end
 
+  defp do_eval(
+         [render_exp: [template: template_binding, arguments: argument_binding]],
+         context,
+         options
+       ) do
+    template = Argument.get(template_binding, context)
+
+    binding_vars =
+      Keyword.get(argument_binding || [], :named_arguments, [])
+      |> Argument.parse_named_arguments(context)
+
+    with {:ok, path} <-
+           Solid.TemplateResolver.lookup(
+             template,
+             options[:cwd],
+             options[:lookup_dir] || []
+           ),
+         options = Keyword.put(options, :cwd, Path.dirname(path)),
+         {:ok, template_str} <- File.read(path),
+         {:ok, template} <- Solid.parse(template_str) do
+      rendered_text = Solid.render(template, %Context{vars: binding_vars}, options)
+      {[text: rendered_text], context}
+    else
+      err ->
+        IO.inspect(inspect(err))
+        # raise "cannot render template #{template}"
+        {[text: "template not found"], context}
+    end
+  end
+
   defp do_for(_, [], exp, context, _options) do
     exp = Keyword.get(exp, :else_exp)
     {exp[:result], context}
