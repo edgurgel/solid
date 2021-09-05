@@ -51,6 +51,19 @@ defmodule Solid do
 
   @doc """
   It renders the compiled template using a `hash` with vars
+  To help `render` tag work correctly, you should specify `cwd` and `lookup_dir` options
+
+  **Options**
+  - `tags`: map of custom render module for custom tag. Ex: `%{"my_tag" => MyRenderer}`
+  - `cwd`: current working directory, `render` tags would look for template in this directory first
+  - `lookup_dir`: list of directory for `render` to look up for template. If `cwd` is nil or no template found in `cwd` then it will look up in `lookup_dir` and stop when found a matching template. For more about lookup rule, please read below
+
+
+  **Lookup rules for `render` tag**
+  - Template name could be full name: `index.html`, `index.liquid`. If it's `.liquid` template, you can ommit extension
+  - Template path is relative to `cwd` or `lookup_dir`
+  - Template path starts with `..` is relative to current directory `cwd` only.
+  - Lookup order `cwd` -> first `lookup_dir` -> ... -> last `lookup_dir`
   """
   # @spec render(any, Map.t) :: iolist
   def render(template_or_text, values, options \\ [])

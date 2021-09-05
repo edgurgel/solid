@@ -161,6 +161,8 @@ defmodule Solid.Tag do
     binding_vars =
       Keyword.get(argument_binding || [], :named_arguments, [])
       |> Argument.parse_named_arguments(context)
+      |> Enum.concat()
+      |> Map.new()
 
     with {:ok, path} <-
            Solid.TemplateResolver.lookup(
@@ -171,11 +173,11 @@ defmodule Solid.Tag do
          options = Keyword.put(options, :cwd, Path.dirname(path)),
          {:ok, template_str} <- File.read(path),
          {:ok, template} <- Solid.parse(template_str) do
-      rendered_text = Solid.render(template, %Context{vars: binding_vars}, options)
+      rendered_text = Solid.render(template, binding_vars, options)
       {[text: rendered_text], context}
     else
-      err ->
-        IO.inspect(inspect(err))
+      _err ->
+        # IO.inspect(inspect(err))
         # raise "cannot render template #{template}"
         {[text: "template not found"], context}
     end

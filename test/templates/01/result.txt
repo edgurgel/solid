@@ -1,2 +1,2 @@
 --> index-template
-{% render "item" %}
+--> item-template

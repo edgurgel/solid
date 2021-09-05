@@ -1,0 +1,5 @@
+--> index-template
+--> item-template
+--> message: hello
+--> item-template
+--> message: we are solid 
