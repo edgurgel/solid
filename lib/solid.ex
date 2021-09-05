@@ -55,15 +55,12 @@ defmodule Solid do
 
   **Options**
   - `tags`: map of custom render module for custom tag. Ex: `%{"my_tag" => MyRenderer}`
-  - `cwd`: current working directory, `render` tags would look for template in this directory first
-  - `lookup_dir`: list of directory for `render` to look up for template. If `cwd` is nil or no template found in `cwd` then it will look up in `lookup_dir` and stop when found a matching template. For more about lookup rule, please read below
+  - `file_system`: a tuple of {FileSytemModule, options}. If this option is not specified, `Solid` use `Solid.BlankFileSystem` which raise error when you use `render` tag. You can use `Solid.LocalFileSystem` or implement your own file system. Please read `Solid.FileSytem` for more detail.
 
+  **Example**:
 
-  **Lookup rules for `render` tag**
-  - Template name could be full name: `index.html`, `index.liquid`. If it's `.liquid` template, you can ommit extension
-  - Template path is relative to `cwd` or `lookup_dir`
-  - Template path starts with `..` is relative to current directory `cwd` only.
-  - Lookup order `cwd` -> first `lookup_dir` -> ... -> last `lookup_dir`
+      fs = Solid.LocalFileSystem.new("/path/to/template/dir/")
+      Solid.render(template, vars, [file_system: {Solid.LocalFileSystem, fs}])
   """
   # @spec render(any, Map.t) :: iolist
   def render(template_or_text, values, options \\ [])
