@@ -1,6 +1,0 @@
---> index-template
---> item-template1
---> item-template2
---> item-template3
---> item-template4
---> item-template5

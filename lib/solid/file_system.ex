@@ -9,13 +9,13 @@ defmodule Solid.FileSystem do
   Example:
 
     file_system = Solid.LocalFileSystem.new(template_path)
-    text = Solid.render(template, file_system: file_system)
+    text = Solid.render(template, file_system: {Solid.LocalFileSystem, file_system})
 
   This will render the template with a LocalFileSystem implementation rooted at 'template_path'.
   """
 
   # Called by Solid to retrieve a template file
-  @callback read_template_file(file_system :: any(), binary()) :: binary()
+  @callback read_template_file(binary(), options :: any()) :: binary()
 end
 
 defmodule Solid.BlankFileSystem do
@@ -25,7 +25,7 @@ defmodule Solid.BlankFileSystem do
   @behaviour Solid.FileSystem
 
   @impl true
-  def read_template_file(_file_system, _template_path) do
+  def read_template_file(_template_path, _opts) do
     raise File.Error, reason: "This solid context does not allow includes."
   end
 end
@@ -55,7 +55,7 @@ defmodule Solid.LocalFileSystem do
 
       file_system = Solid.LocalFileSystem.new("/some/path", "%s.html")
 
-      Solid.LocalFileSystem.full_path(file_system, "index")
+      Solid.LocalFileSystem.full_path( "index", file_system)
       # => "/some/path/index.html"
 
   """
@@ -70,17 +70,17 @@ defmodule Solid.LocalFileSystem do
   end
 
   @impl true
-  def read_template_file(file_system, template_path) do
-    full_path = full_path(file_system, template_path)
+  def read_template_file(template_path, file_system) do
+    full_path = full_path(template_path, file_system)
 
     if File.exists?(full_path) do
-      File.read(full_path)
+      File.read!(full_path)
     else
       raise File.Error, reason: "No such template '#{template_path}'"
     end
   end
 
-  def full_path(file_system, template_path) do
+  def full_path(template_path, file_system) do
     if String.match?(template_path, Regex.compile!("^[^./][a-zA-Z0-9_/]+$")) do
       template_name = String.replace(file_system.pattern, "%s", Path.basename(template_path))
 

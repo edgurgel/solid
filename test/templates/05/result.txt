@@ -1,2 +1,0 @@
---> default/partial/list
-template not found

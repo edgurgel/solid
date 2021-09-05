@@ -164,23 +164,12 @@ defmodule Solid.Tag do
       |> Enum.concat()
       |> Map.new()
 
-    with {:ok, path} <-
-           Solid.Helpers.TemplateResolver.lookup(
-             template,
-             options[:cwd],
-             options[:lookup_dir] || []
-           ),
-         options = Keyword.put(options, :cwd, Path.dirname(path)),
-         {:ok, template_str} <- File.read(path),
-         {:ok, template} <- Solid.parse(template_str) do
-      rendered_text = Solid.render(template, binding_vars, options)
-      {[text: rendered_text], context}
-    else
-      _err ->
-        # IO.inspect(inspect(err))
-        # raise "cannot render template #{template}"
-        {[text: "template not found"], context}
-    end
+    {file_system, instance} = options[:file_system] || {Solid.BlankFileSystem, nil}
+
+    template_str = file_system.read_template_file(template, instance)
+    template = Solid.parse!(template_str, options)
+    rendered_text = Solid.render(template, binding_vars, options)
+    {[text: rendered_text], context}
   end
 
   defp do_for(_, [], exp, context, _options) do

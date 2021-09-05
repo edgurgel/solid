@@ -1,0 +1,5 @@
+test nested render tag
+
+{% for i in (1..5) %}
+{% render "inner", index: i %}
+{% endfor %}
