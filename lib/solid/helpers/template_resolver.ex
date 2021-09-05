@@ -1,4 +1,4 @@
-defmodule Solid.TemplateResolver do
+defmodule Solid.Helpers.TemplateResolver do
   @moduledoc false
 
   @doc """
@@ -32,13 +32,9 @@ defmodule Solid.TemplateResolver do
   defp lookup_template(_, nil), do: {:error, :not_found}
 
   defp lookup_template(template, lookup_dir) do
-    path1 =
-      Path.expand(template, lookup_dir)
-      |> IO.inspect()
+    path1 = Path.expand(template, lookup_dir)
 
-    path2 =
-      Path.expand("#{template}.liquid", lookup_dir)
-      |> IO.inspect()
+    path2 = Path.expand("#{template}.liquid", lookup_dir)
 
     cond do
       File.exists?(path1, raw: true) ->

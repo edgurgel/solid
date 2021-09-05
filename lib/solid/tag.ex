@@ -165,7 +165,7 @@ defmodule Solid.Tag do
       |> Map.new()
 
     with {:ok, path} <-
-           Solid.TemplateResolver.lookup(
+           Solid.Helpers.TemplateResolver.lookup(
              template,
              options[:cwd],
              options[:lookup_dir] || []
