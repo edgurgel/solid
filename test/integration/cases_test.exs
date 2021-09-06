@@ -10,6 +10,7 @@ for test_case <- File.ls!(cases_dir) do
 
     @liquid_input_file "#{cases_dir}/#{test_case}/input.liquid"
     @json_input_file "#{cases_dir}/#{test_case}/input.json"
+    @template_directory "#{cases_dir}/#{test_case}"
     @external_resource @liquid_input_file
     @external_resource @json_input_file
 
@@ -30,7 +31,7 @@ for test_case <- File.ls!(cases_dir) do
       liquid_input = File.read!(@liquid_input_file)
       json_input = File.read!(@json_input_file)
 
-      assert_render(liquid_input, json_input)
+      assert_render(liquid_input, json_input, @template_directory)
     end
   end
 end

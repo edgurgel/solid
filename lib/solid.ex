@@ -51,6 +51,15 @@ defmodule Solid do
 
   @doc """
   It renders the compiled template using a `hash` with vars
+
+  **Options**
+  - `tags`: map of custom render module for custom tag. Ex: `%{"my_tag" => MyRenderer}`
+  - `file_system`: a tuple of {FileSytemModule, options}. If this option is not specified, `Solid` use `Solid.BlankFileSystem` which raise error when you use `render` tag. You can use `Solid.LocalFileSystem` or implement your own file system. Please read `Solid.FileSytem` for more detail.
+
+  **Example**:
+
+      fs = Solid.LocalFileSystem.new("/path/to/template/dir/")
+      Solid.render(template, vars, [file_system: {Solid.LocalFileSystem, fs}])
   """
   # @spec render(any, Map.t) :: iolist
   def render(template_or_text, values, options \\ [])

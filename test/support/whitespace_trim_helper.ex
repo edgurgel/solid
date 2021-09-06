@@ -13,7 +13,7 @@ defmodule WhitespaceTrimHelper do
         for {variant, counter} <- Enum.with_index(generate_permutations(unquote(input))) do
           @tag variant_nr: counter, variant: variant
           test "#{unquote(sanitized_name)}: #{counter}", %{variant: variant} do
-            assert_render(variant, unquote(json))
+            assert_render(variant, unquote(json), nil)
           end
         end
       end

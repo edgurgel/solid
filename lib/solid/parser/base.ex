@@ -401,6 +401,24 @@ defmodule Solid.Parser.Base do
         |> ignore(closing_tag)
         |> tag(:cycle_exp)
 
+      render_tag =
+        ignore(opening_tag)
+        |> ignore(space)
+        |> ignore(string("render"))
+        |> ignore(space)
+        |> tag(argument, :template)
+        |> tag(
+          optional(
+            ignore(string(","))
+            |> ignore(space)
+            |> concat(named_arguments)
+          ),
+          :arguments
+        )
+        |> ignore(space)
+        |> ignore(closing_tag)
+        |> tag(:render_exp)
+
       base_tags = [
         counter_tag,
         comment_tag,
@@ -413,7 +431,8 @@ defmodule Solid.Parser.Base do
         break_tag,
         continue_tag,
         raw_tag,
-        cycle_tag
+        cycle_tag,
+        render_tag
       ]
 
       # We must try to parse longer strings first so if

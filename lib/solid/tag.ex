@@ -151,6 +151,27 @@ defmodule Solid.Tag do
     {[text: raw], context}
   end
 
+  defp do_eval(
+         [render_exp: [template: template_binding, arguments: argument_binding]],
+         context,
+         options
+       ) do
+    template = Argument.get(template_binding, context)
+
+    binding_vars =
+      Keyword.get(argument_binding || [], :named_arguments, [])
+      |> Argument.parse_named_arguments(context)
+      |> Enum.concat()
+      |> Map.new()
+
+    {file_system, instance} = options[:file_system] || {Solid.BlankFileSystem, nil}
+
+    template_str = file_system.read_template_file(template, instance)
+    template = Solid.parse!(template_str, options)
+    rendered_text = Solid.render(template, binding_vars, options)
+    {[text: rendered_text], context}
+  end
+
   defp do_for(_, [], exp, context, _options) do
     exp = Keyword.get(exp, :else_exp)
     {exp[:result], context}
