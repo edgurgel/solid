@@ -51,7 +51,6 @@ defmodule Solid do
 
   @doc """
   It renders the compiled template using a `hash` with vars
-  To help `render` tag work correctly, you should specify `cwd` and `lookup_dir` options
 
   **Options**
   - `tags`: map of custom render module for custom tag. Ex: `%{"my_tag" => MyRenderer}`
