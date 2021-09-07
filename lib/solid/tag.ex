@@ -7,6 +7,12 @@ defmodule Solid.Tag do
 
   alias Solid.{Expression, Argument, Context}
 
+  defmodule CustomTag do
+    @callback spec() :: NimbleParsec.t()
+    @callback render(Solid.Context.t(), list(), keyword()) ::
+                binary() | {[binary()], Solid.Context.t()}
+  end
+
   @doc """
   Evaluate a tag and return the condition that succeeded or nil
   """
@@ -170,6 +176,19 @@ defmodule Solid.Tag do
     template = Solid.parse!(template_str, options)
     rendered_text = Solid.render(template, binding_vars, options)
     {[text: rendered_text], context}
+  end
+
+  defp do_eval([{custom_tag, tag_data}], context, options) do
+    tags = Keyword.get(options, :tags, %{})
+
+    result =
+      if(Map.has_key?(tags, custom_tag)) do
+        [text: tags[custom_tag].render(context, tag_data, options)]
+      else
+        nil
+      end
+
+    {result, context}
   end
 
   defp do_for(_, [], exp, context, _options) do
