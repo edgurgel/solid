@@ -5,6 +5,7 @@ defmodule CustomTags do
 
     @behaviour Solid.Tag.CustomTag
 
+    @impl true
     def spec() do
       space = Literal.whitespace(min: 0)
 
@@ -19,8 +20,9 @@ defmodule CustomTags do
       DateTime.utc_now().year |> to_string
     end
 
+    @impl true
     def render(_context, _arguments, _options) do
-      DateTime.utc_now().year |> to_string
+      [text: DateTime.utc_now().year |> to_string]
     end
   end
 
@@ -30,6 +32,7 @@ defmodule CustomTags do
 
     @behaviour Solid.Tag.CustomTag
 
+    @impl true
     def spec() do
       space = Literal.whitespace(min: 0)
 
@@ -53,15 +56,47 @@ defmodule CustomTags do
       "#{dt.year}-#{dt.month}-#{dt.day}"
     end
 
+    @impl true
     def render(_context, [arguments: [value: dt_str]], _options) do
       {:ok, dt, _} = DateTime.from_iso8601(dt_str)
-      "#{dt.year}-#{dt.month}-#{dt.day}"
+      [text: "#{dt.year}-#{dt.month}-#{dt.day}"]
     end
 
+    @impl true
     def render(context, [arguments: [field: [var_name]]], _options) do
       dt_str = Map.fetch!(context.iteration_vars, var_name)
       {:ok, dt, _} = DateTime.from_iso8601(dt_str)
-      "#{dt.year}-#{dt.month}-#{dt.day}"
+      [text: "#{dt.year}-#{dt.month}-#{dt.day}"]
+    end
+  end
+
+  defmodule CustomBrackedWrappedTag do
+    import NimbleParsec
+    alias Solid.Parser.Literal
+
+    @behaviour Solid.Tag.CustomTag
+
+    @impl true
+    def spec() do
+      space = Literal.whitespace(min: 0)
+
+      ignore(string("{%"))
+      |> ignore(space)
+      |> ignore(string("myblock"))
+      |> ignore(space)
+      |> ignore(string("%}"))
+      |> tag(parsec(:liquid_entry), :result)
+      |> ignore(string("{%"))
+      |> ignore(space)
+      |> ignore(string("endmyblock"))
+      |> ignore(space)
+      |> ignore(string("%}"))
+    end
+
+    @impl true
+    def render(context, [result: result], options) do
+      {text, _context} = Solid.render(result, context, options)
+      [text: ["[[", text, "]]"]]
     end
   end
 end

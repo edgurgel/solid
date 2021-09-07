@@ -4,7 +4,8 @@ defmodule CustomDateParser do
       "current_date",
       "get_year_of_date",
       {"get_current_date", CustomTags.CurrentDate},
-      {"get_year", CustomTags.GetYearOfDate}
+      {"get_year", CustomTags.GetYearOfDate},
+      {"myblock", CustomTags.CustomBrackedWrappedTag}
     ]
 end
 

@@ -108,5 +108,21 @@ defmodule Solid.Integration.CustomTagsTest do
 
       assert String.trim(rendered) == "<span>2020-8-6</span><span>2021-5-3</span>"
     end
+
+    test "custom block wrap bracket" do
+      rendered =
+        render(
+          """
+          {% myblock %}
+          {{- "hello" -}}
+          {% endmyblock %}
+          """,
+          %{},
+          tags: %{"myblock" => CustomTags.CustomBrackedWrappedTag},
+          parser: CustomDateParser
+        )
+
+      assert String.trim(rendered) == "[[hello]]"
+    end
   end
 end
