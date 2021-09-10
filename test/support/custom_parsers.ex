@@ -1,5 +1,12 @@
 defmodule CustomDateParser do
-  use Solid.Parser.Base, custom_tags: ["current_date", "get_year_of_date"]
+  use Solid.Parser.Base,
+    custom_tags: [
+      "current_date",
+      "get_year_of_date",
+      {"get_current_date", CustomTags.CurrentDate},
+      {"get_year", CustomTags.GetYearOfDate},
+      {"myblock", CustomTags.CustomBrackedWrappedTag}
+    ]
 end
 
 defmodule CustomFooParser do

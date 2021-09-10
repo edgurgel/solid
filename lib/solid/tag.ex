@@ -7,6 +7,68 @@ defmodule Solid.Tag do
 
   alias Solid.{Expression, Argument, Context}
 
+  defmodule CustomTag do
+    @moduledoc """
+    This module define behaviour for custom tag.
+
+    To implement new custom tag you need to create new module that implement `CustomTag` behaviour:
+
+        defmodule MyCustomTag do
+          import NimbleParsec
+          @behaviour Solid.Tag.CustomTag
+
+          @impl true
+          def spec() do
+            space = Solid.Parser.Literal.whitespace(min: 0)
+
+            ignore(string("{%"))
+            |> ignore(space)
+            |> ignore(string("my_tag"))
+            |> ignore(space)
+            |> ignore(string("%}"))
+          end
+
+          @impl true
+          def render(_context, _binding, _options) do
+            [text: "my first tag"]
+          end
+        end
+
+    - `spec` define how to parse your tag
+    - `render` define how to render your tag
+
+    Then add custom tag to your parser
+
+        defmodule MyParser do
+          use Solid.Parser.Base, custom_tag: [{"my_tag", MyCustomTag}]
+        end
+
+    Then pass your tag to render function
+
+        "{% my_tag %}"
+        |> Solid.parse!(parser: MyParser)
+        |> Solid.render(tags: %{"my_tag" => MyCustomTag})
+    """
+
+    @type rendered_data :: {:text, binary()} | {:object, keyword()} | {:tag, list()}
+
+    @doc """
+    Build and return NimbleParsec expression to parse your tag. There are some helper expressions that you can use in :
+    - `Solid.Parser.Literal`
+    - `Solid.Parser.Variable`
+    - `Solid.Parser.Argument`
+    """
+    @callback spec() :: NimbleParsec.t()
+
+    @doc """
+    Define how to render your custom tag.
+    Third argument is options that you pass to `Solid.render/2` function
+    """
+
+    @callback render(Solid.Context.t(), list(), keyword()) ::
+                list(rendered_data) | {list(rendered_data), Solid.Context.t()}
+  end
+
   @doc """
   Evaluate a tag and return the condition that succeeded or nil
   """
@@ -170,6 +232,19 @@ defmodule Solid.Tag do
     template = Solid.parse!(template_str, options)
     rendered_text = Solid.render(template, binding_vars, options)
     {[text: rendered_text], context}
+  end
+
+  defp do_eval([{custom_tag, tag_data}], context, options) do
+    tags = Keyword.get(options, :tags, %{})
+
+    if(Map.has_key?(tags, custom_tag)) do
+      case tags[custom_tag].render(context, tag_data, options) do
+        text when is_binary(text) -> [text: text]
+        result -> result
+      end
+    else
+      [text: nil]
+    end
   end
 
   defp do_for(_, [], exp, context, _options) do
