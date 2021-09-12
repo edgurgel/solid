@@ -88,20 +88,6 @@ defmodule Solid.Tag do
     {[text: result], context}
   end
 
-  defp do_eval([custom_tag: tag], context, options) do
-    [tag_name | tag_data] = tag
-    tags = Keyword.get(options, :tags, %{})
-
-    result =
-      if(Map.has_key?(tags, tag_name)) do
-        [text: tags[tag_name].render(context, tag_data)]
-      else
-        nil
-      end
-
-    {result, context}
-  end
-
   defp do_eval([{:if_exp, exp} | _] = tag, context, _options) do
     if eval_expression(exp[:expression], context), do: throw({:result, exp})
     elsif_exps = tag[:elsif_exps]
@@ -235,15 +221,14 @@ defmodule Solid.Tag do
   end
 
   defp do_eval([{custom_tag, tag_data}], context, options) do
-    tags = Keyword.get(options, :tags, %{})
+    # move this to Parser lookup
+    custom_tag_module = get_in(options, [:tags, custom_tag])
 
-    if(Map.has_key?(tags, custom_tag)) do
-      case tags[custom_tag].render(context, tag_data, options) do
+    if custom_tag_module do
+      case custom_tag_module.render(context, tag_data, options) do
         text when is_binary(text) -> [text: text]
         result -> result
       end
-    else
-      [text: nil]
     end
   end
 

@@ -99,4 +99,45 @@ defmodule CustomTags do
       [text: ["[[", text, "]]"]]
     end
   end
+
+  defmodule FoobarTag do
+    import NimbleParsec
+    @behaviour Solid.Tag.CustomTag
+    def spec() do
+      space = Solid.Parser.Literal.whitespace(min: 0)
+
+      ignore(string("{%"))
+      |> ignore(space)
+      |> ignore(string("foobar"))
+      |> ignore(space)
+      |> tag(optional(Solid.Parser.Argument.arguments()), :arguments)
+      |> ignore(space)
+      |> ignore(string("%}"))
+    end
+
+    def render(_context, _arguments, _opts) do
+      "barbaz"
+    end
+  end
+
+  defmodule FoobarValTag do
+    import NimbleParsec
+    @behaviour Solid.Tag.CustomTag
+
+    def spec() do
+      space = Solid.Parser.Literal.whitespace(min: 0)
+
+      ignore(string("{%"))
+      |> ignore(space)
+      |> ignore(string("foobarval"))
+      |> ignore(space)
+      |> tag(optional(Solid.Parser.Argument.arguments()), :arguments)
+      |> ignore(space)
+      |> ignore(string("%}"))
+    end
+
+    def render(_context, [arguments: [value: string]], _opts) do
+      "barbaz#{string}"
+    end
+  end
 end

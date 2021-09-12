@@ -1,8 +1,6 @@
 defmodule Solid.Parser.Base do
   defmacro __using__(opts) do
-    custom_tags = Keyword.get(opts, :custom_tags, [])
-    custom_tag_modules = Enum.filter(custom_tags, &is_tuple(&1))
-    custom_tag_names = custom_tags -- custom_tag_modules
+    custom_tag_modules = Keyword.get(opts, :custom_tags, [])
 
     quote location: :keep do
       import NimbleParsec
@@ -404,41 +402,16 @@ defmodule Solid.Parser.Base do
         render_tag
       ]
 
-      # We must try to parse longer strings first so if
-      # foo and foobar are custom tags foobar must be tried to be parsed first
-      custom_tag_names =
-        unquote(custom_tag_names)
-        |> Enum.uniq()
-        |> Enum.sort_by(&String.length/1, &Kernel.>=/2)
-        |> Enum.map(fn custom_tag -> string(custom_tag) end)
-
-      custom_tags =
-        if custom_tag_names != [] do
-          custom_tag =
-            ignore(opening_tag)
-            |> concat(choice(custom_tag_names))
-            |> ignore(space)
-            |> tag(optional(Argument.arguments()), :arguments)
-            |> ignore(space)
-            |> ignore(closing_tag)
-            |> tag(:custom_tag)
-
-          [custom_tag]
-        end
-
-      all_tags = base_tags ++ (custom_tags || [])
-
       custom_tags =
         if unquote(custom_tag_modules) != [] do
           unquote(custom_tag_modules)
           |> Enum.uniq()
-          |> Enum.reduce([], fn {tag_name, module}, acc ->
-            [tag(module.spec(), tag_name) | acc]
+          |> Enum.map(fn {tag_name, module} ->
+            tag(module.spec(), tag_name)
           end)
-          |> Enum.reverse()
         end
 
-      all_tags = all_tags ++ (custom_tags || [])
+      all_tags = base_tags ++ (custom_tags || [])
 
       tags =
         choice(all_tags)
