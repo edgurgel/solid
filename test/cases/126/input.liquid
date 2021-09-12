@@ -13,3 +13,7 @@ test if filter in condition expression
  {% if a | upcase == "TOMATO" and b | upcase == "ONION" %}
  Let make a soup
  {% endif %}
+
+ {% if a | append: "to" == "tomatoto" %}
+ Yeah me to
+ {% endif %}
