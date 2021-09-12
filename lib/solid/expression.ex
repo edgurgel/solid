@@ -110,10 +110,22 @@ defmodule Solid.Expression do
   end
 
   defp do_eval([arg1: v1, op: [op], arg2: v2], context) do
-    v1 = Argument.get(v1, context)
-    v2 = Argument.get(v2, context)
+    v1 = get_argument(v1, context)
+    v2 = get_argument(v2, context)
     eval({v1, op, v2})
   end
 
-  defp do_eval(value, context), do: eval(Argument.get([value], context))
+  defp do_eval(value, context), do: eval(get_argument(value, context))
+
+  defp get_argument([argument: argument, filters: filters], context) do
+    Argument.get(argument, context, filters: filters)
+  end
+
+  defp get_argument([argument: argument], context) do
+    Argument.get(argument, context)
+  end
+
+  defp get_argument(argument, context) do
+    Argument.get(argument, context)
+  end
 end

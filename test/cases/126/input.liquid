@@ -1,0 +1,15 @@
+test if filter in condition expression
+
+ {% assign a = "tomato" %} 
+ 
+ {% if a | upcase == "TOMATO" %}
+ GOOD {{ a | upcase }}
+ {% else %}
+ BAD {{ a | upcase }}
+ {% endif %}
+
+ {% assign b = "onion" %} 
+ 
+ {% if a | upcase == "TOMATO" and b | upcase == "ONION" %}
+ Let make a soup
+ {% endif %}
