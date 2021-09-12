@@ -40,7 +40,7 @@ defmodule Solid.Tag do
     Then add custom tag to your parser
 
         defmodule MyParser do
-          use Solid.Parser.Base, custom_tag: [{"my_tag", MyCustomTag}]
+          use Solid.Parser.Base, custom_tags: [my_tag: MyCustomTag]
         end
 
     Then pass your tag to render function
@@ -53,20 +53,38 @@ defmodule Solid.Tag do
     @type rendered_data :: {:text, binary()} | {:object, keyword()} | {:tag, list()}
 
     @doc """
-    Build and return NimbleParsec expression to parse your tag. There are some helper expressions that you can use in :
+    Build and return `NimbleParsec` expression to parse your tag. There are some helper expressions that can be used:
     - `Solid.Parser.Literal`
     - `Solid.Parser.Variable`
     - `Solid.Parser.Argument`
     """
+
     @callback spec() :: NimbleParsec.t()
 
     @doc """
-    Define how to render your custom tag.
-    Third argument is options that you pass to `Solid.render/2` function
+    Define how to render your tag.
+    Third argument are the options passed to `Solid.render/2`
     """
 
-    @callback render(Solid.Context.t(), list(), keyword()) ::
-                list(rendered_data) | {list(rendered_data), Solid.Context.t()}
+    @callback render(list(), Solid.Context.t(), keyword()) ::
+                {list(rendered_data), Solid.Context.t()} | String.t()
+
+    @doc """
+    Basic custom tag spec that accepts optional arguments
+    """
+    @spec basic(String.t()) :: NimbleParsec.t()
+    def basic(name) do
+      import NimbleParsec
+      space = Solid.Parser.Literal.whitespace(min: 0)
+
+      ignore(string("{%"))
+      |> ignore(space)
+      |> ignore(string(name))
+      |> ignore(space)
+      |> tag(optional(Solid.Parser.Argument.arguments()), :arguments)
+      |> ignore(space)
+      |> ignore(string("%}"))
+    end
   end
 
   @doc """
@@ -221,14 +239,17 @@ defmodule Solid.Tag do
   end
 
   defp do_eval([{custom_tag, tag_data}], context, options) do
-    # move this to Parser lookup
-    custom_tag_module = get_in(options, [:tags, custom_tag])
+    parser = Keyword.get(options, :parser, Solid.Parser)
 
-    if custom_tag_module do
-      case custom_tag_module.render(context, tag_data, options) do
-        text when is_binary(text) -> [text: text]
-        result -> result
-      end
+    case parser.custom_tag_module(custom_tag) do
+      {:ok, custom_tag_module} ->
+        case custom_tag_module.render(tag_data, context, options) do
+          {result, context} -> {result, context}
+          text when is_binary(text) -> {[text: text], context}
+        end
+
+      _ ->
+        raise ArgumentError
     end
   end
 

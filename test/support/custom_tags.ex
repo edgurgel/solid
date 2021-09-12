@@ -16,13 +16,9 @@ defmodule CustomTags do
       |> ignore(string("%}"))
     end
 
-    def render(_context, _arguments) do
-      DateTime.utc_now().year |> to_string
-    end
-
     @impl true
-    def render(_context, _arguments, _options) do
-      [text: DateTime.utc_now().year |> to_string]
+    def render(_arguments, _context, _options) do
+      DateTime.utc_now().year |> to_string
     end
   end
 
@@ -45,28 +41,17 @@ defmodule CustomTags do
       |> ignore(string("%}"))
     end
 
-    def render(_context, arguments: [value: dt_str]) do
-      {:ok, dt, _} = DateTime.from_iso8601(dt_str)
-      "#{dt.year}-#{dt.month}-#{dt.day}"
-    end
-
-    def render(context, arguments: [field: [var_name]]) do
-      dt_str = Map.fetch!(context.iteration_vars, var_name)
+    @impl true
+    def render([arguments: [value: dt_str]], _context, _options) do
       {:ok, dt, _} = DateTime.from_iso8601(dt_str)
       "#{dt.year}-#{dt.month}-#{dt.day}"
     end
 
     @impl true
-    def render(_context, [arguments: [value: dt_str]], _options) do
-      {:ok, dt, _} = DateTime.from_iso8601(dt_str)
-      [text: "#{dt.year}-#{dt.month}-#{dt.day}"]
-    end
-
-    @impl true
-    def render(context, [arguments: [field: [var_name]]], _options) do
+    def render([arguments: [field: [var_name]]], context, _options) do
       dt_str = Map.fetch!(context.iteration_vars, var_name)
       {:ok, dt, _} = DateTime.from_iso8601(dt_str)
-      [text: "#{dt.year}-#{dt.month}-#{dt.day}"]
+      "#{dt.year}-#{dt.month}-#{dt.day}"
     end
   end
 
@@ -94,49 +79,32 @@ defmodule CustomTags do
     end
 
     @impl true
-    def render(context, [result: result], options) do
-      {text, _context} = Solid.render(result, context, options)
-      [text: ["[[", text, "]]"]]
+    def render([result: result], context, options) do
+      {text, context} = Solid.render(result, context, options)
+      {[text: ["[[", text, "]]"]], context}
     end
   end
 
   defmodule FoobarTag do
-    import NimbleParsec
     @behaviour Solid.Tag.CustomTag
-    def spec() do
-      space = Solid.Parser.Literal.whitespace(min: 0)
 
-      ignore(string("{%"))
-      |> ignore(space)
-      |> ignore(string("foobar"))
-      |> ignore(space)
-      |> tag(optional(Solid.Parser.Argument.arguments()), :arguments)
-      |> ignore(space)
-      |> ignore(string("%}"))
-    end
+    @impl true
+    def spec(), do: Solid.Tag.CustomTag.basic("foobar")
 
-    def render(_context, _arguments, _opts) do
+    @impl true
+    def render(_arguments, _context, _opts) do
       "barbaz"
     end
   end
 
   defmodule FoobarValTag do
-    import NimbleParsec
     @behaviour Solid.Tag.CustomTag
 
-    def spec() do
-      space = Solid.Parser.Literal.whitespace(min: 0)
+    @impl true
+    def spec(), do: Solid.Tag.CustomTag.basic("foobarval")
 
-      ignore(string("{%"))
-      |> ignore(space)
-      |> ignore(string("foobarval"))
-      |> ignore(space)
-      |> tag(optional(Solid.Parser.Argument.arguments()), :arguments)
-      |> ignore(space)
-      |> ignore(string("%}"))
-    end
-
-    def render(_context, [arguments: [value: string]], _opts) do
+    @impl true
+    def render([arguments: [value: string]], _context, _opts) do
       "barbaz#{string}"
     end
   end

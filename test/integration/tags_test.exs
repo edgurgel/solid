@@ -336,7 +336,7 @@ defmodule Solid.Integration.TagsTest do
       {% foobar %}
       """
 
-      assert render(text, %{}, tags: %{foobar: CustomTags.FoobarTag}, parser: CustomFooParser) ==
+      assert render(text, %{}, parser: CustomFooParser) ==
                """
                barbaz
                """
@@ -347,10 +347,7 @@ defmodule Solid.Integration.TagsTest do
       {% foobarval "-show-me" %}
       """
 
-      assert render(text, %{},
-               tags: %{foobarval: CustomTags.FoobarValTag},
-               parser: CustomFooParser
-             ) ==
+      assert render(text, %{}, parser: CustomFooParser) ==
                """
                barbaz-show-me
                """

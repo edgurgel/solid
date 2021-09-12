@@ -2,9 +2,14 @@ defmodule Solid.Parser.Base do
   defmacro __using__(opts) do
     custom_tag_modules = Keyword.get(opts, :custom_tags, [])
 
-    quote location: :keep do
+    quote location: :keep, bind_quoted: [custom_tag_modules: custom_tag_modules] do
       import NimbleParsec
       alias Solid.Parser.{Literal, Variable, Argument}
+
+      def custom_tag_module(tag_name) do
+        module = Keyword.get(unquote(custom_tag_modules), tag_name)
+        if module, do: {:ok, module}, else: {:error, :not_found}
+      end
 
       defp when_join(whens) do
         for {:when, [value: value, result: result]} <- whens, into: %{} do
@@ -403,8 +408,8 @@ defmodule Solid.Parser.Base do
       ]
 
       custom_tags =
-        if unquote(custom_tag_modules) != [] do
-          unquote(custom_tag_modules)
+        if custom_tag_modules != [] do
+          custom_tag_modules
           |> Enum.uniq()
           |> Enum.map(fn {tag_name, module} ->
             tag(module.spec(), tag_name)
