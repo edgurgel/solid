@@ -1,72 +1,84 @@
 defmodule Solid.Tag do
   @moduledoc """
+  This module define behaviour for tags.
+
+  To implement new tag you need to create new module that implement the `Tag` behaviour:
+
+      defmodule MyCustomTag do
+        import NimbleParsec
+        @behaviour Solid.Tag
+
+        @impl true
+        def spec(_parser) do
+          space = Solid.Parser.Literal.whitespace(min: 0)
+
+          ignore(string("{%"))
+          |> ignore(space)
+          |> ignore(string("my_tag"))
+          |> ignore(space)
+          |> ignore(string("%}"))
+        end
+
+        @impl true
+        def render(_tag, _context, _options) do
+          [text: "my first tag"]
+        end
+      end
+
+  - `spec` define how to parse your tag
+  - `render` define how to render your tag
+
+  Then add the tag to your parser
+
+      defmodule MyParser do
+        use Solid.Parser.Base, custom_tags: [my_tag: MyCustomTag]
+      end
+
+  Then pass the custom parser as option
+
+      "{% my_tag %}"
+      |> Solid.parse!(parser: MyParser)
+      |> Solid.render()
+
   Control flow tags can change the information Liquid shows using programming logic.
 
   More info: https://shopify.github.io/liquid/tags/control-flow/
   """
 
-  alias Solid.{Expression, Argument, Context}
+  alias Solid.Context
 
-  defmodule CustomTag do
-    @moduledoc """
-    This module define behaviour for custom tag.
+  @type rendered_data :: {:text, binary()} | {:object, keyword()} | {:tag, list()}
 
-    To implement new custom tag you need to create new module that implement `CustomTag` behaviour:
+  @doc """
+  Build and return `NimbleParsec` expression to parse your tag. There are some helper expressions that can be used:
+  - `Solid.Parser.Literal`
+  - `Solid.Parser.Variable`
+  - `Solid.Parser.Argument`
+  """
 
-        defmodule MyCustomTag do
-          import NimbleParsec
-          @behaviour Solid.Tag.CustomTag
+  @callback spec(module) :: NimbleParsec.t()
 
-          @impl true
-          def spec() do
-            space = Solid.Parser.Literal.whitespace(min: 0)
+  @doc """
+  Define how to render your tag.
+  Third argument are the options passed to `Solid.render/2`
+  """
 
-            ignore(string("{%"))
-            |> ignore(space)
-            |> ignore(string("my_tag"))
-            |> ignore(space)
-            |> ignore(string("%}"))
-          end
+  @callback render(list(), Solid.Context.t(), keyword()) ::
+              {list(rendered_data), Solid.Context.t()} | String.t()
 
-          @impl true
-          def render(_context, _binding, _options) do
-            [text: "my first tag"]
-          end
-        end
+  @doc """
+  Basic custom tag spec that accepts optional arguments
+  """
+  @spec basic(String.t()) :: NimbleParsec.t()
+  def basic(name) do
+    import NimbleParsec
+    space = Solid.Parser.Literal.whitespace(min: 0)
 
-    - `spec` define how to parse your tag
-    - `render` define how to render your tag
-
-    Then add custom tag to your parser
-
-        defmodule MyParser do
-          use Solid.Parser.Base, custom_tag: [{"my_tag", MyCustomTag}]
-        end
-
-    Then pass your tag to render function
-
-        "{% my_tag %}"
-        |> Solid.parse!(parser: MyParser)
-        |> Solid.render(tags: %{"my_tag" => MyCustomTag})
-    """
-
-    @type rendered_data :: {:text, binary()} | {:object, keyword()} | {:tag, list()}
-
-    @doc """
-    Build and return NimbleParsec expression to parse your tag. There are some helper expressions that you can use in :
-    - `Solid.Parser.Literal`
-    - `Solid.Parser.Variable`
-    - `Solid.Parser.Argument`
-    """
-    @callback spec() :: NimbleParsec.t()
-
-    @doc """
-    Define how to render your custom tag.
-    Third argument is options that you pass to `Solid.render/2` function
-    """
-
-    @callback render(Solid.Context.t(), list(), keyword()) ::
-                list(rendered_data) | {list(rendered_data), Solid.Context.t()}
+    ignore(Solid.Parser.BaseTag.opening_tag())
+    |> ignore(string(name))
+    |> ignore(space)
+    |> tag(optional(Solid.Parser.Argument.arguments()), :arguments)
+    |> ignore(Solid.Parser.BaseTag.closing_tag())
   end
 
   @doc """
@@ -76,293 +88,14 @@ defmodule Solid.Tag do
   def eval(tag, context, options) do
     case do_eval(tag, context, options) do
       {text, context} -> {text, context}
+      text when is_binary(text) -> {[text: text], context}
       text -> {text, context}
     end
   end
 
   defp do_eval([], _context, _options), do: nil
 
-  defp do_eval([cycle_exp: cycle], context, _options) do
-    {context, result} = Context.run_cycle(context, cycle)
-
-    {[text: result], context}
+  defp do_eval([{tag_module, tag_data}], context, options) do
+    tag_module.render(tag_data, context, options)
   end
-
-  defp do_eval([custom_tag: tag], context, options) do
-    [tag_name | tag_data] = tag
-    tags = Keyword.get(options, :tags, %{})
-
-    result =
-      if(Map.has_key?(tags, tag_name)) do
-        [text: tags[tag_name].render(context, tag_data)]
-      else
-        nil
-      end
-
-    {result, context}
-  end
-
-  defp do_eval([{:if_exp, exp} | _] = tag, context, _options) do
-    if eval_expression(exp[:expression], context), do: throw({:result, exp})
-    elsif_exps = tag[:elsif_exps]
-
-    if elsif_exps do
-      result = Enum.find(elsif_exps, &eval_elsif(&1, context))
-      if result, do: throw({:result, elem(result, 1)})
-    end
-
-    else_exp = tag[:else_exp]
-    if else_exp, do: throw({:result, else_exp})
-  catch
-    {:result, result} -> result[:result]
-  end
-
-  defp do_eval([{:unless_exp, exp} | _] = tag, context, _options) do
-    unless eval_expression(exp[:expression], context), do: throw({:result, exp})
-    elsif_exps = tag[:elsif_exps]
-
-    if elsif_exps do
-      result = Enum.find(elsif_exps, &eval_elsif(&1, context))
-      if result, do: throw({:result, elem(result, 1)})
-    end
-
-    else_exp = tag[:else_exp]
-    if else_exp, do: throw({:result, else_exp})
-  catch
-    {:result, result} -> result[:result]
-  end
-
-  defp do_eval([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context, _options) do
-    result = when_map[Argument.get(field, context)]
-
-    if result do
-      result
-    else
-      tag[:else_exp][:result]
-    end
-  end
-
-  defp do_eval(
-         [assign_exp: [field: [field_name], argument: argument, filters: filters]],
-         context,
-         _options
-       ) do
-    new_value = Argument.get(argument, context, filters: filters)
-
-    context = %{context | vars: Map.put(context.vars, field_name, new_value)}
-
-    {nil, context}
-  end
-
-  defp do_eval(
-         [capture_exp: [field: [field_name], result: result]],
-         context,
-         options
-       ) do
-    {captured, context} = Solid.render(result, context, options)
-
-    context = %{
-      context
-      | vars: Map.put(context.vars, field_name, IO.iodata_to_binary(captured))
-    }
-
-    {nil, context}
-  end
-
-  defp do_eval([counter_exp: [{operation, default}, field]], context, _options) do
-    value = Argument.get([field], context, scopes: [:counter_vars]) || default
-    {:field, [field_name]} = field
-
-    context = %{
-      context
-      | counter_vars: Map.put(context.counter_vars, field_name, value + operation)
-    }
-
-    {[text: to_string(value)], context}
-  end
-
-  defp do_eval([break_exp: _], context, _options) do
-    throw({:break_exp, [], context})
-  end
-
-  defp do_eval([continue_exp: _], context, _options) do
-    throw({:continue_exp, [], context})
-  end
-
-  defp do_eval(
-         [
-           for_exp:
-             [
-               {:field, [enumerable_key]},
-               {:enumerable, enumerable},
-               {:parameters, parameters} | _
-             ] = exp
-         ],
-         context,
-         options
-       ) do
-    enumerable =
-      enumerable
-      |> enumerable(context)
-      |> apply_parameters(parameters)
-
-    do_for(enumerable_key, enumerable, exp, context, options)
-  end
-
-  defp do_eval([raw_exp: raw], context, _options) do
-    {[text: raw], context}
-  end
-
-  defp do_eval(
-         [render_exp: [template: template_binding, arguments: argument_binding]],
-         context,
-         options
-       ) do
-    template = Argument.get(template_binding, context)
-
-    binding_vars =
-      Keyword.get(argument_binding || [], :named_arguments, [])
-      |> Argument.parse_named_arguments(context)
-      |> Enum.concat()
-      |> Map.new()
-
-    {file_system, instance} = options[:file_system] || {Solid.BlankFileSystem, nil}
-
-    template_str = file_system.read_template_file(template, instance)
-    template = Solid.parse!(template_str, options)
-    rendered_text = Solid.render(template, binding_vars, options)
-    {[text: rendered_text], context}
-  end
-
-  defp do_eval([{custom_tag, tag_data}], context, options) do
-    tags = Keyword.get(options, :tags, %{})
-
-    if(Map.has_key?(tags, custom_tag)) do
-      case tags[custom_tag].render(context, tag_data, options) do
-        text when is_binary(text) -> [text: text]
-        result -> result
-      end
-    else
-      [text: nil]
-    end
-  end
-
-  defp do_for(_, [], exp, context, _options) do
-    exp = Keyword.get(exp, :else_exp)
-    {exp[:result], context}
-  end
-
-  defp do_for(enumerable_key, enumerable, exp, context, options) do
-    exp = Keyword.get(exp, :result)
-    length = Enum.count(enumerable)
-
-    {result, context} =
-      enumerable
-      |> Enum.with_index(0)
-      |> Enum.reduce({[], context}, fn {v, index}, {acc_result, acc_context_initial} ->
-        acc_context =
-          acc_context_initial
-          |> set_enumerable_value(enumerable_key, v)
-          |> maybe_put_forloop_map(enumerable_key, index, length)
-
-        try do
-          {result, acc_context} = Solid.render(exp, acc_context, options)
-          acc_context = restore_initial_forloop_value(acc_context, acc_context_initial)
-          {[result | acc_result], acc_context}
-        catch
-          {:break_exp, partial_result, context} ->
-            throw({:result, [partial_result | acc_result], context})
-
-          {:continue_exp, partial_result, context} ->
-            {[partial_result | acc_result], context}
-        end
-      end)
-
-    context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
-    {[text: Enum.reverse(result)], context}
-  catch
-    {:result, result, context} ->
-      context = %{context | iteration_vars: Map.delete(context.iteration_vars, enumerable_key)}
-      {[text: Enum.reverse(result)], context}
-  end
-
-  defp set_enumerable_value(acc_context, key, value) do
-    iteration_vars = Map.put(acc_context.iteration_vars, key, value)
-    %{acc_context | iteration_vars: iteration_vars}
-  end
-
-  defp maybe_put_forloop_map(acc_context, key, index, length) when key != "forloop" do
-    map = build_forloop_map(index, length)
-    iteration_vars = Map.put(acc_context.iteration_vars, "forloop", map)
-    %{acc_context | iteration_vars: iteration_vars}
-  end
-
-  defp maybe_put_forloop_map(acc_context, _key, _index, _length) do
-    acc_context
-  end
-
-  defp build_forloop_map(index, length) do
-    %{
-      "index" => index + 1,
-      "index0" => index,
-      "rindex" => length - index,
-      "rindex0" => length - index - 1,
-      "first" => index == 0,
-      "last" => length == index + 1,
-      "length" => length
-    }
-  end
-
-  defp restore_initial_forloop_value(acc_context, %{
-         iteration_vars: %{"forloop" => initial_forloop}
-       }) do
-    iteration_vars = Map.put(acc_context.iteration_vars, "forloop", initial_forloop)
-    %{acc_context | iteration_vars: iteration_vars}
-  end
-
-  defp restore_initial_forloop_value(acc_context, _) do
-    acc_context
-  end
-
-  defp enumerable([range: [first: first, last: last]], context) do
-    first = integer_or_field(first, context)
-    last = integer_or_field(last, context)
-    first..last
-  end
-
-  defp enumerable(field, context), do: Argument.get(field, context) || []
-
-  defp apply_parameters(enumerable, parameters) do
-    enumerable
-    |> offset(parameters)
-    |> limit(parameters)
-    |> reversed(parameters)
-  end
-
-  defp offset(enumerable, %{offset: offset}) do
-    Enum.slice(enumerable, offset..-1)
-  end
-
-  defp offset(enumerable, _), do: enumerable
-
-  defp limit(enumerable, %{limit: limit}) do
-    Enum.slice(enumerable, 0..(limit - 1))
-  end
-
-  defp limit(enumerable, _), do: enumerable
-
-  defp reversed(enumerable, %{reversed: _}) do
-    Enum.reverse(enumerable)
-  end
-
-  defp reversed(enumerable, _), do: enumerable
-
-  defp integer_or_field(value, _context) when is_integer(value), do: value
-  defp integer_or_field(field, context), do: Argument.get([field], context)
-
-  defp eval_elsif({:elsif_exp, elsif_exp}, context) do
-    eval_expression(elsif_exp[:expression], context)
-  end
-
-  defp eval_expression(exps, context), do: Expression.eval(exps, context)
 end
