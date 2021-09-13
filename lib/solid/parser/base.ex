@@ -24,22 +24,9 @@ defmodule Solid.Parser.Base do
       closing_object = string("}}")
       closing_wc_object = string("-}}")
 
-      opening_tag =
-        string("{%")
-        |> concat(optional(string("-")))
-        |> concat(space)
-
+      opening_tag = Solid.Parser.Tag.opening_tag()
+      closing_tag = Solid.Parser.Tag.closing_tag()
       opening_wc_tag = string("{%-")
-      closing_wc_tag = string("-%}")
-
-      closing_wc_tag_and_whitespace =
-        closing_wc_tag
-        |> concat(space)
-        |> ignore()
-
-      closing_tag =
-        space
-        |> concat(choice([closing_wc_tag_and_whitespace, string("%}")]))
 
       filter_name =
         ascii_string([?a..?z, ?A..?Z], 1)
@@ -74,21 +61,7 @@ defmodule Solid.Parser.Base do
         |> ignore(choice([closing_wc_object_and_whitespace, closing_object]))
         |> tag(:object)
 
-      comment = string("comment")
-
-      end_comment_tag =
-        ignore(opening_tag)
-        |> ignore(string("endcomment"))
-        |> ignore(closing_tag)
-
-      comment_tag =
-        ignore(opening_tag)
-        |> ignore(space)
-        |> ignore(comment)
-        |> ignore(space)
-        |> ignore(closing_tag)
-        |> ignore(repeat(lookahead_not(ignore(end_comment_tag)) |> utf8_char([])))
-        |> ignore(end_comment_tag)
+      comment_tag = Solid.Tag.Comment.spec()
 
       increment =
         string("increment")
@@ -325,17 +298,9 @@ defmodule Solid.Parser.Base do
         |> ignore(closing_tag)
         |> tag(:capture_exp)
 
-      break_tag =
-        ignore(opening_tag)
-        |> ignore(string("break"))
-        |> ignore(closing_tag)
-        |> tag(:break_exp)
+      break_tag = Solid.Tag.Break.spec()
 
-      continue_tag =
-        ignore(opening_tag)
-        |> ignore(string("continue"))
-        |> ignore(closing_tag)
-        |> tag(:continue_exp)
+      continue_tag = Solid.Tag.Continue.spec()
 
       end_raw_tag =
         opening_tag

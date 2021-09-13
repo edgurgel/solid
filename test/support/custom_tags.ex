@@ -1,19 +1,15 @@
 defmodule CustomTags do
   defmodule CurrentDate do
     import NimbleParsec
-    alias Solid.Parser.Literal
+    alias Solid.Parser.{Literal, Tag}
 
-    @behaviour Solid.Tag.CustomTag
+    @behaviour Solid.Tag
 
     @impl true
     def spec() do
-      space = Literal.whitespace(min: 0)
-
-      ignore(string("{%"))
-      |> ignore(space)
+      ignore(Tag.opening_tag())
       |> ignore(string("get_current_date"))
-      |> ignore(space)
-      |> ignore(string("%}"))
+      |> ignore(Tag.closing_tag())
     end
 
     @impl true
@@ -24,21 +20,19 @@ defmodule CustomTags do
 
   defmodule GetYearOfDate do
     import NimbleParsec
-    alias Solid.Parser.{Literal, Argument}
+    alias Solid.Parser.{Literal, Argument, Tag}
 
-    @behaviour Solid.Tag.CustomTag
+    @behaviour Solid.Tag
 
     @impl true
     def spec() do
       space = Literal.whitespace(min: 0)
 
-      ignore(string("{%"))
-      |> ignore(space)
+      ignore(Tag.opening_tag())
       |> ignore(string("get_year"))
       |> ignore(space)
       |> tag(Argument.arguments(), :arguments)
-      |> ignore(space)
-      |> ignore(string("%}"))
+      |> ignore(Tag.closing_tag())
     end
 
     @impl true
@@ -47,7 +41,6 @@ defmodule CustomTags do
       "#{dt.year}-#{dt.month}-#{dt.day}"
     end
 
-    @impl true
     def render([arguments: [field: [var_name]]], context, _options) do
       dt_str = Map.fetch!(context.iteration_vars, var_name)
       {:ok, dt, _} = DateTime.from_iso8601(dt_str)
@@ -57,25 +50,22 @@ defmodule CustomTags do
 
   defmodule CustomBrackedWrappedTag do
     import NimbleParsec
-    alias Solid.Parser.Literal
+    alias Solid.Parser.{Literal, Tag}
 
-    @behaviour Solid.Tag.CustomTag
+    @behaviour Solid.Tag
 
     @impl true
     def spec() do
       space = Literal.whitespace(min: 0)
 
-      ignore(string("{%"))
-      |> ignore(space)
+      ignore(Tag.opening_tag())
       |> ignore(string("myblock"))
-      |> ignore(space)
-      |> ignore(string("%}"))
+      |> ignore(Tag.closing_tag())
       |> tag(parsec(:liquid_entry), :result)
-      |> ignore(string("{%"))
+      |> ignore(Tag.opening_tag())
       |> ignore(space)
       |> ignore(string("endmyblock"))
-      |> ignore(space)
-      |> ignore(string("%}"))
+      |> ignore(Tag.closing_tag())
     end
 
     @impl true
@@ -86,10 +76,10 @@ defmodule CustomTags do
   end
 
   defmodule FoobarTag do
-    @behaviour Solid.Tag.CustomTag
+    @behaviour Solid.Tag
 
     @impl true
-    def spec(), do: Solid.Tag.CustomTag.basic("foobar")
+    def spec(), do: Solid.Tag.basic("foobar")
 
     @impl true
     def render(_arguments, _context, _opts) do
@@ -98,10 +88,10 @@ defmodule CustomTags do
   end
 
   defmodule FoobarValTag do
-    @behaviour Solid.Tag.CustomTag
+    @behaviour Solid.Tag
 
     @impl true
-    def spec(), do: Solid.Tag.CustomTag.basic("foobarval")
+    def spec(), do: Solid.Tag.basic("foobarval")
 
     @impl true
     def render([arguments: [value: string]], _context, _opts) do

@@ -1,5 +1,45 @@
 defmodule Solid.Tag do
   @moduledoc """
+  This module define behaviour for tags.
+
+  To implement new custom tag you need to create new module that implement `CustomTag` behaviour:
+
+      defmodule MyCustomTag do
+        import NimbleParsec
+        @behaviour Solid.Tag
+
+        @impl true
+        def spec() do
+          space = Solid.Parser.Literal.whitespace(min: 0)
+
+          ignore(string("{%"))
+          |> ignore(space)
+          |> ignore(string("my_tag"))
+          |> ignore(space)
+          |> ignore(string("%}"))
+        end
+
+        @impl true
+        def render(_context, _binding, _options) do
+          [text: "my first tag"]
+        end
+      end
+
+  - `spec` define how to parse your tag
+  - `render` define how to render your tag
+
+  Then add custom tag to your parser
+
+      defmodule MyParser do
+        use Solid.Parser.Base, custom_tags: [my_tag: MyCustomTag]
+      end
+
+  Then pass your tag to render function
+
+      "{% my_tag %}"
+      |> Solid.parse!(parser: MyParser)
+      |> Solid.render(tags: %{"my_tag" => MyCustomTag})
+
   Control flow tags can change the information Liquid shows using programming logic.
 
   More info: https://shopify.github.io/liquid/tags/control-flow/
@@ -7,84 +47,39 @@ defmodule Solid.Tag do
 
   alias Solid.{Expression, Argument, Context}
 
-  defmodule CustomTag do
-    @moduledoc """
-    This module define behaviour for custom tag.
+  @type rendered_data :: {:text, binary()} | {:object, keyword()} | {:tag, list()}
 
-    To implement new custom tag you need to create new module that implement `CustomTag` behaviour:
+  @doc """
+  Build and return `NimbleParsec` expression to parse your tag. There are some helper expressions that can be used:
+  - `Solid.Parser.Literal`
+  - `Solid.Parser.Variable`
+  - `Solid.Parser.Argument`
+  """
 
-        defmodule MyCustomTag do
-          import NimbleParsec
-          @behaviour Solid.Tag.CustomTag
+  @callback spec() :: NimbleParsec.t()
 
-          @impl true
-          def spec() do
-            space = Solid.Parser.Literal.whitespace(min: 0)
+  @doc """
+  Define how to render your tag.
+  Third argument are the options passed to `Solid.render/2`
+  """
 
-            ignore(string("{%"))
-            |> ignore(space)
-            |> ignore(string("my_tag"))
-            |> ignore(space)
-            |> ignore(string("%}"))
-          end
+  @callback render(list(), Solid.Context.t(), keyword()) ::
+              {list(rendered_data), Solid.Context.t()} | String.t()
 
-          @impl true
-          def render(_context, _binding, _options) do
-            [text: "my first tag"]
-          end
-        end
+  @doc """
+  Basic custom tag spec that accepts optional arguments
+  """
+  @spec basic(String.t()) :: NimbleParsec.t()
+  def basic(name) do
+    import NimbleParsec
+    alias Solid.Parser.Tag
+    space = Solid.Parser.Literal.whitespace(min: 0)
 
-    - `spec` define how to parse your tag
-    - `render` define how to render your tag
-
-    Then add custom tag to your parser
-
-        defmodule MyParser do
-          use Solid.Parser.Base, custom_tags: [my_tag: MyCustomTag]
-        end
-
-    Then pass your tag to render function
-
-        "{% my_tag %}"
-        |> Solid.parse!(parser: MyParser)
-        |> Solid.render(tags: %{"my_tag" => MyCustomTag})
-    """
-
-    @type rendered_data :: {:text, binary()} | {:object, keyword()} | {:tag, list()}
-
-    @doc """
-    Build and return `NimbleParsec` expression to parse your tag. There are some helper expressions that can be used:
-    - `Solid.Parser.Literal`
-    - `Solid.Parser.Variable`
-    - `Solid.Parser.Argument`
-    """
-
-    @callback spec() :: NimbleParsec.t()
-
-    @doc """
-    Define how to render your tag.
-    Third argument are the options passed to `Solid.render/2`
-    """
-
-    @callback render(list(), Solid.Context.t(), keyword()) ::
-                {list(rendered_data), Solid.Context.t()} | String.t()
-
-    @doc """
-    Basic custom tag spec that accepts optional arguments
-    """
-    @spec basic(String.t()) :: NimbleParsec.t()
-    def basic(name) do
-      import NimbleParsec
-      space = Solid.Parser.Literal.whitespace(min: 0)
-
-      ignore(string("{%"))
-      |> ignore(space)
-      |> ignore(string(name))
-      |> ignore(space)
-      |> tag(optional(Solid.Parser.Argument.arguments()), :arguments)
-      |> ignore(space)
-      |> ignore(string("%}"))
-    end
+    ignore(Tag.opening_tag())
+    |> ignore(string(name))
+    |> ignore(space)
+    |> tag(optional(Solid.Parser.Argument.arguments()), :arguments)
+    |> ignore(Tag.closing_tag())
   end
 
   @doc """
@@ -185,12 +180,12 @@ defmodule Solid.Tag do
     {[text: to_string(value)], context}
   end
 
-  defp do_eval([break_exp: _], context, _options) do
-    throw({:break_exp, [], context})
+  defp do_eval([break_exp: _] = tag, context, options) do
+    Solid.Tag.Break.render(tag, context, options)
   end
 
-  defp do_eval([continue_exp: _], context, _options) do
-    throw({:continue_exp, [], context})
+  defp do_eval([continue_exp: _] = tag, context, options) do
+    Solid.Tag.Continue.render(tag, context, options)
   end
 
   defp do_eval(
