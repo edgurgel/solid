@@ -73,7 +73,10 @@ defmodule Solid.Parser.Base do
 
       comment = string("comment")
 
-      end_comment = string("endcomment")
+      end_comment_tag =
+        ignore(opening_tag)
+        |> ignore(string("endcomment"))
+        |> ignore(closing_tag)
 
       comment_tag =
         ignore(opening_tag)
@@ -81,12 +84,8 @@ defmodule Solid.Parser.Base do
         |> ignore(comment)
         |> ignore(space)
         |> ignore(closing_tag)
-        |> ignore(parsec(:liquid_entry))
-        |> ignore(opening_tag)
-        |> ignore(space)
-        |> ignore(end_comment)
-        |> ignore(space)
-        |> ignore(closing_tag)
+        |> ignore(repeat(lookahead_not(ignore(end_comment_tag)) |> utf8_char([])))
+        |> ignore(end_comment_tag)
 
       increment =
         string("increment")
