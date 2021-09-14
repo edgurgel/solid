@@ -157,17 +157,29 @@ defmodule Solid.Parser.Base do
         ])
         |> map({:erlang, :binary_to_atom, [:utf8]})
 
+      argument_filter =
+        tag(Argument.argument(), :argument)
+        |> tag(
+          repeat(
+            lookahead_not(choice([operator, string("and"), string("or")]))
+            |> concat(filter)
+          ),
+          :filters
+        )
+
+      defcombinatorp(:__argument_filter__, argument_filter)
+
       boolean_operation =
-        tag(Argument.argument(), :arg1)
+        tag(parsec(:__argument_filter__), :arg1)
         |> ignore(space)
         |> tag(operator, :op)
         |> ignore(space)
-        |> tag(Argument.argument(), :arg2)
+        |> tag(parsec(:__argument_filter__), :arg2)
         |> wrap()
 
       expression =
         ignore(space)
-        |> choice([boolean_operation, Argument.argument()])
+        |> choice([boolean_operation, wrap(parsec(:__argument_filter__))])
         |> ignore(space)
 
       bool_and =
@@ -182,11 +194,13 @@ defmodule Solid.Parser.Base do
         expression
         |> repeat(choice([bool_and, bool_or]) |> concat(expression))
 
+      defcombinatorp(:__boolean_expression__, boolean_expression)
+
       if_tag =
         ignore(opening_tag)
         |> ignore(space)
         |> ignore(string("if"))
-        |> tag(boolean_expression, :expression)
+        |> tag(parsec(:__boolean_expression__), :expression)
         |> ignore(closing_tag)
         |> tag(parsec(:liquid_entry), :result)
 
@@ -194,7 +208,7 @@ defmodule Solid.Parser.Base do
         ignore(opening_tag)
         |> ignore(space)
         |> ignore(string("elsif"))
-        |> tag(boolean_expression, :expression)
+        |> tag(parsec(:__boolean_expression__), :expression)
         |> ignore(closing_tag)
         |> tag(parsec(:liquid_entry), :result)
         |> tag(:elsif_exp)
@@ -203,7 +217,7 @@ defmodule Solid.Parser.Base do
         ignore(opening_tag)
         |> ignore(space)
         |> ignore(string("unless"))
-        |> tag(boolean_expression, :expression)
+        |> tag(parsec(:__boolean_expression__), :expression)
         |> ignore(space)
         |> ignore(closing_tag)
         |> tag(parsec(:liquid_entry), :result)

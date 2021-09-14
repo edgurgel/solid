@@ -328,7 +328,7 @@ defmodule Solid.TagTest do
                    field: ["y"],
                    result: [
                      tag: [
-                       if_exp: [expression: [value: true], result: [text: ["ABC"]]],
+                       if_exp: [expression: [[value: true]], result: [text: ["ABC"]]],
                        elsif_exps: []
                      ]
                    ]
