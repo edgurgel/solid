@@ -28,22 +28,6 @@ defmodule Solid.Parser.Base do
       closing_tag = Solid.Parser.Tag.closing_tag()
       opening_wc_tag = string("{%-")
 
-      filter_name =
-        ascii_string([?a..?z, ?A..?Z], 1)
-        |> concat(ascii_string([?a..?z, ?A..?Z, ?_], min: 0))
-        |> reduce({Enum, :join, []})
-
-      filter =
-        ignore(space)
-        |> ignore(string("|"))
-        |> ignore(space)
-        |> concat(filter_name)
-        |> tag(
-          optional(ignore(string(":")) |> ignore(space) |> concat(Argument.arguments())),
-          :arguments
-        )
-        |> tag(:filter)
-
       closing_wc_object_and_whitespace =
         closing_wc_object
         |> concat(Literal.whitespace(min: 0))
@@ -56,30 +40,10 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> lookahead_not(closing_object)
         |> tag(Argument.argument(), :argument)
-        |> optional(tag(repeat(filter), :filters))
+        |> optional(tag(repeat(Argument.filter()), :filters))
         |> ignore(space)
         |> ignore(choice([closing_wc_object_and_whitespace, closing_object]))
         |> tag(:object)
-
-      comment_tag = Solid.Tag.Comment.spec()
-
-      increment =
-        string("increment")
-        |> replace({1, 0})
-
-      decrement =
-        string("decrement")
-        |> replace({-1, -1})
-
-      counter_tag =
-        ignore(opening_tag)
-        |> ignore(space)
-        |> concat(choice([increment, decrement]))
-        |> ignore(space)
-        |> concat(Variable.field())
-        |> ignore(space)
-        |> ignore(closing_tag)
-        |> tag(:counter_exp)
 
       case_tag =
         ignore(opening_tag)
@@ -138,7 +102,7 @@ defmodule Solid.Parser.Base do
         |> tag(
           repeat(
             lookahead_not(choice([operator, string("and"), string("or")]))
-            |> concat(filter)
+            |> concat(Argument.filter())
           ),
           :filters
         )
@@ -218,19 +182,6 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> ignore(closing_tag)
 
-      assign_tag =
-        ignore(opening_tag)
-        |> ignore(string("assign"))
-        |> ignore(space)
-        |> concat(Variable.field())
-        |> ignore(space)
-        |> ignore(string("="))
-        |> ignore(space)
-        |> tag(Argument.argument(), :argument)
-        |> optional(tag(repeat(filter), :filters))
-        |> ignore(closing_tag)
-        |> tag(:assign_exp)
-
       range =
         ignore(string("("))
         |> unwrap_and_tag(choice([integer(min: 1), Variable.field()]), :first)
@@ -285,22 +236,6 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> ignore(closing_tag)
         |> tag(:for_exp)
-
-      capture_tag =
-        ignore(opening_tag)
-        |> ignore(string("capture"))
-        |> ignore(space)
-        |> concat(Variable.field())
-        |> ignore(closing_tag)
-        |> tag(parsec(:liquid_entry), :result)
-        |> ignore(opening_tag)
-        |> ignore(string("endcapture"))
-        |> ignore(closing_tag)
-        |> tag(:capture_exp)
-
-      break_tag = Solid.Tag.Break.spec()
-
-      continue_tag = Solid.Tag.Continue.spec()
 
       end_raw_tag =
         opening_tag
@@ -357,16 +292,16 @@ defmodule Solid.Parser.Base do
         |> tag(:render_exp)
 
       base_tags = [
-        counter_tag,
-        comment_tag,
-        assign_tag,
+        Solid.Tag.Break.spec(),
+        Solid.Tag.Continue.spec(),
+        Solid.Tag.Counter.spec(),
+        Solid.Tag.Comment.spec(),
+        Solid.Tag.Assign.spec(),
+        Solid.Tag.Capture.spec(),
         cond_if_tag,
         cond_unless_tag,
         cond_case_tag,
         for_tag,
-        capture_tag,
-        break_tag,
-        continue_tag,
         raw_tag,
         cycle_tag,
         render_tag

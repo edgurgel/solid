@@ -168,16 +168,18 @@ defmodule Solid.Tag do
     {nil, context}
   end
 
-  defp do_eval([counter_exp: [{operation, default}, field]], context, _options) do
-    value = Argument.get([field], context, scopes: [:counter_vars]) || default
-    {:field, [field_name]} = field
+  defp do_eval([counter_exp: _counter_exp] = tag, context, options) do
+    # value = Argument.get([field], context, scopes: [:counter_vars]) || default
+    # {:field, [field_name]} = field
 
-    context = %{
-      context
-      | counter_vars: Map.put(context.counter_vars, field_name, value + operation)
-    }
+    # context = %{
+    # context
+    # | counter_vars: Map.put(context.counter_vars, field_name, value + operation)
+    # }
 
-    {[text: to_string(value)], context}
+    # {[text: to_string(value)], context}
+    #
+    Solid.Tag.Counter.render(tag, context, options)
   end
 
   defp do_eval([break_exp: _] = tag, context, options) do
