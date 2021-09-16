@@ -153,32 +153,11 @@ defmodule Solid.Tag do
     {nil, context}
   end
 
-  defp do_eval(
-         [capture_exp: [field: [field_name], result: result]],
-         context,
-         options
-       ) do
-    {captured, context} = Solid.render(result, context, options)
-
-    context = %{
-      context
-      | vars: Map.put(context.vars, field_name, IO.iodata_to_binary(captured))
-    }
-
-    {nil, context}
+  defp do_eval([capture_exp: _] = tag, context, options) do
+    Solid.Tag.Capture.render(tag, context, options)
   end
 
   defp do_eval([counter_exp: _counter_exp] = tag, context, options) do
-    # value = Argument.get([field], context, scopes: [:counter_vars]) || default
-    # {:field, [field_name]} = field
-
-    # context = %{
-    # context
-    # | counter_vars: Map.put(context.counter_vars, field_name, value + operation)
-    # }
-
-    # {[text: to_string(value)], context}
-    #
     Solid.Tag.Counter.render(tag, context, options)
   end
 
@@ -210,29 +189,12 @@ defmodule Solid.Tag do
     do_for(enumerable_key, enumerable, exp, context, options)
   end
 
-  defp do_eval([raw_exp: raw], context, _options) do
-    {[text: raw], context}
+  defp do_eval([raw_exp: _] = tag, context, options) do
+    Solid.Tag.Raw.render(tag, context, options)
   end
 
-  defp do_eval(
-         [render_exp: [template: template_binding, arguments: argument_binding]],
-         context,
-         options
-       ) do
-    template = Argument.get(template_binding, context)
-
-    binding_vars =
-      Keyword.get(argument_binding || [], :named_arguments, [])
-      |> Argument.parse_named_arguments(context)
-      |> Enum.concat()
-      |> Map.new()
-
-    {file_system, instance} = options[:file_system] || {Solid.BlankFileSystem, nil}
-
-    template_str = file_system.read_template_file(template, instance)
-    template = Solid.parse!(template_str, options)
-    rendered_text = Solid.render(template, binding_vars, options)
-    {[text: rendered_text], context}
+  defp do_eval([render_exp: _] = tag, context, options) do
+    Solid.Tag.Render.render(tag, context, options)
   end
 
   defp do_eval([{custom_tag, tag_data}], context, options) do

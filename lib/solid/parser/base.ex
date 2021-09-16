@@ -237,19 +237,6 @@ defmodule Solid.Parser.Base do
         |> ignore(closing_tag)
         |> tag(:for_exp)
 
-      end_raw_tag =
-        opening_tag
-        |> ignore(string("endraw"))
-        |> ignore(closing_tag)
-
-      raw_tag =
-        ignore(opening_tag)
-        |> ignore(string("raw"))
-        |> ignore(closing_tag)
-        |> repeat(lookahead_not(ignore(end_raw_tag)) |> utf8_char([]))
-        |> ignore(end_raw_tag)
-        |> tag(:raw_exp)
-
       cycle_tag =
         ignore(opening_tag)
         |> ignore(string("cycle"))
@@ -273,24 +260,6 @@ defmodule Solid.Parser.Base do
         |> ignore(closing_tag)
         |> tag(:cycle_exp)
 
-      render_tag =
-        ignore(opening_tag)
-        |> ignore(space)
-        |> ignore(string("render"))
-        |> ignore(space)
-        |> tag(Argument.argument(), :template)
-        |> tag(
-          optional(
-            ignore(string(","))
-            |> ignore(space)
-            |> concat(Argument.named_arguments())
-          ),
-          :arguments
-        )
-        |> ignore(space)
-        |> ignore(closing_tag)
-        |> tag(:render_exp)
-
       base_tags = [
         Solid.Tag.Break.spec(),
         Solid.Tag.Continue.spec(),
@@ -302,9 +271,9 @@ defmodule Solid.Parser.Base do
         cond_unless_tag,
         cond_case_tag,
         for_tag,
-        raw_tag,
+        Solid.Tag.Raw.spec(),
         cycle_tag,
-        render_tag
+        Solid.Tag.Render.spec()
       ]
 
       custom_tags =
