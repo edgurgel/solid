@@ -1,8 +1,24 @@
 defmodule Solid.Tag.Capture do
   import NimbleParsec
-  alias Solid.Parser.{Tag, Literal, Variable}
+  alias Solid.Parser.{BaseTag, Literal, Variable}
 
   @behaviour Solid.Tag
+
+  @impl true
+  def spec() do
+    space = Literal.whitespace(min: 0)
+
+    ignore(BaseTag.opening_tag())
+    |> ignore(string("capture"))
+    |> ignore(space)
+    |> concat(Variable.field())
+    |> ignore(BaseTag.closing_tag())
+    |> tag(parsec(:liquid_entry), :result)
+    |> ignore(BaseTag.opening_tag())
+    |> ignore(string("endcapture"))
+    |> ignore(BaseTag.closing_tag())
+    |> tag(:capture_exp)
+  end
 
   @impl true
   def render(
@@ -18,21 +34,5 @@ defmodule Solid.Tag.Capture do
     }
 
     {nil, context}
-  end
-
-  @impl true
-  def spec() do
-    space = Literal.whitespace(min: 0)
-
-    ignore(Tag.opening_tag())
-    |> ignore(string("capture"))
-    |> ignore(space)
-    |> concat(Variable.field())
-    |> ignore(Tag.closing_tag())
-    |> tag(parsec(:liquid_entry), :result)
-    |> ignore(Tag.opening_tag())
-    |> ignore(string("endcapture"))
-    |> ignore(Tag.closing_tag())
-    |> tag(:capture_exp)
   end
 end

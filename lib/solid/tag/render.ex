@@ -1,8 +1,29 @@
 defmodule Solid.Tag.Render do
   import NimbleParsec
-  alias Solid.Parser.{Tag, Argument, Literal}
+  alias Solid.Parser.{BaseTag, Argument, Literal}
 
   @behaviour Solid.Tag
+
+  @impl true
+  def spec() do
+    space = Literal.whitespace(min: 0)
+
+    ignore(BaseTag.opening_tag())
+    |> ignore(string("render"))
+    |> ignore(space)
+    |> tag(Argument.argument(), :template)
+    |> tag(
+      optional(
+        ignore(string(","))
+        |> ignore(space)
+        |> concat(Argument.named_arguments())
+      ),
+      :arguments
+    )
+    |> ignore(space)
+    |> ignore(BaseTag.closing_tag())
+    |> tag(:render_exp)
+  end
 
   @impl true
   def render(
@@ -24,26 +45,5 @@ defmodule Solid.Tag.Render do
     template = Solid.parse!(template_str, options)
     rendered_text = Solid.render(template, binding_vars, options)
     {[text: rendered_text], context}
-  end
-
-  @impl true
-  def spec() do
-    space = Literal.whitespace(min: 0)
-
-    ignore(Tag.opening_tag())
-    |> ignore(string("render"))
-    |> ignore(space)
-    |> tag(Argument.argument(), :template)
-    |> tag(
-      optional(
-        ignore(string(","))
-        |> ignore(space)
-        |> concat(Argument.named_arguments())
-      ),
-      :arguments
-    )
-    |> ignore(space)
-    |> ignore(Tag.closing_tag())
-    |> tag(:render_exp)
   end
 end

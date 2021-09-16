@@ -4,7 +4,7 @@ defmodule Solid.Parser.Base do
 
     quote location: :keep, bind_quoted: [custom_tag_modules: custom_tag_modules] do
       import NimbleParsec
-      alias Solid.Parser.{Literal, Variable, Argument}
+      alias Solid.Parser.{Literal, Variable, Argument, BaseTag}
 
       def custom_tag_module(tag_name) do
         module = Keyword.get(unquote(custom_tag_modules), tag_name)
@@ -24,8 +24,8 @@ defmodule Solid.Parser.Base do
       closing_object = string("}}")
       closing_wc_object = string("-}}")
 
-      opening_tag = Solid.Parser.Tag.opening_tag()
-      closing_tag = Solid.Parser.Tag.closing_tag()
+      opening_tag = BaseTag.opening_tag()
+      closing_tag = BaseTag.closing_tag()
       opening_wc_tag = string("{%-")
 
       closing_wc_object_and_whitespace =
@@ -44,46 +44,6 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> ignore(choice([closing_wc_object_and_whitespace, closing_object]))
         |> tag(:object)
-
-      case_tag =
-        ignore(opening_tag)
-        |> ignore(space)
-        |> ignore(string("case"))
-        |> ignore(space)
-        |> concat(Argument.argument())
-        |> ignore(space)
-        |> ignore(closing_tag)
-
-      when_tag =
-        ignore(opening_tag)
-        |> ignore(space)
-        |> ignore(string("when"))
-        |> ignore(space)
-        |> concat(Literal.value())
-        |> ignore(space)
-        |> ignore(closing_tag)
-        |> tag(parsec(:liquid_entry), :result)
-        |> tag(:when)
-
-      else_tag =
-        ignore(opening_tag)
-        |> ignore(space)
-        |> ignore(string("else"))
-        |> ignore(space)
-        |> ignore(closing_tag)
-        |> tag(parsec(:liquid_entry), :result)
-
-      cond_case_tag =
-        tag(case_tag, :case_exp)
-        # FIXME
-        |> ignore(parsec(:liquid_entry))
-        |> unwrap_and_tag(reduce(times(when_tag, min: 1), :when_join), :whens)
-        |> optional(tag(else_tag, :else_exp))
-        |> ignore(opening_tag)
-        |> ignore(space)
-        |> ignore(string("endcase"))
-        |> ignore(space)
-        |> ignore(closing_tag)
 
       operator =
         choice([
@@ -165,7 +125,7 @@ defmodule Solid.Parser.Base do
       cond_if_tag =
         tag(if_tag, :if_exp)
         |> tag(times(elsif_tag, min: 0), :elsif_exps)
-        |> optional(tag(else_tag, :else_exp))
+        |> optional(tag(BaseTag.else_tag(), :else_exp))
         |> ignore(opening_tag)
         |> ignore(space)
         |> ignore(string("endif"))
@@ -175,7 +135,7 @@ defmodule Solid.Parser.Base do
       cond_unless_tag =
         tag(unless_tag, :unless_exp)
         |> tag(times(elsif_tag, min: 0), :elsif_exps)
-        |> optional(tag(else_tag, :else_exp))
+        |> optional(tag(BaseTag.else_tag(), :else_exp))
         |> ignore(opening_tag)
         |> ignore(space)
         |> ignore(string("endunless"))
@@ -230,35 +190,12 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> ignore(closing_tag)
         |> tag(parsec(:liquid_entry), :result)
-        |> optional(tag(else_tag, :else_exp))
+        |> optional(tag(BaseTag.else_tag(), :else_exp))
         |> ignore(opening_tag)
         |> ignore(string("endfor"))
         |> ignore(space)
         |> ignore(closing_tag)
         |> tag(:for_exp)
-
-      cycle_tag =
-        ignore(opening_tag)
-        |> ignore(string("cycle"))
-        |> ignore(space)
-        |> optional(
-          Literal.double_quoted_string()
-          |> ignore(string(":"))
-          |> ignore(space)
-          |> unwrap_and_tag(:name)
-        )
-        |> concat(
-          Literal.double_quoted_string()
-          |> repeat(
-            ignore(space)
-            |> ignore(string(","))
-            |> ignore(space)
-            |> concat(Literal.double_quoted_string())
-          )
-          |> tag(:values)
-        )
-        |> ignore(closing_tag)
-        |> tag(:cycle_exp)
 
       base_tags = [
         Solid.Tag.Break.spec(),
@@ -269,10 +206,10 @@ defmodule Solid.Parser.Base do
         Solid.Tag.Capture.spec(),
         cond_if_tag,
         cond_unless_tag,
-        cond_case_tag,
+        Solid.Tag.Case.spec(),
         for_tag,
         Solid.Tag.Raw.spec(),
-        cycle_tag,
+        Solid.Tag.Cycle.spec(),
         Solid.Tag.Render.spec()
       ]
 

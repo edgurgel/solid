@@ -72,14 +72,13 @@ defmodule Solid.Tag do
   @spec basic(String.t()) :: NimbleParsec.t()
   def basic(name) do
     import NimbleParsec
-    alias Solid.Parser.Tag
     space = Solid.Parser.Literal.whitespace(min: 0)
 
-    ignore(Tag.opening_tag())
+    ignore(Solid.Parser.BaseTag.opening_tag())
     |> ignore(string(name))
     |> ignore(space)
     |> tag(optional(Solid.Parser.Argument.arguments()), :arguments)
-    |> ignore(Tag.closing_tag())
+    |> ignore(Solid.Parser.BaseTag.closing_tag())
   end
 
   @doc """
@@ -95,10 +94,8 @@ defmodule Solid.Tag do
 
   defp do_eval([], _context, _options), do: nil
 
-  defp do_eval([cycle_exp: cycle], context, _options) do
-    {context, result} = Context.run_cycle(context, cycle)
-
-    {[text: result], context}
+  defp do_eval([cycle_exp: _] = tag, context, options) do
+    Solid.Tag.Cycle.render(tag, context, options)
   end
 
   defp do_eval([{:if_exp, exp} | _] = tag, context, _options) do
@@ -131,26 +128,12 @@ defmodule Solid.Tag do
     {:result, result} -> result[:result]
   end
 
-  defp do_eval([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context, _options) do
-    result = when_map[Argument.get(field, context)]
-
-    if result do
-      result
-    else
-      tag[:else_exp][:result]
-    end
+  defp do_eval([{:case_exp, _} | _] = tag, context, options) do
+    Solid.Tag.Case.render(tag, context, options)
   end
 
-  defp do_eval(
-         [assign_exp: [field: [field_name], argument: argument, filters: filters]],
-         context,
-         _options
-       ) do
-    new_value = Argument.get(argument, context, filters: filters)
-
-    context = %{context | vars: Map.put(context.vars, field_name, new_value)}
-
-    {nil, context}
+  defp do_eval([assign_exp: _] = tag, context, options) do
+    Solid.Tag.Assign.render(tag, context, options)
   end
 
   defp do_eval([capture_exp: _] = tag, context, options) do

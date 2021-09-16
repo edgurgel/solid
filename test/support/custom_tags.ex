@@ -1,15 +1,15 @@
 defmodule CustomTags do
   defmodule CurrentDate do
     import NimbleParsec
-    alias Solid.Parser.{Literal, Tag}
+    alias Solid.Parser.{Literal, BaseTag}
 
     @behaviour Solid.Tag
 
     @impl true
     def spec() do
-      ignore(Tag.opening_tag())
+      ignore(BaseTag.opening_tag())
       |> ignore(string("get_current_date"))
-      |> ignore(Tag.closing_tag())
+      |> ignore(BaseTag.closing_tag())
     end
 
     @impl true
@@ -20,7 +20,7 @@ defmodule CustomTags do
 
   defmodule GetYearOfDate do
     import NimbleParsec
-    alias Solid.Parser.{Literal, Argument, Tag}
+    alias Solid.Parser.{Literal, Argument, BaseTag}
 
     @behaviour Solid.Tag
 
@@ -28,11 +28,11 @@ defmodule CustomTags do
     def spec() do
       space = Literal.whitespace(min: 0)
 
-      ignore(Tag.opening_tag())
+      ignore(BaseTag.opening_tag())
       |> ignore(string("get_year"))
       |> ignore(space)
       |> tag(Argument.arguments(), :arguments)
-      |> ignore(Tag.closing_tag())
+      |> ignore(BaseTag.closing_tag())
     end
 
     @impl true
@@ -50,7 +50,7 @@ defmodule CustomTags do
 
   defmodule CustomBrackedWrappedTag do
     import NimbleParsec
-    alias Solid.Parser.{Literal, Tag}
+    alias Solid.Parser.{Literal, BaseTag}
 
     @behaviour Solid.Tag
 
@@ -58,14 +58,14 @@ defmodule CustomTags do
     def spec() do
       space = Literal.whitespace(min: 0)
 
-      ignore(Tag.opening_tag())
+      ignore(BaseTag.opening_tag())
       |> ignore(string("myblock"))
-      |> ignore(Tag.closing_tag())
+      |> ignore(BaseTag.closing_tag())
       |> tag(parsec(:liquid_entry), :result)
-      |> ignore(Tag.opening_tag())
+      |> ignore(BaseTag.opening_tag())
       |> ignore(space)
       |> ignore(string("endmyblock"))
-      |> ignore(Tag.closing_tag())
+      |> ignore(BaseTag.closing_tag())
     end
 
     @impl true
