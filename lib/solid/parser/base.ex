@@ -142,61 +142,6 @@ defmodule Solid.Parser.Base do
         |> ignore(space)
         |> ignore(closing_tag)
 
-      range =
-        ignore(string("("))
-        |> unwrap_and_tag(choice([integer(min: 1), Variable.field()]), :first)
-        |> ignore(string(".."))
-        |> unwrap_and_tag(choice([integer(min: 1), Variable.field()]), :last)
-        |> ignore(string(")"))
-        |> tag(:range)
-
-      limit =
-        ignore(string("limit"))
-        |> ignore(space)
-        |> ignore(string(":"))
-        |> ignore(space)
-        |> unwrap_and_tag(integer(min: 1), :limit)
-        |> ignore(space)
-
-      offset =
-        ignore(string("offset"))
-        |> ignore(space)
-        |> ignore(string(":"))
-        |> ignore(space)
-        |> unwrap_and_tag(integer(min: 1), :offset)
-        |> ignore(space)
-
-      reversed =
-        string("reversed")
-        |> replace({:reversed, 0})
-        |> ignore(space)
-
-      for_parameters =
-        repeat(choice([limit, offset, reversed]))
-        |> reduce({Enum, :into, [%{}]})
-
-      for_tag =
-        ignore(opening_tag)
-        |> ignore(space)
-        |> ignore(string("for"))
-        |> ignore(space)
-        |> concat(Argument.argument())
-        |> ignore(space)
-        |> ignore(string("in"))
-        |> ignore(space)
-        |> tag(choice([Variable.field(), range]), :enumerable)
-        |> ignore(space)
-        |> unwrap_and_tag(for_parameters, :parameters)
-        |> ignore(space)
-        |> ignore(closing_tag)
-        |> tag(parsec(:liquid_entry), :result)
-        |> optional(tag(BaseTag.else_tag(), :else_exp))
-        |> ignore(opening_tag)
-        |> ignore(string("endfor"))
-        |> ignore(space)
-        |> ignore(closing_tag)
-        |> tag(:for_exp)
-
       base_tags = [
         Solid.Tag.Break.spec(),
         Solid.Tag.Continue.spec(),
@@ -207,7 +152,7 @@ defmodule Solid.Parser.Base do
         cond_if_tag,
         cond_unless_tag,
         Solid.Tag.Case.spec(),
-        for_tag,
+        Solid.Tag.For.spec(),
         Solid.Tag.Raw.spec(),
         Solid.Tag.Cycle.spec(),
         Solid.Tag.Render.spec()
