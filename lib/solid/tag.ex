@@ -45,7 +45,7 @@ defmodule Solid.Tag do
   More info: https://shopify.github.io/liquid/tags/control-flow/
   """
 
-  alias Solid.{Expression, Context}
+  alias Solid.Context
 
   @type rendered_data :: {:text, binary()} | {:object, keyword()} | {:tag, list()}
 
@@ -98,34 +98,12 @@ defmodule Solid.Tag do
     Solid.Tag.Cycle.render(tag, context, options)
   end
 
-  defp do_eval([{:if_exp, exp} | _] = tag, context, _options) do
-    if eval_expression(exp[:expression], context), do: throw({:result, exp})
-    elsif_exps = tag[:elsif_exps]
-
-    if elsif_exps do
-      result = Enum.find(elsif_exps, &eval_elsif(&1, context))
-      if result, do: throw({:result, elem(result, 1)})
-    end
-
-    else_exp = tag[:else_exp]
-    if else_exp, do: throw({:result, else_exp})
-  catch
-    {:result, result} -> result[:result]
+  defp do_eval([{:if_exp, _} | _] = tag, context, options) do
+    Solid.Tag.If.render(tag, context, options)
   end
 
-  defp do_eval([{:unless_exp, exp} | _] = tag, context, _options) do
-    unless eval_expression(exp[:expression], context), do: throw({:result, exp})
-    elsif_exps = tag[:elsif_exps]
-
-    if elsif_exps do
-      result = Enum.find(elsif_exps, &eval_elsif(&1, context))
-      if result, do: throw({:result, elem(result, 1)})
-    end
-
-    else_exp = tag[:else_exp]
-    if else_exp, do: throw({:result, else_exp})
-  catch
-    {:result, result} -> result[:result]
+  defp do_eval([{:unless_exp, _} | _] = tag, context, options) do
+    Solid.Tag.If.render(tag, context, options)
   end
 
   defp do_eval([{:case_exp, _} | _] = tag, context, options) do
@@ -164,24 +142,10 @@ defmodule Solid.Tag do
     Solid.Tag.Render.render(tag, context, options)
   end
 
-  defp do_eval([{custom_tag, tag_data}], context, options) do
-    parser = Keyword.get(options, :parser, Solid.Parser)
-
-    case parser.custom_tag_module(custom_tag) do
-      {:ok, custom_tag_module} ->
-        case custom_tag_module.render(tag_data, context, options) do
-          {result, context} -> {result, context}
-          text when is_binary(text) -> {[text: text], context}
-        end
-
-      _ ->
-        raise ArgumentError
+  defp do_eval([{custom_tag_module, tag_data}], context, options) do
+    case custom_tag_module.render(tag_data, context, options) do
+      {result, context} -> {result, context}
+      text when is_binary(text) -> {[text: text], context}
     end
   end
-
-  defp eval_elsif({:elsif_exp, elsif_exp}, context) do
-    eval_expression(elsif_exp[:expression], context)
-  end
-
-  defp eval_expression(exps, context), do: Expression.eval(exps, context)
 end
