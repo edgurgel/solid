@@ -9,11 +9,10 @@ defmodule Solid.Tag.Break do
     ignore(BaseTag.opening_tag())
     |> ignore(string("break"))
     |> ignore(BaseTag.closing_tag())
-    |> tag(:break_exp)
   end
 
   @impl true
-  def render([break_exp: _], context, _options) do
+  def render(_tag, context, _options) do
     throw({:break_exp, [], context})
   end
 end

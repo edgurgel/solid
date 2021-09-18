@@ -22,12 +22,11 @@ defmodule Solid.Tag.Render do
     )
     |> ignore(space)
     |> ignore(BaseTag.closing_tag())
-    |> tag(:render_exp)
   end
 
   @impl true
   def render(
-        [render_exp: [template: template_binding, arguments: argument_binding]],
+        [template: template_binding, arguments: argument_binding],
         context,
         options
       ) do

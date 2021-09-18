@@ -56,7 +56,7 @@ defmodule Solid.Parser.Base do
           Solid.Tag.Render
         ]
         |> Enum.map(fn tag ->
-          tag.spec(__MODULE__)
+          tag(tag.spec(__MODULE__), tag)
         end)
 
       custom_tags =

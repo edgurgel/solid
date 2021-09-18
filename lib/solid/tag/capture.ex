@@ -17,12 +17,11 @@ defmodule Solid.Tag.Capture do
     |> ignore(BaseTag.opening_tag())
     |> ignore(string("endcapture"))
     |> ignore(BaseTag.closing_tag())
-    |> tag(:capture_exp)
   end
 
   @impl true
   def render(
-        [capture_exp: [field: [field_name], result: result]],
+        [field: [field_name], result: result],
         context,
         options
       ) do

@@ -28,11 +28,10 @@ defmodule Solid.Tag.Cycle do
       |> tag(:values)
     )
     |> ignore(BaseTag.closing_tag())
-    |> tag(:cycle_exp)
   end
 
   @impl true
-  def render([cycle_exp: cycle], context, _options) do
+  def render(cycle, context, _options) do
     {context, result} = Solid.Context.run_cycle(context, cycle)
 
     {[text: result], context}

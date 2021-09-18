@@ -18,12 +18,11 @@ defmodule Solid.Tag.Assign do
     |> tag(Argument.argument(), :argument)
     |> optional(tag(repeat(Argument.filter()), :filters))
     |> ignore(BaseTag.closing_tag())
-    |> tag(:assign_exp)
   end
 
   @impl true
   def render(
-        [assign_exp: [field: [field_name], argument: argument, filters: filters]],
+        [field: [field_name], argument: argument, filters: filters],
         context,
         _options
       ) do

@@ -88,64 +88,14 @@ defmodule Solid.Tag do
   def eval(tag, context, options) do
     case do_eval(tag, context, options) do
       {text, context} -> {text, context}
+      text when is_binary(text) -> {[text: text], context}
       text -> {text, context}
     end
   end
 
   defp do_eval([], _context, _options), do: nil
 
-  defp do_eval([cycle_exp: _] = tag, context, options) do
-    Solid.Tag.Cycle.render(tag, context, options)
-  end
-
-  defp do_eval([{:if_exp, _} | _] = tag, context, options) do
-    Solid.Tag.If.render(tag, context, options)
-  end
-
-  defp do_eval([{:unless_exp, _} | _] = tag, context, options) do
-    Solid.Tag.If.render(tag, context, options)
-  end
-
-  defp do_eval([{:case_exp, _} | _] = tag, context, options) do
-    Solid.Tag.Case.render(tag, context, options)
-  end
-
-  defp do_eval([assign_exp: _] = tag, context, options) do
-    Solid.Tag.Assign.render(tag, context, options)
-  end
-
-  defp do_eval([capture_exp: _] = tag, context, options) do
-    Solid.Tag.Capture.render(tag, context, options)
-  end
-
-  defp do_eval([counter_exp: _counter_exp] = tag, context, options) do
-    Solid.Tag.Counter.render(tag, context, options)
-  end
-
-  defp do_eval([break_exp: _] = tag, context, options) do
-    Solid.Tag.Break.render(tag, context, options)
-  end
-
-  defp do_eval([continue_exp: _] = tag, context, options) do
-    Solid.Tag.Continue.render(tag, context, options)
-  end
-
-  defp do_eval([for_exp: _] = tag, context, options) do
-    Solid.Tag.For.render(tag, context, options)
-  end
-
-  defp do_eval([raw_exp: _] = tag, context, options) do
-    Solid.Tag.Raw.render(tag, context, options)
-  end
-
-  defp do_eval([render_exp: _] = tag, context, options) do
-    Solid.Tag.Render.render(tag, context, options)
-  end
-
-  defp do_eval([{custom_tag_module, tag_data}], context, options) do
-    case custom_tag_module.render(tag_data, context, options) do
-      {result, context} -> {result, context}
-      text when is_binary(text) -> {[text: text], context}
-    end
+  defp do_eval([{tag_module, tag_data}], context, options) do
+    tag_module.render(tag_data, context, options)
   end
 end

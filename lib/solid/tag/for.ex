@@ -57,19 +57,12 @@ defmodule Solid.Tag.For do
     |> ignore(BaseTag.opening_tag())
     |> ignore(string("endfor"))
     |> ignore(BaseTag.closing_tag())
-    |> tag(:for_exp)
   end
 
   @impl true
   def render(
-        [
-          for_exp:
-            [
-              {:field, [enumerable_key]},
-              {:enumerable, enumerable},
-              {:parameters, parameters} | _
-            ] = exp
-        ],
+        [{:field, [enumerable_key]}, {:enumerable, enumerable}, {:parameters, parameters} | _] =
+          exp,
         context,
         options
       ) do

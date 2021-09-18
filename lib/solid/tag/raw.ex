@@ -16,11 +16,10 @@ defmodule Solid.Tag.Raw do
     |> ignore(BaseTag.closing_tag())
     |> repeat(lookahead_not(ignore(end_raw_tag)) |> utf8_char([]))
     |> ignore(end_raw_tag)
-    |> tag(:raw_exp)
   end
 
   @impl true
-  def render([raw_exp: raw], context, _options) do
+  def render(raw, context, _options) do
     {[text: raw], context}
   end
 end

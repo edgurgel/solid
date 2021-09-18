@@ -22,11 +22,10 @@ defmodule Solid.Tag.Counter do
     |> ignore(space)
     |> concat(Variable.field())
     |> ignore(BaseTag.closing_tag())
-    |> tag(:counter_exp)
   end
 
   @impl true
-  def render([counter_exp: [{operation, default}, field]], context, _options) do
+  def render([{operation, default}, field], context, _options) do
     value = Argument.get([field], context, scopes: [:counter_vars]) || default
     {:field, [field_name]} = field
 
