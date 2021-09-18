@@ -2,14 +2,14 @@ defmodule Solid.Tag do
   @moduledoc """
   This module define behaviour for tags.
 
-  To implement new custom tag you need to create new module that implement `CustomTag` behaviour:
+  To implement new tag you need to create new module that implement the `Tag` behaviour:
 
       defmodule MyCustomTag do
         import NimbleParsec
         @behaviour Solid.Tag
 
         @impl true
-        def spec() do
+        def spec(_parser) do
           space = Solid.Parser.Literal.whitespace(min: 0)
 
           ignore(string("{%"))
@@ -20,7 +20,7 @@ defmodule Solid.Tag do
         end
 
         @impl true
-        def render(_context, _binding, _options) do
+        def render(_tag, _context, _options) do
           [text: "my first tag"]
         end
       end
@@ -28,17 +28,17 @@ defmodule Solid.Tag do
   - `spec` define how to parse your tag
   - `render` define how to render your tag
 
-  Then add custom tag to your parser
+  Then add the tag to your parser
 
       defmodule MyParser do
         use Solid.Parser.Base, custom_tags: [my_tag: MyCustomTag]
       end
 
-  Then pass your tag to render function
+  Then pass the custom parser as option
 
       "{% my_tag %}"
       |> Solid.parse!(parser: MyParser)
-      |> Solid.render(tags: %{"my_tag" => MyCustomTag})
+      |> Solid.render()
 
   Control flow tags can change the information Liquid shows using programming logic.
 
