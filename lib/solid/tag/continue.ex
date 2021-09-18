@@ -5,7 +5,7 @@ defmodule Solid.Tag.Continue do
   @behaviour Solid.Tag
 
   @impl true
-  def spec() do
+  def spec(_parser) do
     ignore(BaseTag.opening_tag())
     |> ignore(string("continue"))
     |> ignore(BaseTag.closing_tag())

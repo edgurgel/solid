@@ -5,7 +5,7 @@ defmodule Solid.Tag.For do
   @behaviour Solid.Tag
 
   @impl true
-  def spec() do
+  def spec(parser) do
     space = Literal.whitespace(min: 0)
 
     range =
@@ -52,7 +52,7 @@ defmodule Solid.Tag.For do
     |> ignore(space)
     |> unwrap_and_tag(for_parameters, :parameters)
     |> ignore(BaseTag.closing_tag())
-    |> tag(parsec(:liquid_entry), :result)
+    |> tag(parsec({parser, :liquid_entry}), :result)
     |> optional(tag(BaseTag.else_tag(), :else_exp))
     |> ignore(BaseTag.opening_tag())
     |> ignore(string("endfor"))

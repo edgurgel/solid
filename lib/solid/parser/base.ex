@@ -40,27 +40,31 @@ defmodule Solid.Parser.Base do
         |> ignore(choice([closing_wc_object_and_whitespace, closing_object]))
         |> tag(:object)
 
-      base_tags = [
-        Solid.Tag.Break.spec(),
-        Solid.Tag.Continue.spec(),
-        Solid.Tag.Counter.spec(),
-        Solid.Tag.Comment.spec(),
-        Solid.Tag.Assign.spec(),
-        Solid.Tag.Capture.spec(),
-        Solid.Tag.If.spec(),
-        Solid.Tag.Case.spec(),
-        Solid.Tag.For.spec(),
-        Solid.Tag.Raw.spec(),
-        Solid.Tag.Cycle.spec(),
-        Solid.Tag.Render.spec()
-      ]
+      base_tags =
+        [
+          Solid.Tag.Break,
+          Solid.Tag.Continue,
+          Solid.Tag.Counter,
+          Solid.Tag.Comment,
+          Solid.Tag.Assign,
+          Solid.Tag.Capture,
+          Solid.Tag.If,
+          Solid.Tag.Case,
+          Solid.Tag.For,
+          Solid.Tag.Raw,
+          Solid.Tag.Cycle,
+          Solid.Tag.Render
+        ]
+        |> Enum.map(fn tag ->
+          tag.spec(__MODULE__)
+        end)
 
       custom_tags =
         if custom_tag_modules != [] do
           custom_tag_modules
           |> Enum.uniq()
           |> Enum.map(fn {tag_name, module} ->
-            tag(module.spec(), module)
+            tag(module.spec(__MODULE__), module)
           end)
         end
 
@@ -91,7 +95,7 @@ defmodule Solid.Parser.Base do
         |> lookahead(choice([opening_wc_object, opening_wc_tag]))
         |> ignore()
 
-      defcombinatorp(:liquid_entry, repeat(choice([object, tags, text, leading_whitespace])))
+      defcombinator(:liquid_entry, repeat(choice([object, tags, text, leading_whitespace])))
 
       defparsec(:parse, parsec(:liquid_entry) |> eos())
     end

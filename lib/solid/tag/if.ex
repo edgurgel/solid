@@ -63,7 +63,7 @@ defmodule Solid.Tag.If do
   defcombinator(:__boolean_expression__, boolean_expression)
 
   @impl true
-  def spec() do
+  def spec(parser) do
     space = Literal.whitespace(min: 0)
 
     if_tag =
@@ -71,14 +71,14 @@ defmodule Solid.Tag.If do
       |> ignore(string("if"))
       |> tag(parsec({__MODULE__, :__boolean_expression__}), :expression)
       |> ignore(BaseTag.closing_tag())
-      |> tag(parsec(:liquid_entry), :result)
+      |> tag(parsec({parser, :liquid_entry}), :result)
 
     elsif_tag =
       ignore(BaseTag.opening_tag())
       |> ignore(string("elsif"))
       |> tag(parsec({__MODULE__, :__boolean_expression__}), :expression)
       |> ignore(BaseTag.closing_tag())
-      |> tag(parsec(:liquid_entry), :result)
+      |> tag(parsec({parser, :liquid_entry}), :result)
       |> tag(:elsif_exp)
 
     unless_tag =
@@ -87,7 +87,7 @@ defmodule Solid.Tag.If do
       |> tag(parsec({__MODULE__, :__boolean_expression__}), :expression)
       |> ignore(space)
       |> ignore(BaseTag.closing_tag())
-      |> tag(parsec(:liquid_entry), :result)
+      |> tag(parsec({parser, :liquid_entry}), :result)
 
     cond_if_tag =
       tag(if_tag, :if_exp)

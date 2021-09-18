@@ -5,7 +5,7 @@ defmodule Solid.Tag.Assign do
   @behaviour Solid.Tag
 
   @impl true
-  def spec() do
+  def spec(_parser) do
     space = Literal.whitespace(min: 0)
 
     ignore(BaseTag.opening_tag())

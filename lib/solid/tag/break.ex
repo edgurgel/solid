@@ -5,7 +5,7 @@ defmodule Solid.Tag.Break do
   @behaviour Solid.Tag
 
   @impl true
-  def spec() do
+  def spec(_parser) do
     ignore(BaseTag.opening_tag())
     |> ignore(string("break"))
     |> ignore(BaseTag.closing_tag())

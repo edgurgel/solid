@@ -6,7 +6,7 @@ defmodule Solid.Tag.Counter do
   @behaviour Solid.Tag
 
   @impl true
-  def spec() do
+  def spec(_parser) do
     space = Literal.whitespace(min: 0)
 
     increment =

@@ -5,7 +5,7 @@ defmodule Solid.Tag.Raw do
   @behaviour Solid.Tag
 
   @impl true
-  def spec() do
+  def spec(_parser) do
     end_raw_tag =
       BaseTag.opening_tag()
       |> ignore(string("endraw"))

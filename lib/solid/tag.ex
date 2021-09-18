@@ -56,7 +56,7 @@ defmodule Solid.Tag do
   - `Solid.Parser.Argument`
   """
 
-  @callback spec() :: NimbleParsec.t()
+  @callback spec(module) :: NimbleParsec.t()
 
   @doc """
   Define how to render your tag.

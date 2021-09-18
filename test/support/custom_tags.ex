@@ -6,7 +6,7 @@ defmodule CustomTags do
     @behaviour Solid.Tag
 
     @impl true
-    def spec() do
+    def spec(_parser) do
       ignore(BaseTag.opening_tag())
       |> ignore(string("get_current_date"))
       |> ignore(BaseTag.closing_tag())
@@ -25,7 +25,7 @@ defmodule CustomTags do
     @behaviour Solid.Tag
 
     @impl true
-    def spec() do
+    def spec(_parser) do
       space = Literal.whitespace(min: 0)
 
       ignore(BaseTag.opening_tag())
@@ -55,13 +55,13 @@ defmodule CustomTags do
     @behaviour Solid.Tag
 
     @impl true
-    def spec() do
+    def spec(parser) do
       space = Literal.whitespace(min: 0)
 
       ignore(BaseTag.opening_tag())
       |> ignore(string("myblock"))
       |> ignore(BaseTag.closing_tag())
-      |> tag(parsec(:liquid_entry), :result)
+      |> tag(parsec({parser, :liquid_entry}), :result)
       |> ignore(BaseTag.opening_tag())
       |> ignore(space)
       |> ignore(string("endmyblock"))
@@ -79,7 +79,7 @@ defmodule CustomTags do
     @behaviour Solid.Tag
 
     @impl true
-    def spec(), do: Solid.Tag.basic("foobar")
+    def spec(_parser), do: Solid.Tag.basic("foobar")
 
     @impl true
     def render(_arguments, _context, _opts) do
@@ -91,7 +91,7 @@ defmodule CustomTags do
     @behaviour Solid.Tag
 
     @impl true
-    def spec(), do: Solid.Tag.basic("foobarval")
+    def spec(_parser), do: Solid.Tag.basic("foobarval")
 
     @impl true
     def render([arguments: [value: string]], _context, _opts) do

@@ -5,7 +5,7 @@ defmodule Solid.Tag.Capture do
   @behaviour Solid.Tag
 
   @impl true
-  def spec() do
+  def spec(parser) do
     space = Literal.whitespace(min: 0)
 
     ignore(BaseTag.opening_tag())
@@ -13,7 +13,7 @@ defmodule Solid.Tag.Capture do
     |> ignore(space)
     |> concat(Variable.field())
     |> ignore(BaseTag.closing_tag())
-    |> tag(parsec(:liquid_entry), :result)
+    |> tag(parsec({parser, :liquid_entry}), :result)
     |> ignore(BaseTag.opening_tag())
     |> ignore(string("endcapture"))
     |> ignore(BaseTag.closing_tag())

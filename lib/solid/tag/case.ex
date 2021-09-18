@@ -5,7 +5,7 @@ defmodule Solid.Tag.Case do
   @behaviour Solid.Tag
 
   @impl true
-  def spec() do
+  def spec(parser) do
     space = Literal.whitespace(min: 0)
 
     case_tag =
@@ -21,12 +21,12 @@ defmodule Solid.Tag.Case do
       |> ignore(space)
       |> concat(Literal.value())
       |> ignore(BaseTag.closing_tag())
-      |> tag(parsec(:liquid_entry), :result)
+      |> tag(parsec({parser, :liquid_entry}), :result)
       |> tag(:when)
 
     tag(case_tag, :case_exp)
     # FIXME
-    |> ignore(parsec(:liquid_entry))
+    |> ignore(parsec({parser, :liquid_entry}))
     |> unwrap_and_tag(reduce(times(when_tag, min: 1), :when_join), :whens)
     |> optional(tag(BaseTag.else_tag(), :else_exp))
     |> ignore(BaseTag.opening_tag())

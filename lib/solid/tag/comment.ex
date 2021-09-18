@@ -5,7 +5,7 @@ defmodule Solid.Tag.Comment do
   @behaviour Solid.Tag
 
   @impl true
-  def spec() do
+  def spec(_parser) do
     end_comment_tag =
       ignore(BaseTag.opening_tag())
       |> ignore(string("endcomment"))
