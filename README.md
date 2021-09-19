@@ -55,7 +55,7 @@ Then add the tag to your parser
 
 ```
 defmodule MyParser do
-  use Solid.Parser.Base, custom_tags: [my_tag: MyCustomTag]
+  use Solid.Parser.Base, custom_tags: [MyCustomTag]
 end
 ```
 
