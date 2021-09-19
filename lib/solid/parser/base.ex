@@ -6,12 +6,6 @@ defmodule Solid.Parser.Base do
       import NimbleParsec
       alias Solid.Parser.{Literal, Variable, Argument, BaseTag}
 
-      defp when_join(whens) do
-        for {:when, [value: value, result: result]} <- whens, into: %{} do
-          {value, result}
-        end
-      end
-
       space = Literal.whitespace(min: 0)
 
       opening_object = string("{{")
@@ -63,7 +57,7 @@ defmodule Solid.Parser.Base do
         if custom_tag_modules != [] do
           custom_tag_modules
           |> Enum.uniq()
-          |> Enum.map(fn {tag_name, module} ->
+          |> Enum.map(fn module ->
             tag(module.spec(__MODULE__), module)
           end)
         end

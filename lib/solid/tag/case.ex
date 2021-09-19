@@ -4,6 +4,12 @@ defmodule Solid.Tag.Case do
 
   @behaviour Solid.Tag
 
+  def when_join(whens) do
+    for {:when, [value: value, result: result]} <- whens, into: %{} do
+      {value, result}
+    end
+  end
+
   @impl true
   def spec(parser) do
     space = Literal.whitespace(min: 0)
@@ -27,7 +33,7 @@ defmodule Solid.Tag.Case do
     tag(case_tag, :case_exp)
     # FIXME
     |> ignore(parsec({parser, :liquid_entry}))
-    |> unwrap_and_tag(reduce(times(when_tag, min: 1), :when_join), :whens)
+    |> unwrap_and_tag(reduce(times(when_tag, min: 1), {__MODULE__, :when_join, []}), :whens)
     |> optional(tag(BaseTag.else_tag(), :else_exp))
     |> ignore(BaseTag.opening_tag())
     |> ignore(string("endcase"))
