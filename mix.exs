@@ -1,27 +1,20 @@
 defmodule Solid.Mixfile do
   use Mix.Project
 
-  @description """
-    Liquid Template engine
-  """
+  @source_url "https://github.com/edgurgel/solid"
+  @version "0.10.0"
 
   def project do
     [
       app: :solid,
-      version: "0.10.0",
+      version: @version,
       elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       name: "solid",
-      description: @description,
       package: package(),
-      docs: [
-        main: "readme",
-        extras: [
-          "README.md"
-        ]
-      ],
+      docs: docs(),
       deps: deps()
     ]
   end
@@ -32,16 +25,30 @@ defmodule Solid.Mixfile do
     [
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0", only: :test},
-      {:earmark, "~> 1.3", only: :dev},
-      {:ex_doc, "~> 0.21", only: :dev}
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 
   defp package do
     [
+      description: "Liquid Template engine",
       maintainers: ["Eduardo Gurgel Pinho"],
       licenses: ["MIT"],
-      links: %{"Github" => "https://github.com/edgurgel/solid"}
+      links: %{"Github" => @source_url}
+    ]
+  end
+
+  defp docs do
+    [
+      extras: [
+        "CONTRIBUTING.md": [title: "Contributing"],
+        "LICENSE.md": [title: "License"],
+        "README.md": [title: "Overview"]
+      ],
+      main: "readme",
+      source_url: @source_url,
+      source_ref: "v#{@version}",
+      formatters: ["html"]
     ]
   end
 
