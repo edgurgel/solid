@@ -23,7 +23,7 @@ end
 
 ## Custom tags
 
-To implement new tag you need to create new module that implement the `Tag` behaviour:
+To implement a new tag you need to create a new module that implements the `Tag` behaviour:
 
 ```elixir
 defmodule MyCustomTag do
@@ -48,10 +48,10 @@ defmodule MyCustomTag do
 end
 ```
 
-- `spec` define how to parse your tag
-- `render` define how to render your tag
+- `spec` defines how to parse your tag;
+- `render` defines how to render your tag.
 
-Then add the tag to your parser
+Now we need to add the tag to the parser
 
 ```
 defmodule MyParser do
@@ -59,7 +59,7 @@ defmodule MyParser do
 end
 ```
 
-Then pass the custom parser as option
+And finally pass the custom parser as an option:
 
 ```elixir
 "{% my_tag %}"
