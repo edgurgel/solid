@@ -17,13 +17,60 @@ The package can be installed with:
 
 ```elixir
 def deps do
-  [{:solid, "~> 0.8"}]
+  [{:solid, "~> 0.10"}]
 end
+```
+
+## Custom tags
+
+To implement new tag you need to create new module that implement the `Tag` behaviour:
+
+```elixir
+defmodule MyCustomTag do
+  import NimbleParsec
+  @behaviour Solid.Tag
+
+  @impl true
+  def spec(_parser) do
+    space = Solid.Parser.Literal.whitespace(min: 0)
+
+    ignore(string("{%"))
+    |> ignore(space)
+    |> ignore(string("my_tag"))
+    |> ignore(space)
+    |> ignore(string("%}"))
+  end
+
+  @impl true
+  def render(tag, _context, _options) do
+    [text: "my first tag"]
+  end
+end
+```
+
+- `spec` define how to parse your tag
+- `render` define how to render your tag
+
+Then add the tag to your parser
+
+```
+defmodule MyParser do
+  use Solid.Parser.Base, custom_tags: [MyCustomTag]
+end
+```
+
+Then pass the custom parser as option
+
+```elixir
+"{% my_tag %}"
+|> Solid.parse!(parser: MyParser)
+|> Solid.render()
 ```
 
 ## Contributing
 
 When adding new functionality or fixing bugs consider adding a new test case here inside `test/cases`. These cases are tested against the Ruby gem so we can try to stay as close as possible to the original implementation.
+
 ## TODO
 
 * [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
@@ -45,4 +92,4 @@ When adding new functionality or fixing bugs consider adding a new test case her
   - [x] `increment` [#16](https://github.com/edgurgel/solid/issues/16)
   - [x] `decrement` [#16](https://github.com/edgurgel/solid/issues/16)
 * [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
-* [ ] Whitespace control [#10](https://github.com/edgurgel/solid/issues/10)
+* [x] Whitespace control [#10](https://github.com/edgurgel/solid/issues/10)
