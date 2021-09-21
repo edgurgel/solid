@@ -8,8 +8,10 @@ defmodule Solid.FileSystem do
 
   Example:
 
-    file_system = Solid.LocalFileSystem.new(template_path)
-    text = Solid.render(template, file_system: {Solid.LocalFileSystem, file_system})
+  ```elixir
+  file_system = Solid.LocalFileSystem.new(template_path)
+  text = Solid.render(template, file_system: {Solid.LocalFileSystem, file_system})
+  ```
 
   This will render the template with a LocalFileSystem implementation rooted at 'template_path'.
   """

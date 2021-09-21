@@ -20,6 +20,6 @@ defmodule Solid.Tag.Comment do
 
   @impl true
   def render(_tag, context, _options) do
-    {nil, context}
+    {[], context}
   end
 end

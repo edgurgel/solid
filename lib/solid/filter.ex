@@ -321,7 +321,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.split("", " ")
   [""]
   """
-  @spec split(any, String.t()) :: List.t()
+  @spec split(any, String.t()) :: list(String.t())
   def split(input, pattern), do: to_string(input) |> String.split(pattern)
 
   @doc """
@@ -466,7 +466,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.reverse(["a", "b", "c"])
   ["c", "b", "a"]
   """
-  @spec reverse(list) :: List.t()
+  @spec reverse(list) :: list
   def reverse(input), do: Enum.reverse(input)
 
   @doc """
@@ -538,7 +538,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.sort(~w(zebra octopus giraffe SallySnake))
   ~w(SallySnake giraffe octopus zebra)
   """
-  @spec sort(List.t()) :: List.t()
+  @spec sort(list) :: list
   def sort(input), do: Enum.sort(input)
 
   @doc """
@@ -547,7 +547,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.sort_natural(~w(zebra octopus giraffe SallySnake))
   ~w(giraffe octopus SallySnake zebra)
   """
-  @spec sort_natural(List.t()) :: List.t()
+  @spec sort_natural(list) :: list
   def sort_natural(input) do
     Enum.sort(input, &(String.downcase(&1) <= String.downcase(&2)))
   end

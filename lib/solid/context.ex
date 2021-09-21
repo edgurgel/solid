@@ -2,10 +2,10 @@ defmodule Solid.Context do
   defstruct vars: %{}, counter_vars: %{}, iteration_vars: %{}, cycle_state: %{}
 
   @type t :: %__MODULE__{
-          vars: Map.t(),
-          counter_vars: Map.t(),
+          vars: map,
+          counter_vars: map,
           iteration_vars: %{optional(String.t()) => term},
-          cycle_state: Map.t()
+          cycle_state: map
         }
   @type scope :: :counter_vars | :vars | :iteration_vars
 

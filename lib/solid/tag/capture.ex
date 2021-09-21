@@ -32,6 +32,6 @@ defmodule Solid.Tag.Capture do
       | vars: Map.put(context.vars, field_name, IO.iodata_to_binary(captured))
     }
 
-    {nil, context}
+    {[], context}
   end
 end

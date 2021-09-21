@@ -1,9 +1,6 @@
 defmodule Solid do
   @moduledoc """
   Main module to interact with Solid
-
-  iex> Solid.parse("{{ variable }}") |> elem(1) |> Solid.render(%{ "variable" => "value" }) |> to_string
-  "value"
   """
   alias Solid.{Object, Tag, Context}
 
@@ -27,6 +24,13 @@ defmodule Solid do
 
   @doc """
   It generates the compiled template
+
+  This function returns `{:ok, template}` if successfully parses the template, `{:error, template_error}` otherwise
+
+  # Options
+
+  * `parser` - a custom parser module can be passed. See `Solid.Tag` for more information
+
   """
   @spec parse(String.t(), Keyword.t()) :: {:ok, %Template{}} | {:error, %TemplateError{}}
   def parse(text, opts \\ []) do
@@ -40,6 +44,8 @@ defmodule Solid do
 
   @doc """
   It generates the compiled template
+
+  This function returns the compiled template or raises an error. Same options as `parse/2`
   """
   @spec parse!(String.t(), Keyword.t()) :: %Template{} | no_return
   def parse!(text, opts \\ []) do
@@ -53,15 +59,16 @@ defmodule Solid do
   It renders the compiled template using a `hash` with vars
 
   **Options**
-  - `tags`: map of custom render module for custom tag. Ex: `%{"my_tag" => MyRenderer}`
-  - `file_system`: a tuple of {FileSytemModule, options}. If this option is not specified, `Solid` use `Solid.BlankFileSystem` which raise error when you use `render` tag. You can use `Solid.LocalFileSystem` or implement your own file system. Please read `Solid.FileSytem` for more detail.
+  - `file_system`: a tuple of {FileSytemModule, options}. If this option is not specified, `Solid` uses `Solid.BlankFileSystem` which raises an error when the `render` tag is used. `Solid.LocalFileSystem` can be used or a custom module may be implemented. See `Solid.FileSytem` for more details.
 
   **Example**:
 
-      fs = Solid.LocalFileSystem.new("/path/to/template/dir/")
-      Solid.render(template, vars, [file_system: {Solid.LocalFileSystem, fs}])
+  ```elixir
+  fs = Solid.LocalFileSystem.new("/path/to/template/dir/")
+  Solid.render(template, vars, [file_system: {Solid.LocalFileSystem, fs}])
+  ```
   """
-  # @spec render(any, Map.t) :: iolist
+  @spec render(any, Map.t()) :: iolist
   def render(template_or_text, values, options \\ [])
 
   def render(%Template{parsed_template: parsed_template}, hash, options) do

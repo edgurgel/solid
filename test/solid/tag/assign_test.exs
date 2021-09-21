@@ -11,7 +11,7 @@ defmodule Solid.Tag.AssignTest do
   test "integration" do
     {:ok, parsed, _, _, _, _} = "{% assign first = 3 %}" |> Parser.parse()
 
-    assert {nil, context} = Assign.render(parsed, %Context{}, [])
+    assert {[], context} = Assign.render(parsed, %Context{}, [])
 
     assert context.vars == %{"first" => 3}
   end

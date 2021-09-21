@@ -30,6 +30,6 @@ defmodule Solid.Tag.Assign do
 
     context = %{context | vars: Map.put(context.vars, field_name, new_value)}
 
-    {nil, context}
+    {[], context}
   end
 end
