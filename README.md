@@ -60,7 +60,7 @@ end
 
 Now we need to add the tag to the parser
 
-```
+```elixir
 defmodule MyParser do
   use Solid.Parser.Base, custom_tags: [MyCustomTag]
 end
