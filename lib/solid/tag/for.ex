@@ -53,7 +53,7 @@ defmodule Solid.Tag.For do
     |> unwrap_and_tag(for_parameters, :parameters)
     |> ignore(BaseTag.closing_tag())
     |> tag(parsec({parser, :liquid_entry}), :result)
-    |> optional(tag(BaseTag.else_tag(), :else_exp))
+    |> optional(tag(BaseTag.else_tag(parser), :else_exp))
     |> ignore(BaseTag.opening_tag())
     |> ignore(string("endfor"))
     |> ignore(BaseTag.closing_tag())

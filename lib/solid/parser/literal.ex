@@ -1,6 +1,8 @@
 defmodule Solid.Parser.Literal do
   import NimbleParsec
 
+  @dialyzer :no_opaque
+
   def minus, do: string("-")
   def plus, do: string("+")
 

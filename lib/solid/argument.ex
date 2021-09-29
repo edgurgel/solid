@@ -63,6 +63,7 @@ defmodule Solid.Argument do
     |> apply_filters(filters, context)
   end
 
+  @spec parse_named_arguments(list, Context.t()) :: list
   def parse_named_arguments(ast, context) do
     ast
     |> Enum.chunk_every(2)

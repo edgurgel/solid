@@ -92,7 +92,7 @@ defmodule Solid.Tag.If do
     cond_if_tag =
       tag(if_tag, :if_exp)
       |> tag(times(elsif_tag, min: 0), :elsif_exps)
-      |> optional(tag(BaseTag.else_tag(), :else_exp))
+      |> optional(tag(BaseTag.else_tag(parser), :else_exp))
       |> ignore(BaseTag.opening_tag())
       |> ignore(string("endif"))
       |> ignore(BaseTag.closing_tag())
@@ -100,7 +100,7 @@ defmodule Solid.Tag.If do
     cond_unless_tag =
       tag(unless_tag, :unless_exp)
       |> tag(times(elsif_tag, min: 0), :elsif_exps)
-      |> optional(tag(BaseTag.else_tag(), :else_exp))
+      |> optional(tag(BaseTag.else_tag(parser), :else_exp))
       |> ignore(BaseTag.opening_tag())
       |> ignore(string("endunless"))
       |> ignore(BaseTag.closing_tag())

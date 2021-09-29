@@ -34,7 +34,7 @@ defmodule Solid.Tag.Case do
     # FIXME
     |> ignore(parsec({parser, :liquid_entry}))
     |> unwrap_and_tag(reduce(times(when_tag, min: 1), {__MODULE__, :when_join, []}), :whens)
-    |> optional(tag(BaseTag.else_tag(), :else_exp))
+    |> optional(tag(BaseTag.else_tag(parser), :else_exp))
     |> ignore(BaseTag.opening_tag())
     |> ignore(string("endcase"))
     |> ignore(BaseTag.closing_tag())

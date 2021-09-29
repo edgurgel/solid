@@ -15,7 +15,8 @@ defmodule Solid.Mixfile do
       name: "solid",
       package: package(),
       docs: docs(),
-      deps: deps()
+      deps: deps(),
+      dialyzer: [ignore_warnings: "dialyzer.ignore-warnings"]
     ]
   end
 

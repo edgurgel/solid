@@ -5,6 +5,11 @@ defmodule Solid do
   alias Solid.{Object, Tag, Context}
 
   defmodule Template do
+    @type t :: %__MODULE__{
+            parsed_template: list(rendered_data())
+          }
+
+    @type rendered_data :: {:text, iolist() | String.t()} | {:object, keyword()} | {:tag, list()}
     @enforce_keys [:parsed_template]
     defstruct [:parsed_template]
   end
@@ -56,10 +61,10 @@ defmodule Solid do
   end
 
   @doc """
-  It renders the compiled template using a `hash` with vars
+  It renders the compiled template using a map with vars
 
   **Options**
-  - `file_system`: a tuple of {FileSytemModule, options}. If this option is not specified, `Solid` uses `Solid.BlankFileSystem` which raises an error when the `render` tag is used. `Solid.LocalFileSystem` can be used or a custom module may be implemented. See `Solid.FileSytem` for more details.
+  - `file_system`: a tuple of {FileSystemModule, options}. If this option is not specified, `Solid` uses `Solid.BlankFileSystem` which raises an error when the `render` tag is used. `Solid.LocalFileSystem` can be used or a custom module may be implemented. See `Solid.FileSystem` for more details.
 
   **Example**:
 
@@ -68,9 +73,10 @@ defmodule Solid do
   Solid.render(template, vars, [file_system: {Solid.LocalFileSystem, fs}])
   ```
   """
-  @spec render(any, Map.t()) :: iolist
   def render(template_or_text, values, options \\ [])
 
+  @spec render(%Template{}, map, Keyword.t()) :: iolist
+  @spec render(list, %Context{}, Keyword.t()) :: {iolist, %Context{}}
   def render(%Template{parsed_template: parsed_template}, hash, options) do
     context = %Context{vars: hash}
 

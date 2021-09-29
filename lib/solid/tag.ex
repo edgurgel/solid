@@ -47,8 +47,6 @@ defmodule Solid.Tag do
 
   alias Solid.Context
 
-  @type rendered_data :: {:text, binary()} | {:object, keyword()} | {:tag, list()}
-
   @doc """
   Build and return `NimbleParsec` expression to parse your tag. There are some helper expressions that can be used:
   - `Solid.Parser.Literal`
@@ -60,11 +58,11 @@ defmodule Solid.Tag do
 
   @doc """
   Define how to render your tag.
-  Third argument are the options passed to `Solid.render/2`
+  Third argument are the options passed to `Solid.render/3`
   """
 
   @callback render(list(), Solid.Context.t(), keyword()) ::
-              {list(rendered_data), Solid.Context.t()} | String.t()
+              {list(Solid.Template.rendered_data()), Solid.Context.t()} | String.t()
 
   @doc """
   Basic custom tag spec that accepts optional arguments

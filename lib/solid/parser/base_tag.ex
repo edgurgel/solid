@@ -21,10 +21,10 @@ defmodule Solid.Parser.BaseTag do
     |> concat(choice([closing_wc_tag_and_whitespace, string("%}")]))
   end
 
-  def else_tag() do
+  def else_tag(parser) do
     ignore(opening_tag())
     |> ignore(string("else"))
     |> ignore(closing_tag())
-    |> tag(parsec(:liquid_entry), :result)
+    |> tag(parsec({parser, :liquid_entry}), :result)
   end
 end

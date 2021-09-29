@@ -2,6 +2,8 @@ defmodule Solid.Parser.Argument do
   import NimbleParsec
   alias Solid.Parser.{Variable, Literal}
 
+  @dialyzer :no_opaque
+
   defp space(), do: Literal.whitespace(min: 0)
 
   def argument_name() do

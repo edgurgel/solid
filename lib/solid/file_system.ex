@@ -17,7 +17,7 @@ defmodule Solid.FileSystem do
   """
 
   # Called by Solid to retrieve a template file
-  @callback read_template_file(binary(), options :: any()) :: binary()
+  @callback read_template_file(binary(), options :: any()) :: String.t() | no_return()
 end
 
 defmodule Solid.BlankFileSystem do

@@ -2,6 +2,8 @@ defmodule Solid.Parser.Variable do
   import NimbleParsec
   alias Solid.Parser.Literal
 
+  @dialyzer :no_opaque
+
   defp identifier(), do: ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-, ??], min: 1)
 
   def bracket_access do
