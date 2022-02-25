@@ -8,15 +8,19 @@ defmodule Solid.Filter do
   @doc """
   Apply `filter` if it exists. Otherwise return the first input.
 
-  iex> Solid.Filter.apply("upcase", ["ac"])
+  iex> Solid.Filter.apply("upcase", ["ac"], [])
   "AC"
-  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3])
+  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3], [])
   1
   """
-  def apply(filter, args) do
+  def apply(filter, args, opts) do
     custom_module = Application.get_env(:solid, :custom_filters, __MODULE__)
+    args_with_opts = args ++ [opts]
 
     cond do
+      filter_exists?({custom_module, filter, Enum.count(args_with_opts)}) ->
+        apply_filter({custom_module, filter, args_with_opts})
+
       filter_exists?({custom_module, filter, Enum.count(args)}) ->
         apply_filter({custom_module, filter, args})
 

@@ -23,6 +23,11 @@ defmodule Solid.Integration.CustomFiltersTest do
     def substitute(message, bindings \\ %{}) do
       Regex.replace(~r/%\{(\w+)\}/, message, fn _, key -> Map.get(bindings, key) end)
     end
+
+    def asset_url(input, opts) do
+      url = Keyword.get(opts, :"#{input}", "")
+      url <> input
+    end
   end
 
   setup do
@@ -59,6 +64,11 @@ defmodule Solid.Integration.CustomFiltersTest do
                "date_var" => date
              }) ==
                "today is 2019-10-31"
+    end
+
+    test "asset_url with opts" do
+      assert render(~s<{{ "app.css" | asset_url }}>, %{}, "app.css": "http://assets.example.com/") ==
+               "http://assets.example.com/app.css"
     end
   end
 end
