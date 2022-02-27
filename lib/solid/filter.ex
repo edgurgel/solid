@@ -14,7 +14,9 @@ defmodule Solid.Filter do
   1
   """
   def apply(filter, args, opts) do
-    custom_module = Application.get_env(:solid, :custom_filters, __MODULE__)
+    custom_module =
+      opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
+
     args_with_opts = args ++ [opts]
 
     cond do
