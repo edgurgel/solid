@@ -70,5 +70,14 @@ defmodule Solid.Integration.CustomFiltersTest do
       assert render(~s<{{ "app.css" | asset_url }}>, %{}, "app.css": "http://assets.example.com/") ==
                "http://assets.example.com/app.css"
     end
+
+    defmodule MyCustomFilters do
+      def add_one(x), do: x + 1
+    end
+
+    test "custom filters from render options" do
+      opts = [custom_filters: MyCustomFilters]
+      assert render("{{ number | add_one }}", %{"number" => 2}, opts) == "3"
+    end
   end
 end
