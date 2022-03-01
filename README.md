@@ -24,7 +24,7 @@ The package can be installed with:
 
 ```elixir
 def deps do
-  [{:solid, "~> 0.10"}]
+  [{:solid, "~> 0.12"}]
 end
 ```
 
@@ -72,6 +72,40 @@ And finally pass the custom parser as an option:
 "{% my_tag %}"
 |> Solid.parse!(parser: MyParser)
 |> Solid.render()
+```
+
+## Custom filters
+
+While calling `Solid.render` one can pass a module with custom filters:
+
+```elixir
+defmodule MyCustomFilters do
+  def add_one(x), do: x + 1
+end
+
+"{{ number | add_one }}"
+|> Solid.parse!()
+|> Solid.render(%{ "number" => 41}, custom_filters: MyCustomFilters)
+|> IO.puts()
+# 42
+```
+
+Extra options can be passed as last argument to custom filters if an extra argument is accepted:
+
+```elixir
+defmodule MyCustomFilters do
+  def asset_url(path, opts) do
+    opts[:host] <> path
+  end
+end
+
+opts = [custom_filters: MyCustomFilters, host: "http://example.com"]
+
+"{{ file_path | asset_url }}"
+|> Solid.parse!()
+|> Solid.render(%{ "file_path" => "/styles/app.css"}, opts)
+|> IO.puts()
+# http://example.com/styles/app.css
 ```
 
 ## Contributing
