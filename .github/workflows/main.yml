@@ -10,9 +10,9 @@ jobs:
       - uses: actions/checkout@v2.3.1
 
       - name: Install OTP and Elixir
-        uses: actions/setup-elixir@v1
+        uses: erlef/setup-elixir@v1
         with:
-          otp-version: 23.0
+          otp-version: 23.1.1
           elixir-version: 1.11.2
 
       - name: Install dependencies
@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - otp: 23.0
+          - otp: 23.1.1
             elixir: 1.11.2
             coverage: true
     env:
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v1
 
       - name: Install OTP and Elixir
-        uses: actions/setup-elixir@v1
+        uses: erlef/setup-elixir@v1
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
@@ -55,7 +55,7 @@ jobs:
         run: mix deps.get --only test
 
       - name: Install liquid gem
-        run: gem install liquid -v 4.0.2
+        run: gem install liquid -v 5.0.1
 
       - name: Run tests
         run: mix test --trace

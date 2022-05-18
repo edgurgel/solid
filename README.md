@@ -1,6 +1,13 @@
-# Solid [![Build Status](https://github.com/edgurgel/httpoison/workflows/CI/badge.svg?branch=master)](https://github.com/edgurgel/httpoison/actions?query=workflow%3ACI)
+# Solid
 
-Solid is an implementation in Elixir of the template engine Liquid. It uses [nimble_parsec](https://github.com/plataformatec/nimble_parsec) to generate the parser.
+[![Build Status](https://github.com/edgurgel/solid/workflows/CI/badge.svg?branch=master)](https://github.com/edgurgel/solid/actions?query=workflow%3ACI)
+[![Module Version](https://img.shields.io/hexpm/v/solid.svg)](https://hex.pm/packages/solid)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/solid/)
+[![Total Download](https://img.shields.io/hexpm/dt/solid.svg)](https://hex.pm/packages/solid)
+[![License](https://img.shields.io/hexpm/l/solid.svg)](https://github.com/edgurgel/solid/blob/master/LICENSE.md)
+[![Last Updated](https://img.shields.io/github/last-commit/edgurgel/solid.svg)](https://github.com/edgurgel/solid/commits/master)
+
+Solid is an implementation in Elixir of the template language [Liquid](https://shopify.github.io/liquid/). It uses [nimble_parsec](https://github.com/plataformatec/nimble_parsec) to generate the parser.
 
 ## Basic Usage
 
@@ -17,10 +24,93 @@ The package can be installed with:
 
 ```elixir
 def deps do
-  [{:solid, "~> 0.4.0"}]
+  [{:solid, "~> 0.12"}]
 end
 ```
 
+## Custom tags
+
+To implement a new tag you need to create a new module that implements the `Tag` behaviour:
+
+```elixir
+defmodule MyCustomTag do
+  import NimbleParsec
+  @behaviour Solid.Tag
+
+  @impl true
+  def spec(_parser) do
+    space = Solid.Parser.Literal.whitespace(min: 0)
+
+    ignore(string("{%"))
+    |> ignore(space)
+    |> ignore(string("my_tag"))
+    |> ignore(space)
+    |> ignore(string("%}"))
+  end
+
+  @impl true
+  def render(tag, _context, _options) do
+    [text: "my first tag"]
+  end
+end
+```
+
+- `spec` defines how to parse your tag;
+- `render` defines how to render your tag.
+
+Now we need to add the tag to the parser
+
+```elixir
+defmodule MyParser do
+  use Solid.Parser.Base, custom_tags: [MyCustomTag]
+end
+```
+
+And finally pass the custom parser as an option:
+
+```elixir
+"{% my_tag %}"
+|> Solid.parse!(parser: MyParser)
+|> Solid.render()
+```
+
+## Custom filters
+
+While calling `Solid.render` one can pass a module with custom filters:
+
+```elixir
+defmodule MyCustomFilters do
+  def add_one(x), do: x + 1
+end
+
+"{{ number | add_one }}"
+|> Solid.parse!()
+|> Solid.render(%{ "number" => 41}, custom_filters: MyCustomFilters)
+|> IO.puts()
+# 42
+```
+
+Extra options can be passed as last argument to custom filters if an extra argument is accepted:
+
+```elixir
+defmodule MyCustomFilters do
+  def asset_url(path, opts) do
+    opts[:host] <> path
+  end
+end
+
+opts = [custom_filters: MyCustomFilters, host: "http://example.com"]
+
+"{{ file_path | asset_url }}"
+|> Solid.parse!()
+|> Solid.render(%{ "file_path" => "/styles/app.css"}, opts)
+|> IO.puts()
+# http://example.com/styles/app.css
+```
+
+## Contributing
+
+When adding new functionality or fixing bugs consider adding a new test case here inside `test/cases`. These cases are tested against the Ruby gem so we can try to stay as close as possible to the original implementation.
 
 ## TODO
 
@@ -43,4 +133,12 @@ end
   - [x] `increment` [#16](https://github.com/edgurgel/solid/issues/16)
   - [x] `decrement` [#16](https://github.com/edgurgel/solid/issues/16)
 * [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
-* [ ] Whitespace control [#10](https://github.com/edgurgel/solid/issues/10)
+* [x] Whitespace control [#10](https://github.com/edgurgel/solid/issues/10)
+
+
+## Copyright and License
+
+Copyright (c) 2016 Eduardo Gurgel Pinho
+
+This work is free. You can redistribute it and/or modify it under the
+terms of the MIT License. See the [LICENSE.md](./LICENSE.md) file for more details.

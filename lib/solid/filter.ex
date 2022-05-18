@@ -8,15 +8,21 @@ defmodule Solid.Filter do
   @doc """
   Apply `filter` if it exists. Otherwise return the first input.
 
-  iex> Solid.Filter.apply("upcase", ["ac"])
+  iex> Solid.Filter.apply("upcase", ["ac"], [])
   "AC"
-  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3])
+  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3], [])
   1
   """
-  def apply(filter, args) do
-    custom_module = Application.get_env(:solid, :custom_filters, __MODULE__)
+  def apply(filter, args, opts) do
+    custom_module =
+      opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
+
+    args_with_opts = args ++ [opts]
 
     cond do
+      filter_exists?({custom_module, filter, Enum.count(args_with_opts)}) ->
+        apply_filter({custom_module, filter, args_with_opts})
+
       filter_exists?({custom_module, filter, Enum.count(args)}) ->
         apply_filter({custom_module, filter, args})
 
@@ -236,7 +242,8 @@ defmodule Solid.Filter do
   nil
   """
   @spec first(list) :: any
-  def first(input), do: List.first(input)
+  def first(input) when is_list(input), do: List.first(input)
+  def first(_), do: nil
 
   @doc """
   Rounds a number down to the nearest whole number.
@@ -299,7 +306,8 @@ defmodule Solid.Filter do
   nil
   """
   @spec last(list) :: any
-  def last(input), do: List.last(input)
+  def last(input) when is_list(input), do: List.last(input)
+  def last(_), do: nil
 
   @doc """
   Removes all whitespaces (tabs, spaces, and newlines) from the beginning of a string.
@@ -319,7 +327,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.split("", " ")
   [""]
   """
-  @spec split(any, String.t()) :: List.t()
+  @spec split(any, String.t()) :: list(String.t())
   def split(input, pattern), do: to_string(input) |> String.split(pattern)
 
   @doc """
@@ -464,7 +472,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.reverse(["a", "b", "c"])
   ["c", "b", "a"]
   """
-  @spec reverse(list) :: List.t()
+  @spec reverse(list) :: list
   def reverse(input), do: Enum.reverse(input)
 
   @doc """
@@ -536,7 +544,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.sort(~w(zebra octopus giraffe SallySnake))
   ~w(SallySnake giraffe octopus zebra)
   """
-  @spec sort(List.t()) :: List.t()
+  @spec sort(list) :: list
   def sort(input), do: Enum.sort(input)
 
   @doc """
@@ -545,7 +553,7 @@ defmodule Solid.Filter do
   iex> Solid.Filter.sort_natural(~w(zebra octopus giraffe SallySnake))
   ~w(giraffe octopus SallySnake zebra)
   """
-  @spec sort_natural(List.t()) :: List.t()
+  @spec sort_natural(list) :: list
   def sort_natural(input) do
     Enum.sort(input, &(String.downcase(&1) <= String.downcase(&2)))
   end

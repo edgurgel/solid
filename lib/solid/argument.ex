@@ -19,29 +19,56 @@ defmodule Solid.Argument do
   nil
   iex> Solid.Argument.get([field: ["key", 1, "foo"]], %Solid.Context{vars: %{"key" => [%{"foo" => "bar1"}, %{"foo" => "bar2"}]}})
   "bar2"
+  iex> Solid.Argument.get([field: ["value"]], %Solid.Context{vars: %{"value" => nil}})
+  nil
+  iex> Solid.Argument.get([field: ["value"]], %Solid.Context{vars: %{"value" => false}})
+  false
+  iex> Solid.Argument.get([field: ["value"]], %Solid.Context{vars: %{"value" => true}})
+  true
   """
   @spec get([field: [String.t() | integer]] | [value: term], Context.t(), Keyword.t()) :: term
   def get(arg, context, opts \\ []) do
     scopes = Keyword.get(opts, :scopes, [:iteration_vars, :vars, :counter_vars])
-    filters = Keyword.get(opts, :filters, [])
+    {filters, opts} = Keyword.pop(opts, :filters, [])
 
     arg
     |> do_get(context, scopes)
-    |> apply_filters(filters, context)
+    |> apply_filters(filters, context, opts)
   end
 
   defp do_get([value: val], _hash, _scopes), do: val
 
   defp do_get([field: keys], context, scopes), do: Context.get_in(context, keys, scopes)
 
-  defp apply_filters(input, nil, _), do: input
-  defp apply_filters(input, [], _), do: input
+  defp apply_filters(input, nil, _context, _opts), do: input
+  defp apply_filters(input, [], _context, _opts), do: input
 
-  defp apply_filters(input, [{:filter, [filter, {:arguments, args}]} | filters], context) do
+  defp apply_filters(
+         input,
+         [{:filter, [filter, {:arguments, [{:named_arguments, args}]}]} | filters],
+         context,
+         opts
+       ) do
+    values = parse_named_arguments(args, context, opts)
+
+    filter
+    |> Filter.apply([input | values], opts)
+    |> apply_filters(filters, context, opts)
+  end
+
+  defp apply_filters(input, [{:filter, [filter, {:arguments, args}]} | filters], context, opts) do
     values = for arg <- args, do: get([arg], context)
 
     filter
-    |> Filter.apply([input | values])
-    |> apply_filters(filters, context)
+    |> Filter.apply([input | values], opts)
+    |> apply_filters(filters, context, opts)
+  end
+
+  @spec parse_named_arguments(list, Context.t()) :: list
+  def parse_named_arguments(ast, context, opts \\ []) do
+    ast
+    |> Enum.chunk_every(2)
+    |> Map.new(fn [key, value_or_field] -> {key, get([value_or_field], context, opts)} end)
+    |> List.wrap()
   end
 end

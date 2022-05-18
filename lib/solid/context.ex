@@ -1,12 +1,11 @@
 defmodule Solid.Context do
-  defstruct vars: %{}, counter_vars: %{}, iteration_vars: %{}, cycle_state: %{}, trim_next: false
+  defstruct vars: %{}, counter_vars: %{}, iteration_vars: %{}, cycle_state: %{}
 
   @type t :: %__MODULE__{
-          vars: Map.t(),
-          counter_vars: Map.t(),
+          vars: map,
+          counter_vars: map,
           iteration_vars: %{optional(String.t()) => term},
-          cycle_state: Map.t(),
-          trim_next: boolean
+          cycle_state: map
         }
   @type scope :: :counter_vars | :vars | :iteration_vars
 
@@ -17,9 +16,15 @@ defmodule Solid.Context do
   """
   @spec get_in(t(), [term()], [scope]) :: term
   def get_in(context, key, scopes) do
-    Enum.find_value(scopes, fn scope ->
-      get_from_scope(context, scope, key)
-    end)
+    {:ok, result} =
+      scopes
+      |> Enum.map(&get_from_scope(context, &1, key))
+      |> Enum.find({:ok, nil}, fn
+        {:ok, _} -> true
+        _ -> false
+      end)
+
+    result
   end
 
   @doc """
@@ -66,15 +71,19 @@ defmodule Solid.Context do
     do_get_in(context.iteration_vars, key)
   end
 
-  defp do_get_in(nil, _), do: nil
-  defp do_get_in(data, []), do: data
+  defp do_get_in(nil, _), do: {:error, :not_found}
+  defp do_get_in(data, []), do: {:ok, data}
 
   defp do_get_in(data, ["size"]) when is_list(data) do
-    Enum.count(data)
+    {:ok, Enum.count(data)}
   end
 
   defp do_get_in(data, ["size"]) when is_map(data) do
-    Map.get(data, "size", Enum.count(data))
+    {:ok, Map.get(data, "size", Enum.count(data))}
+  end
+
+  defp do_get_in(data, ["size"]) when is_binary(data) do
+    {:ok, String.length(data)}
   end
 
   defp do_get_in(data, [key | keys]) when is_map(data) do
@@ -85,5 +94,5 @@ defmodule Solid.Context do
     do_get_in(Enum.at(data, key), keys)
   end
 
-  defp do_get_in(_, _), do: nil
+  defp do_get_in(_, _), do: {:error, :not_found}
 end

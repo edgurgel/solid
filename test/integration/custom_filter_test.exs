@@ -19,6 +19,15 @@ defmodule Solid.Integration.CustomFiltersTest do
 
     def date_format(date, _format),
       do: to_string(date)
+
+    def substitute(message, bindings \\ %{}) do
+      Regex.replace(~r/%\{(\w+)\}/, message, fn _, key -> Map.get(bindings, key) end)
+    end
+
+    def asset_url(input, opts) do
+      url = Keyword.get(opts, :"#{input}", "")
+      url <> input
+    end
   end
 
   setup do
@@ -42,10 +51,33 @@ defmodule Solid.Integration.CustomFiltersTest do
     end
 
     test "date format with malformed format", %{date: date} do
-      assert render(
-               ~s<{{ date_var | date_format: "x/y/z" }}>,
-               %{"date_var" => date} == "2019-10-31"
-             )
+      assert render(~s<{{ date_var | date_format: "x/y/z" }}>, %{"date_var" => date}) ==
+               "2019-10-31"
+    end
+
+    test "substitute without bindings" do
+      assert render(~s<{{ "hello world" | substitute }}>)
+    end
+
+    test "substitute with bindings", %{date: date} do
+      assert render(~s<{{ "today is %{today}" | substitute: today: date_var }}>, %{
+               "date_var" => date
+             }) ==
+               "today is 2019-10-31"
+    end
+
+    test "asset_url with opts" do
+      assert render(~s<{{ "app.css" | asset_url }}>, %{}, "app.css": "http://assets.example.com/") ==
+               "http://assets.example.com/app.css"
+    end
+
+    defmodule MyCustomFilters do
+      def add_one(x), do: x + 1
+    end
+
+    test "custom filters from render options" do
+      opts = [custom_filters: MyCustomFilters]
+      assert render("{{ number | add_one }}", %{"number" => 2}, opts) == "3"
     end
   end
 end
