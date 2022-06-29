@@ -5,72 +5,87 @@ defmodule Solid.ContextTest do
   describe "get_in/3" do
     test "counter_vars scope only" do
       context = %Context{counter_vars: %{"x" => 1}}
-      assert Context.get_in(context, ["x"], [:counter_vars]) == 1
+      assert Context.get_in(context, ["x"], [:counter_vars]) == {:ok, 1}
     end
 
     test "vars scope only" do
       context = %Context{vars: %{"x" => 1}}
-      assert Context.get_in(context, ["x"], [:vars]) == 1
+      assert Context.get_in(context, ["x"], [:vars]) == {:ok, 1}
     end
 
     test "var scope with false value" do
       context = %Context{vars: %{"x" => false}}
-      assert Context.get_in(context, ["x"], [:vars]) == false
+      assert Context.get_in(context, ["x"], [:vars]) == {:ok, false}
     end
 
     test "var scope with nil value" do
       context = %Context{vars: %{"x" => nil}}
-      assert Context.get_in(context, ["x"], [:vars]) == nil
+      assert Context.get_in(context, ["x"], [:vars]) == {:ok, nil}
+    end
+
+    test "var scope missing value" do
+      context = %Context{vars: %{}}
+      assert Context.get_in(context, ["x"], [:vars]) == {:error, :not_found, key: ["x"]}
     end
 
     test "iteration_vars scope only" do
       context = %Context{iteration_vars: %{"x" => 1}}
-      assert Context.get_in(context, ["x"], [:iteration_vars]) == 1
+      assert Context.get_in(context, ["x"], [:iteration_vars]) == {:ok, 1}
     end
 
     test "nested access" do
       context = %Context{vars: %{"x" => %{"y" => 1}}}
-      assert Context.get_in(context, ["x", "y"], [:vars]) == 1
+      assert Context.get_in(context, ["x", "y"], [:vars]) == {:ok, 1}
     end
 
     test "nested access string" do
       context = %Context{vars: %{"x" => "y"}}
-      assert Context.get_in(context, ["x", "y"], [:vars]) == nil
+      assert Context.get_in(context, ["x", "y"], [:vars]) == {:error, :not_found, key: ["x", "y"]}
     end
 
     test "nested access nil" do
       context = %Context{vars: %{"x" => 1}}
-      assert Context.get_in(context, ["x", "y"], [:vars]) == nil
+      assert Context.get_in(context, ["x", "y"], [:vars]) == {:error, :not_found, key: ["x", "y"]}
+    end
+
+    test "nested access missing" do
+      context = %Context{vars: %{}}
+      assert Context.get_in(context, ["x", "y"], [:vars]) == {:error, :not_found, key: ["x", "y"]}
     end
 
     test "counter_vars & vars scopes with both keys existing" do
       context = %Context{vars: %{"x" => 1}, counter_vars: %{"x" => 2}}
-      assert Context.get_in(context, ["x"], [:vars, :counter_vars]) == 1
+      assert Context.get_in(context, ["x"], [:vars, :counter_vars]) == {:ok, 1}
     end
 
     test "counter_vars & vars scopes with counter_vars key existing" do
       context = %Context{counter_vars: %{"x" => 2}}
-      assert Context.get_in(context, ["x"], [:vars, :counter_vars]) == 2
+      assert Context.get_in(context, ["x"], [:vars, :counter_vars]) == {:ok, 2}
     end
 
     test "list access" do
       context = %Context{vars: %{"x" => ["a", "b", "c"]}}
-      assert Context.get_in(context, ["x", 1], [:vars]) == "b"
+      assert Context.get_in(context, ["x", 1], [:vars]) == {:ok, "b"}
+    end
+
+    test "list invalid index" do
+      context = %Context{vars: %{"x" => ["a", "b", "c"]}}
+      assert Context.get_in(context, ["x", 3], [:vars]) == {:error, :not_found, key: ["x", 3]}
     end
 
     test "list size" do
       context = %Context{vars: %{"x" => ["a", "b", "c"]}}
-      assert Context.get_in(context, ["x", "size"], [:vars]) == 3
+      assert Context.get_in(context, ["x", "size"], [:vars]) == {:ok, 3}
     end
 
     test "map size" do
       context = %Context{vars: %{"x" => %{"a" => 1, "b" => 2}}}
-      assert Context.get_in(context, ["x", "size"], [:vars]) == 2
+      assert Context.get_in(context, ["x", "size"], [:vars]) == {:ok, 2}
     end
 
     test "map size key" do
       context = %Context{vars: %{"x" => %{"a" => 1, "b" => 2, "size" => 42}}}
-      assert Context.get_in(context, ["x", "size"], [:vars]) == 42
+      assert Context.get_in(context, ["x", "size"], [:vars]) == {:ok, 42}
     end
   end
 

@@ -31,12 +31,19 @@ defmodule Solid.Argument do
     scopes = Keyword.get(opts, :scopes, [:iteration_vars, :vars, :counter_vars])
     {filters, opts} = Keyword.pop(opts, :filters, [])
 
-    arg
-    |> do_get(context, scopes)
-    |> apply_filters(filters, context, opts)
+    value =
+      case do_get(arg, context, scopes) do
+        {:error, :not_found, key: key} ->
+          nil
+
+        {:ok, result} ->
+          result
+      end
+
+    apply_filters(value, filters, context, opts)
   end
 
-  defp do_get([value: val], _hash, _scopes), do: val
+  defp do_get([value: val], _hash, _scopes), do: {:ok, val}
 
   defp do_get([field: keys], context, scopes), do: Context.get_in(context, keys, scopes)
 
