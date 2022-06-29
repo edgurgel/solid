@@ -61,18 +61,20 @@ defmodule Solid.Integration.FiltersTest do
     assert Solid.ErrorContext.get() == %Solid.ErrorContext{}
 
     assert render("{{ key | invalid }}", %{"key" => "abc"}) == "abc"
+
     assert Solid.ErrorContext.get() == %Solid.ErrorContext{
-      errors: [
-        %Solid.ErrorContext.UndefinedFilter{filter: "invalid"}
-      ]
-    }
+             errors: [
+               %Solid.ErrorContext.UndefinedFilter{filter: "invalid"}
+             ]
+           }
 
     assert render("{{ key | upcase | invalid | another }}", %{"key" => "abc"}) == "ABC"
+
     assert Solid.ErrorContext.get() == %Solid.ErrorContext{
-      errors: [
-        %Solid.ErrorContext.UndefinedFilter{filter: "invalid"},
-        %Solid.ErrorContext.UndefinedFilter{filter: "another"}
-      ]
-    }
+             errors: [
+               %Solid.ErrorContext.UndefinedFilter{filter: "invalid"},
+               %Solid.ErrorContext.UndefinedFilter{filter: "another"}
+             ]
+           }
   end
 end
