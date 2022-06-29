@@ -55,4 +55,24 @@ defmodule Solid.Integration.FiltersTest do
              %{}
            ) == "\n\n\n\n- apples\n\n- oranges\n\n- kale\n\n- cucumbers\n\n"
   end
+
+  test "invalid filter applied" do
+    assert render("{{ key | upcase }}", %{"key" => "abc"}) == "ABC"
+    assert Solid.ErrorContext.get() == %Solid.ErrorContext{}
+
+    assert render("{{ key | invalid }}", %{"key" => "abc"}) == "abc"
+    assert Solid.ErrorContext.get() == %Solid.ErrorContext{
+      errors: [
+        %Solid.ErrorContext.UndefinedFilter{filter: "invalid"}
+      ]
+    }
+
+    assert render("{{ key | upcase | invalid | another }}", %{"key" => "abc"}) == "ABC"
+    assert Solid.ErrorContext.get() == %Solid.ErrorContext{
+      errors: [
+        %Solid.ErrorContext.UndefinedFilter{filter: "invalid"},
+        %Solid.ErrorContext.UndefinedFilter{filter: "another"}
+      ]
+    }
+  end
 end

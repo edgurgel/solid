@@ -30,6 +30,7 @@ defmodule Solid.Filter do
         apply_filter({__MODULE__, filter, args})
 
       true ->
+        Solid.ErrorContext.add_undefined_filter(filter)
         List.first(args)
     end
   end

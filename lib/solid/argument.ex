@@ -34,6 +34,7 @@ defmodule Solid.Argument do
     value =
       case do_get(arg, context, scopes) do
         {:error, :not_found, key: key} ->
+          Solid.ErrorContext.add_undefined_variable(key)
           nil
 
         {:ok, result} ->

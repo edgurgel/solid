@@ -48,4 +48,18 @@ defmodule Solid.Integration.ObjectsTest do
            :Hans!
            """
   end
+
+  test "missing variables" do
+    assert render("Number {{ key }}", %{"key" => 1}) == "Number 1"
+    assert Solid.ErrorContext.get() == %Solid.ErrorContext{}
+
+    assert render("Number {{ key }} ! {{ key.value }} ! {{list[0]}} {{list[1]}}", %{"list" => [1]}) == "Number  !  ! 1 "
+    assert Solid.ErrorContext.get() == %Solid.ErrorContext{
+      errors: [
+        %Solid.ErrorContext.UndefinedVariable{variable: "key"},
+        %Solid.ErrorContext.UndefinedVariable{variable: "key.value"},
+        %Solid.ErrorContext.UndefinedVariable{variable: "list.1"}
+      ]
+    }
+  end
 end

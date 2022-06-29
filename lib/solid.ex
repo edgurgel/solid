@@ -94,6 +94,8 @@ defmodule Solid do
   end
 
   def render(text, context = %Context{}, options) do
+    Solid.ErrorContext.new!()
+
     {result, context} =
       Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
         try do
