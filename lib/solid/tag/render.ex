@@ -30,7 +30,7 @@ defmodule Solid.Tag.Render do
         context,
         options
       ) do
-    template = Solid.Argument.get(template_binding, context)
+    template = Solid.Argument.get(template_binding, context, allow_undefined?: true)
 
     binding_vars =
       Keyword.get(argument_binding || [], :named_arguments, [])
@@ -42,7 +42,7 @@ defmodule Solid.Tag.Render do
 
     template_str = file_system.read_template_file(template, instance)
     template = Solid.parse!(template_str, options)
-    rendered_text = Solid.render(template, binding_vars, options)
+    rendered_text = Solid.render(template, binding_vars, Keyword.merge(options, nested?: true))
     {[text: rendered_text], context}
   end
 end

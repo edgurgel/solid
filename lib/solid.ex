@@ -94,7 +94,9 @@ defmodule Solid do
   end
 
   def render(text, context = %Context{}, options) do
-    Solid.ErrorContext.new!()
+    unless options[:nested?] do
+      Solid.ErrorContext.new!()
+    end
 
     {result, context} =
       Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
@@ -128,7 +130,7 @@ defmodule Solid do
     {result, context} = Tag.eval(tag, context, options)
 
     if result do
-      render(result, context, options)
+      render(result, context, Keyword.merge(options, nested?: true))
     else
       {"", context}
     end

@@ -9,7 +9,12 @@ defmodule Solid.ErrorContext do
     defstruct @enforce_keys
   end
 
-  defstruct errors: []
+  defmodule EmptyWarning do
+    @enforce_keys [:variable, :filter]
+    defstruct @enforce_keys
+  end
+
+  defstruct errors: [], warnings: []
 
   @process_key Solid.ErrorContext
 
@@ -23,20 +28,26 @@ defmodule Solid.ErrorContext do
 
   def add_undefined_variable(key) do
     error = %UndefinedVariable{variable: Enum.join(key, ".")}
-    error_ctx = Process.get(@process_key)
-
-    if error_ctx do
-      error_ctx = %{error_ctx | errors: error_ctx.errors ++ [error]}
-      Process.put(@process_key, error_ctx)
-    end
+    add_entry_to_context(:errors, error)
   end
 
   def add_undefined_filter(filter) do
     error = %UndefinedFilter{filter: filter}
+    add_entry_to_context(:errors, error)
+  end
+
+  def add_empty_warning(key, filters) do
+    filter_names = Enum.map(filters, fn {:filter, [name, _opts]} -> name end)
+    warning = %EmptyWarning{variable: Enum.join(key, "."), filter: filter_names}
+    add_entry_to_context(:warnings, warning)
+  end
+
+  defp add_entry_to_context(field, entry) do
     error_ctx = Process.get(@process_key)
 
     if error_ctx do
-      error_ctx = %{error_ctx | errors: error_ctx.errors ++ [error]}
+      current = Map.get(error_ctx, field)
+      error_ctx = %{error_ctx | field => current ++ [entry]}
       Process.put(@process_key, error_ctx)
     end
   end

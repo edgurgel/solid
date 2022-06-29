@@ -26,7 +26,7 @@ defmodule Solid.Tag.Assign do
         context,
         _options
       ) do
-    new_value = Solid.Argument.get(argument, context, filters: filters)
+    new_value = Solid.Argument.get(argument, context, filters: filters, allow_undefined?: true)
 
     context = %{context | vars: Map.put(context.vars, field_name, new_value)}
 

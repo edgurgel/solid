@@ -6,11 +6,15 @@ defmodule Solid.Integration.CustomTagsTest do
     test "pass in custom tag that needs no arguments" do
       assert render("{% get_current_date %}", %{}, parser: CustomDateParser) ==
                to_string(DateTime.utc_now().year)
+
+      assert_no_errors!()
     end
 
     test "pass in custom tag that needs arguments" do
       assert render(~s({% get_year "2020-08-06T06:23:48Z" %}), %{}, parser: CustomDateParser) ==
                "2020-8-6"
+
+      assert_no_errors!()
     end
 
     test "custom tags are evaluated inside of for loops" do
@@ -19,6 +23,8 @@ defmodule Solid.Integration.CustomTagsTest do
                %{"dates" => ["2020-08-06T06:23:48Z", "2021-05-03T06:23:48Z"]},
                parser: CustomDateParser
              ) == "<span>2020-8-6</span><span>2021-5-3</span>"
+
+      assert_no_errors!()
     end
 
     test "custom tags are evaluated inside of captures" do
@@ -27,6 +33,8 @@ defmodule Solid.Integration.CustomTagsTest do
                %{"dates" => ["2020-08-06T06:23:48Z", "2021-05-03T06:23:48Z"]},
                parser: CustomDateParser
              ) == "2020-8-6"
+
+      assert_no_errors!()
     end
 
     test "custom tags are evaluated inside of for loops and captures" do
@@ -44,6 +52,7 @@ defmodule Solid.Integration.CustomTagsTest do
         )
 
       assert String.trim(rendered) == "<span>2020-8-6</span><span>2021-5-3</span>"
+      assert_no_errors!()
     end
 
     test "custom block wrap bracket" do
@@ -59,6 +68,7 @@ defmodule Solid.Integration.CustomTagsTest do
         )
 
       assert String.trim(rendered) == "[[hello]]"
+      assert_no_errors!()
     end
   end
 end

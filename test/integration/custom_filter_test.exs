@@ -38,25 +38,33 @@ defmodule Solid.Integration.CustomFiltersTest do
   describe "custom filters" do
     test "date year filter", %{date: date} do
       assert render("{{ date_var | date_year }}", %{"date_var" => date}) == "2019"
+      assert_no_errors!()
     end
 
     test "date format m/d/yyyy", %{date: date} do
       assert render(~s<{{ date_var | date_format: "m/d/yyyy" }}>, %{"date_var" => date}) ==
                "10/31/2019"
+
+      assert_no_errors!()
     end
 
     test "date format d.m.yyyy", %{date: date} do
       assert render(~s<{{ date_var | date_format: "d.m.yyyy" }}>, %{"date_var" => date}) ==
                "31.10.2019"
+
+      assert_no_errors!()
     end
 
     test "date format with malformed format", %{date: date} do
       assert render(~s<{{ date_var | date_format: "x/y/z" }}>, %{"date_var" => date}) ==
                "2019-10-31"
+
+      assert_no_errors!()
     end
 
     test "substitute without bindings" do
       assert render(~s<{{ "hello world" | substitute }}>)
+      assert_no_errors!()
     end
 
     test "substitute with bindings", %{date: date} do
@@ -64,11 +72,15 @@ defmodule Solid.Integration.CustomFiltersTest do
                "date_var" => date
              }) ==
                "today is 2019-10-31"
+
+      assert_no_errors!()
     end
 
     test "asset_url with opts" do
       assert render(~s<{{ "app.css" | asset_url }}>, %{}, "app.css": "http://assets.example.com/") ==
                "http://assets.example.com/app.css"
+
+      assert_no_errors!()
     end
 
     defmodule MyCustomFilters do

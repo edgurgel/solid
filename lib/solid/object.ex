@@ -12,6 +12,7 @@ defmodule Solid.Object do
     value = Argument.get(argument, context, [filters: object[:filters]] ++ options)
 
     stringify!(value)
+    |> warn_on_empty(argument: argument, filters: object[:filters])
   end
 
   defp stringify!(value) when is_list(value) do
@@ -25,4 +26,11 @@ defmodule Solid.Object do
   end
 
   defp stringify!(value), do: to_string(value)
+
+  defp warn_on_empty(value = "", argument: [field: key], filters: filters) do
+    Solid.ErrorContext.add_empty_warning(key, filters)
+    value
+  end
+
+  defp warn_on_empty(value, _opts), do: value
 end

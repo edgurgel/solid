@@ -93,7 +93,9 @@ defmodule Solid.Tag.For do
           |> maybe_put_forloop_map(enumerable_key, index, length)
 
         try do
-          {result, acc_context} = Solid.render(exp, acc_context, options)
+          {result, acc_context} =
+            Solid.render(exp, acc_context, Keyword.merge(options, nested?: true))
+
           acc_context = restore_initial_forloop_value(acc_context, acc_context_initial)
           {[result | acc_result], acc_context}
         catch

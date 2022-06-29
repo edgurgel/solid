@@ -25,7 +25,7 @@ defmodule Solid.Tag.Capture do
         context,
         options
       ) do
-    {captured, context} = Solid.render(result, context, options)
+    {captured, context} = Solid.render(result, context, Keyword.merge(options, nested?: true))
 
     context = %{
       context

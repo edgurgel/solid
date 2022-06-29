@@ -42,7 +42,10 @@ defmodule Solid.Tag.Case do
 
   @impl true
   def render([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context, _options) do
-    result = when_map[Solid.Argument.get(field, context)]
+    result =
+      when_map[
+        Solid.Argument.get(field, context, allow_undefined?: Keyword.has_key?(tag, :else_exp))
+      ]
 
     if result do
       result

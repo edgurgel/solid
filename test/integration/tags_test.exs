@@ -5,66 +5,86 @@ defmodule Solid.Integration.TagsTest do
   describe "if" do
     test "true expression" do
       assert render("{% if 1 == 1 %}True{% endif %} is True", %{"key" => 123}) == "True is True"
+      assert_no_errors!()
     end
 
     test "false expression" do
       assert render("{% if 1 != 1 %}True{% endif %}False?", %{"key" => 123}) == "False?"
+      assert_no_errors!()
     end
 
     test "true" do
       assert render("{% if true %}True{% endif %} is True", %{"key" => 123}) == "True is True"
+      assert_no_errors!()
     end
 
     test "false" do
       assert render("{% if false %}True{% endif %}False?", %{"key" => 123}) == "False?"
+      assert_no_errors!()
     end
 
     test "boolean expression" do
       assert render("{% if 1 != 1 or 3 == 3 %}True{% endif %}", %{"key" => 123}) == "True"
+      assert_no_errors!()
     end
 
     test "nested" do
       assert render("{% if 1 == 1 %}{% if 1 != 2 %}True{% endif %}{% endif %} is True", %{
                "key" => 123
              }) == "True is True"
+
+      assert_no_errors!()
     end
 
     test "with object" do
       assert render("{% if 1 != 2 %}{{ key }}{% endif %}", %{"key" => 123}) == "123"
+
+      assert_no_errors!()
     end
 
     test "else true" do
       assert render("{% if 1 == 1 %}True{% else %}False{% endif %} is True", %{"key" => 123}) ==
                "True is True"
+
+      assert_no_errors!()
     end
 
     test "else false" do
       assert render("{% if 1 != 1 %}True{% else %}False{% endif %} is False", %{"key" => 123}) ==
                "False is False"
+
+      assert_no_errors!()
     end
 
     test "elsif" do
       assert render("{% if 1 != 1 %}if{% elsif 1 == 1 %}elsif{% endif %}") == "elsif"
+      assert_no_errors!()
     end
   end
 
   describe "unless" do
     test "true expression" do
       assert render("{% unless 1 == 1 %}True{% endunless %}False?", %{"key" => 123}) == "False?"
+      assert_no_errors!()
     end
 
     test "false expression" do
       assert render("{% unless 1 != 1 %}True{% endunless %} is True", %{"key" => 123}) ==
                "True is True"
+
+      assert_no_errors!()
     end
 
     test "true" do
       assert render("{% unless true %}False{% endunless %}False?", %{"key" => 123}) == "False?"
+      assert_no_errors!()
     end
 
     test "false" do
       assert render("{% unless false %}True{% endunless %} is True", %{"key" => 123}) ==
                "True is True"
+
+      assert_no_errors!()
     end
 
     test "nested" do
@@ -72,14 +92,18 @@ defmodule Solid.Integration.TagsTest do
                "{% unless 1 != 1 %}{% unless 1 == 2 %}True{% endunless %}{% endunless %} is True",
                %{"key" => 123}
              ) == "True is True"
+
+      assert_no_errors!()
     end
 
     test "with object" do
       assert render("{% unless 1 == 2 %}{{ key }}{% endunless %}", %{"key" => 123}) == "123"
+      assert_no_errors!()
     end
 
     test "elsif" do
       assert render("{% unless 1 == 1 %}unless{% elsif 1 == 1 %}elsif{% endunless %}") == "elsif"
+      assert_no_errors!()
     end
   end
 
@@ -93,6 +117,13 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text) == "\n"
+
+      assert Solid.ErrorContext.get() == %Solid.ErrorContext{
+               errors: [
+                 %Solid.ErrorContext.UndefinedVariable{variable: "handle"}
+               ],
+               warnings: []
+             }
     end
 
     test "no matching when with else" do
@@ -106,6 +137,7 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text) == "\nElse\n\n"
+      assert_no_errors!()
     end
 
     test "with a matching when" do
@@ -119,6 +151,7 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{"handle" => "cake"}) == "\nThis is a cake\n\n"
+      assert_no_errors!()
     end
   end
 
@@ -131,6 +164,7 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{"values" => [1, 2]}) == "\n  Got: 1\n\n  Got: 2\n\n"
+      assert_no_errors!()
     end
 
     test "for using range literals" do
@@ -141,6 +175,7 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{}) == "\n  Got: 1\n\n  Got: 2\n\n"
+      assert_no_errors!()
     end
 
     test "for using range variables" do
@@ -151,6 +186,7 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{"first" => 1, "last" => 2}) == "\n  Got: 1\n\n  Got: 2\n\n"
+      assert_no_errors!()
     end
 
     test "simple for with a break" do
@@ -161,6 +197,7 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{"values" => [1, 2]}) == "\n Got: 1\n\n\n"
+      assert_no_errors!()
     end
 
     test "with conditional tag" do
@@ -171,11 +208,19 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{"values" => [1, 2, 3]}) == "\n  \n\n  \n\n  I got 3!\n\n"
+      assert_no_errors!()
     end
 
     test "with no value" do
       text = "test {% for value in values %}{{ value }}{% endfor %}"
       assert render(text, %{}) == "test "
+
+      assert Solid.ErrorContext.get() == %Solid.ErrorContext{
+               errors: [
+                 %Solid.ErrorContext.UndefinedVariable{variable: "values"}
+               ],
+               warnings: []
+             }
     end
 
     test "with no value and an else" do
@@ -187,7 +232,27 @@ defmodule Solid.Integration.TagsTest do
       {% endfor %}
       """
 
+      assert render(text, %{"values" => []}) == "test \nelse\n\n"
+      assert_no_errors!()
+    end
+
+    test "with no variable and an else" do
+      text = """
+      test {% for value in values %}
+        {{ value }}
+      {% else %}
+      else
+      {% endfor %}
+      """
+
       assert render(text, %{}) == "test \nelse\n\n"
+
+      assert Solid.ErrorContext.get() == %Solid.ErrorContext{
+               errors: [
+                 %Solid.ErrorContext.UndefinedVariable{variable: "values"}
+               ],
+               warnings: []
+             }
     end
   end
 
@@ -199,6 +264,23 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{}) == "\nVariable: 1\n"
+      assert_no_errors!()
+    end
+
+    test "assign to empty" do
+      text = """
+      {% assign variable = "" %}
+      Variable: {{ variable }}
+      """
+
+      assert render(text, %{"variable" => 1}) == "\nVariable: \n"
+
+      assert Solid.ErrorContext.get() == %Solid.ErrorContext{
+               errors: [],
+               warnings: [
+                 %Solid.ErrorContext.EmptyWarning{filter: [], variable: "variable"}
+               ]
+             }
     end
 
     test "assign existing variable" do
@@ -211,6 +293,8 @@ defmodule Solid.Integration.TagsTest do
 
              Variable: 123
              """
+
+      assert_no_errors!()
     end
   end
 
@@ -225,6 +309,8 @@ defmodule Solid.Integration.TagsTest do
              0
              counter value: 1
              """
+
+      assert_no_errors!()
     end
 
     test "increment multiple calls" do
@@ -239,6 +325,8 @@ defmodule Solid.Integration.TagsTest do
              1
              counter value: 2
              """
+
+      assert_no_errors!()
     end
   end
 
@@ -253,6 +341,8 @@ defmodule Solid.Integration.TagsTest do
              -1
              counter value: -2
              """
+
+      assert_no_errors!()
     end
 
     test "decrement multiple calls" do
@@ -267,6 +357,8 @@ defmodule Solid.Integration.TagsTest do
              -2
              counter value: -3
              """
+
+      assert_no_errors!()
     end
   end
 
@@ -289,6 +381,8 @@ defmodule Solid.Integration.TagsTest do
              the text is here
 
              """
+
+      assert_no_errors!()
     end
   end
 
@@ -303,6 +397,8 @@ defmodule Solid.Integration.TagsTest do
       assert render(text, %{}) == """
              pre-break
              """
+
+      assert_no_errors!()
     end
   end
 
@@ -315,6 +411,8 @@ defmodule Solid.Integration.TagsTest do
       assert render(text, %{}) == """
              {{ 5 | plus: 6 }} equals 11
              """
+
+      assert_no_errors!()
     end
 
     test "raw with nested tag" do
@@ -327,6 +425,8 @@ defmodule Solid.Integration.TagsTest do
              {% increment counter %}{{ counter }}
              0 1
              """
+
+      assert_no_errors!()
     end
   end
 
@@ -340,6 +440,8 @@ defmodule Solid.Integration.TagsTest do
                """
                barbaz
                """
+
+      assert_no_errors!()
     end
 
     test "with an argument" do
@@ -351,6 +453,8 @@ defmodule Solid.Integration.TagsTest do
                """
                barbaz-show-me
                """
+
+      assert_no_errors!()
     end
   end
 end

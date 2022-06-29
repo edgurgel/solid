@@ -64,4 +64,10 @@ defmodule Solid.Helpers do
       end
     end
   end
+
+  defmacro assert_no_errors! do
+    quote do
+      assert Solid.ErrorContext.get() == %Solid.ErrorContext{}
+    end
+  end
 end
