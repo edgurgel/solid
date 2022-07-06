@@ -41,13 +41,14 @@ defmodule Solid.Tag.Case do
   end
 
   @impl true
-  def render([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context, _options) do
-    result = when_map[Solid.Argument.get(field, context)]
+  def render([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context, options) do
+    {:ok, value, context} = Solid.Argument.get(field, context, options)
+    result = when_map[value]
 
     if result do
-      result
+      {result, context}
     else
-      tag[:else_exp][:result]
+      {tag[:else_exp][:result], context}
     end
   end
 end

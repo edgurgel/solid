@@ -14,7 +14,7 @@ Solid is an implementation in Elixir of the template language [Liquid](https://s
 ```elixir
 iex> template = "My name is {{ user.name }}"
 iex> {:ok, template} = Solid.parse(template)
-iex> Solid.render(template, %{ "user" => %{ "name" => "José" } }) |> to_string
+iex> Solid.render!(template, %{ "user" => %{ "name" => "José" } }) |> to_string
 "My name is José"
 ```
 
@@ -24,7 +24,7 @@ The package can be installed with:
 
 ```elixir
 def deps do
-  [{:solid, "~> 0.12"}]
+  [{:solid, "~> 0.13"}]
 end
 ```
 
@@ -108,6 +108,14 @@ opts = [custom_filters: MyCustomFilters, host: "http://example.com"]
 # http://example.com/styles/app.css
 ```
 
+## Strict rendering
+
+`Solid.render/3` doesn't raise or return errors unless `strict_variables: true` is passed as option.
+
+If there are any missing variables `Solid.render/3` returns `{:error, errors, result}` where errors is the list of collected errors and `result` is the rendered template.
+
+`Solid.render!/3` raises if `strict_variables: true` is passed and there are missing variables.
+
 ## Contributing
 
 When adding new functionality or fixing bugs consider adding a new test case here inside `test/cases`. These cases are tested against the Ruby gem so we can try to stay as close as possible to the original implementation.
@@ -138,7 +146,7 @@ When adding new functionality or fixing bugs consider adding a new test case her
 
 ## Copyright and License
 
-Copyright (c) 2016 Eduardo Gurgel Pinho
+Copyright (c) 2016-2022 Eduardo Gurgel Pinho
 
 This work is free. You can redistribute it and/or modify it under the
 terms of the MIT License. See the [LICENSE.md](./LICENSE.md) file for more details.

@@ -5,9 +5,10 @@ defmodule Solid.Parser.Argument do
   @dialyzer :no_opaque
 
   defp space(), do: Literal.whitespace(min: 0)
+  defp identifier(), do: ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-, ??], min: 1)
 
   def argument_name() do
-    ascii_string([?a..?z, ?A..?Z], 1)
+    identifier()
     |> concat(ascii_string([?a..?z, ?A..?Z, ?_], min: 0))
     |> reduce({Enum, :join, []})
   end

@@ -15,8 +15,7 @@ defmodule Solid.Mixfile do
       name: "solid",
       package: package(),
       docs: docs(),
-      deps: deps(),
-      dialyzer: [ignore_warnings: "dialyzer.ignore-warnings"]
+      deps: deps()
     ]
   end
 
@@ -27,7 +26,8 @@ defmodule Solid.Mixfile do
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
   end
 

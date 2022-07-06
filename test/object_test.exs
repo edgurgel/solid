@@ -6,15 +6,17 @@ defmodule Solid.ObjectTest do
 
   describe "render/2" do
     test "value no filter" do
-      assert render([argument: [value: 1]], %Context{}, []) == "1"
+      assert render([argument: [value: 1]], %Context{}, []) == {:ok, "1", %Context{}}
     end
 
     test "list value no filter" do
-      assert render([argument: [value: [1, [2, 3, [4, 5, "six"]]]]], %Context{}, []) == "12345six"
+      assert render([argument: [value: [1, [2, 3, [4, 5, "six"]]]]], %Context{}, []) ==
+               {:ok, "12345six", %Context{}}
     end
 
     test "map value no filter" do
-      assert render([argument: [value: %{"a" => "b"}]], %Context{}, []) == "%{\"a\" => \"b\"}"
+      assert render([argument: [value: %{"a" => "b"}]], %Context{}, []) ==
+               {:ok, "%{\"a\" => \"b\"}", %Context{}}
     end
 
     test "value with filter" do
@@ -22,12 +24,12 @@ defmodule Solid.ObjectTest do
                [argument: [value: "a"], filters: [filter: ["upcase", {:arguments, []}]]],
                %Context{},
                []
-             ) == "A"
+             ) == {:ok, "A", %Context{}}
     end
 
     test "field no filter" do
       context = %Context{vars: %{"var" => 1}}
-      assert render([argument: [field: ["var"]]], context, []) == "1"
+      assert render([argument: [field: ["var"]]], context, []) == {:ok, "1", context}
     end
 
     test "field with filter" do
@@ -37,7 +39,7 @@ defmodule Solid.ObjectTest do
                [argument: [field: ["var"]], filters: [filter: ["upcase", {:arguments, []}]]],
                context,
                []
-             ) == "A"
+             ) == {:ok, "A", context}
     end
 
     test "field with filter and args" do
@@ -50,7 +52,7 @@ defmodule Solid.ObjectTest do
                ],
                context,
                []
-             ) == "1"
+             ) == {:ok, "1", context}
     end
   end
 end
