@@ -30,11 +30,14 @@ defmodule Solid.Tag.Render do
         context,
         options
       ) do
-    template = Solid.Argument.get(template_binding, context)
+    {:ok, template, context} = Solid.Argument.get(template_binding, context)
 
-    binding_vars =
+    {:ok, binding_vars, context} =
       Keyword.get(argument_binding || [], :named_arguments, [])
       |> Solid.Argument.parse_named_arguments(context)
+
+    binding_vars =
+      binding_vars
       |> Enum.concat()
       |> Map.new()
 
@@ -42,7 +45,13 @@ defmodule Solid.Tag.Render do
 
     template_str = file_system.read_template_file(template, instance)
     template = Solid.parse!(template_str, options)
-    rendered_text = Solid.render(template, binding_vars, options)
-    {[text: rendered_text], context}
+    # FIXME need to sort out context error stuff :thinking: + tests
+    case Solid.render(template, binding_vars, options) do
+      {:ok, rendered_text} ->
+        {[text: rendered_text], context}
+
+      {:error, errors, rendered_text} ->
+        {[text: rendered_text], Solid.Context.put_errors(context, Enum.reverse(errors))}
+    end
   end
 end

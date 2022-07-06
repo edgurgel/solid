@@ -1,6 +1,7 @@
 defmodule Solid.Integration.FiltersTest do
   use ExUnit.Case, async: true
   import Solid.Helpers
+  alias Solid.UndefinedVariableError
 
   test "multiple filters" do
     assert render("Text {{ key | default: 1 | upcase }} !", %{"key" => "abc"}) == "Text ABC !"
@@ -11,7 +12,22 @@ defmodule Solid.Integration.FiltersTest do
   end
 
   test "default filter with default integer" do
-    assert render("Number {{ key | default: 456 }} !") == "Number 456 !"
+    assert render("Number {{ key | default: 456 }} !") ==
+             "Number 456 !"
+  end
+
+  test "default filter with default variable" do
+    assert render("Number {{ key | default: other_key }} !", %{"other_key" => 456}) ==
+             "Number 456 !"
+  end
+
+  test "default filter with strict_variables" do
+    assert render("Number {{ key | default: other_key }} !", %{}, strict_variables: true) ==
+             {:error,
+              [
+                %UndefinedVariableError{variable: ["key"]},
+                %UndefinedVariableError{variable: ["other_key"]}
+              ], "Number  !"}
   end
 
   test "default filter with default string" do

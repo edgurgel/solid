@@ -24,9 +24,10 @@ defmodule Solid.Tag.Assign do
   def render(
         [field: [field_name], argument: argument, filters: filters],
         context,
-        _options
+        options
       ) do
-    new_value = Solid.Argument.get(argument, context, filters: filters)
+    {:ok, new_value, context} =
+      Solid.Argument.get(argument, context, [{:filters, filters} | options])
 
     context = %{context | vars: Map.put(context.vars, field_name, new_value)}
 

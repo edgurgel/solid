@@ -1,6 +1,7 @@
 defmodule Solid.Integration.ObjectsTest do
   use ExUnit.Case, async: true
   import Solid.Helpers
+  alias Solid.UndefinedVariableError
 
   test "no liquid template" do
     assert render("No Number!", %{"key" => 123}) == "No Number!"
@@ -47,5 +48,18 @@ defmodule Solid.Integration.ObjectsTest do
 
            :Hans!
            """
+  end
+
+  test "strict_variables" do
+    template = "{{key1}} {{missing1}} {{key2.key3}} {{key2.missing2}}"
+    values = %{"key1" => "value1", "key2" => %{"key3" => "value2"}}
+    assert {:error, errors, result} = render(template, values, strict_variables: true)
+
+    assert errors == [
+             %UndefinedVariableError{variable: ["missing1"]},
+             %UndefinedVariableError{variable: ["key2", "missing2"]}
+           ]
+
+    assert result == "value1  value2 "
   end
 end

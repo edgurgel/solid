@@ -1,4 +1,5 @@
 ExUnit.start()
+{:module, _} = Code.ensure_compiled(Solid.CustomFilters)
 
 defmodule Solid.Helpers do
   def render(text, hash \\ %{}, options \\ []) do
@@ -6,7 +7,11 @@ defmodule Solid.Helpers do
       {:ok, template} ->
         template
         |> Solid.render(hash, options)
-        |> to_string()
+        |> case do
+          {:error, errors, result} -> {:error, errors, to_string(result)}
+          {:ok, result} -> to_string(result)
+          result -> to_string(result)
+        end
 
       {:error, error} ->
         inspect(error)
@@ -25,14 +30,14 @@ defmodule Solid.Helpers do
     end
   end
 
-  defmacro assert_render(liquid_input, json_input, template_dir) do
+  defmacro assert_render(liquid_input, json_input, template_dir, opts \\ []) do
     quote do
       opts =
         if unquote(template_dir) do
           file_system = Solid.LocalFileSystem.new(unquote(template_dir))
-          [file_system: {Solid.LocalFileSystem, file_system}]
+          [{:file_system, {Solid.LocalFileSystem, file_system}} | unquote(opts)]
         else
-          []
+          unquote(opts)
         end
 
       solid_output =

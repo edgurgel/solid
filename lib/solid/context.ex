@@ -1,30 +1,45 @@
+defmodule Solid.UndefinedVariableError do
+  defexception [:variable]
+
+  @impl true
+  def message(exception), do: "Undefined variable #{exception.variable}"
+end
+
 defmodule Solid.Context do
-  defstruct vars: %{}, counter_vars: %{}, iteration_vars: %{}, cycle_state: %{}
+  defstruct vars: %{}, counter_vars: %{}, iteration_vars: %{}, cycle_state: %{}, errors: []
 
   @type t :: %__MODULE__{
           vars: map,
           counter_vars: map,
           iteration_vars: %{optional(String.t()) => term},
-          cycle_state: map
+          cycle_state: map,
+          errors: list(Solid.UndefinedVariableError)
         }
   @type scope :: :counter_vars | :vars | :iteration_vars
+
+  def put_errors(context, errors) when is_list(errors) do
+    %{context | errors: errors ++ context.errors}
+  end
+
+  def put_errors(context, error) do
+    %{context | errors: [error | context.errors]}
+  end
 
   @doc """
   Get data from context respecting the scope order provided.
 
   Possible scope values: :counter_vars, :vars or :iteration_vars
   """
-  @spec get_in(t(), [term()], [scope]) :: term
+  @spec get_in(t(), [term()], [scope]) :: {:ok, term} | {:error, {:not_found, [term()]}}
   def get_in(context, key, scopes) do
-    {:ok, result} =
-      scopes
-      |> Enum.map(&get_from_scope(context, &1, key))
-      |> Enum.find({:ok, nil}, fn
-        {:ok, _} -> true
-        _ -> false
-      end)
-
-    result
+    scopes
+    |> Enum.reverse()
+    |> Enum.map(&get_from_scope(context, &1, key))
+    |> Enum.reduce({:error, {:not_found, key}}, fn
+      {:ok, nil}, acc = {:ok, _} -> acc
+      value = {:ok, _}, _acc -> value
+      _value, acc -> acc
+    end)
   end
 
   @doc """
@@ -71,6 +86,7 @@ defmodule Solid.Context do
     do_get_in(context.iteration_vars, key)
   end
 
+  defp do_get_in(nil, []), do: {:ok, nil}
   defp do_get_in(nil, _), do: {:error, :not_found}
   defp do_get_in(data, []), do: {:ok, data}
 
@@ -87,11 +103,17 @@ defmodule Solid.Context do
   end
 
   defp do_get_in(data, [key | keys]) when is_map(data) do
-    do_get_in(data[key], keys)
+    case Map.fetch(data, key) do
+      {:ok, value} -> do_get_in(value, keys)
+      _ -> {:error, :not_found}
+    end
   end
 
   defp do_get_in(data, [key | keys]) when is_integer(key) and is_list(data) do
-    do_get_in(Enum.at(data, key), keys)
+    case Enum.fetch(data, key) do
+      {:ok, value} -> do_get_in(value, keys)
+      _ -> {:error, :not_found}
+    end
   end
 
   defp do_get_in(_, _), do: {:error, :not_found}
