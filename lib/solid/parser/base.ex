@@ -1,8 +1,10 @@
 defmodule Solid.Parser.Base do
   defmacro __using__(opts) do
     custom_tag_modules = Keyword.get(opts, :custom_tags, [])
+    excluded_tags = Keyword.get(opts, :excluded_tags, [])
 
-    quote location: :keep, bind_quoted: [custom_tag_modules: custom_tag_modules] do
+    quote location: :keep,
+          bind_quoted: [custom_tag_modules: custom_tag_modules, excluded_tags: excluded_tags] do
       import NimbleParsec
       alias Solid.Parser.{Literal, Variable, Argument, BaseTag}
 
@@ -49,6 +51,7 @@ defmodule Solid.Parser.Base do
           Solid.Tag.Cycle,
           Solid.Tag.Render
         ]
+        |> Enum.reject(&(&1 in excluded_tags))
         |> Enum.map(fn tag ->
           tag(tag.spec(__MODULE__), tag)
         end)

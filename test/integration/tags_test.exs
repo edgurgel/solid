@@ -353,4 +353,18 @@ defmodule Solid.Integration.TagsTest do
                """
     end
   end
+
+  describe "excluded standard tag" do
+    test "a standard tag can be removed from the parser" do
+      text = """
+      {% render "nope" %}
+      """
+
+      assert render(text, %{}) ==
+               "%File.Error{action: \"\", path: nil, reason: \"This solid context does not allow includes.\"}"
+
+      assert render(text, %{}, parser: NoRenderParser) ==
+               "%Solid.TemplateError{line: {1, 0}, message: \"Reason: expected end of string, line: 1\", reason: \"expected end of string\"}"
+    end
+  end
 end
