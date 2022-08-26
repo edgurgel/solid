@@ -102,6 +102,14 @@ defmodule Solid.Context do
     {:ok, String.length(data)}
   end
 
+  defp do_get_in(data, ["last"]) when is_list(data) do
+    {:ok, List.last(data)}
+  end
+
+  defp do_get_in(data, ["first"]) when is_list(data) do
+    {:ok, List.first(data)}
+  end
+
   defp do_get_in(data, [key | keys]) when is_map(data) do
     case Map.fetch(data, key) do
       {:ok, value} -> do_get_in(value, keys)
