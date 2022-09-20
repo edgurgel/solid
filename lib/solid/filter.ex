@@ -317,7 +317,7 @@ defmodule Solid.Filter do
   "So much room for activities!          "
   """
   @spec lstrip(String.t()) :: String.t()
-  def lstrip(input), do: String.trim_leading(input)
+  def lstrip(input), do: to_string(input) |> String.trim_leading()
 
   @doc """
   Split input string into an array of substrings separated by given pattern.
@@ -430,7 +430,7 @@ defmodule Solid.Filter do
   """
   @spec remove(String.t(), String.t()) :: String.t()
   def remove(input, string) do
-    String.replace(input, string, "")
+    input |> to_string |> String.replace(string, "")
   end
 
   @doc """
@@ -441,7 +441,7 @@ defmodule Solid.Filter do
   """
   @spec remove_first(String.t(), String.t()) :: String.t()
   def remove_first(input, string) do
-    String.replace(input, string, "", global: false)
+    input |> to_string |> String.replace(string, "", global: false)
   end
 
   @doc """
@@ -502,7 +502,7 @@ defmodule Solid.Filter do
   "          So much room for activities!"
   """
   @spec rstrip(String.t()) :: String.t()
-  def rstrip(input), do: String.trim_trailing(input)
+  def rstrip(input), do: to_string(input) |> String.trim_trailing()
 
   @doc """
   Returns the number of characters in a string or the number of items in an array.
@@ -514,7 +514,8 @@ defmodule Solid.Filter do
   """
   @spec size(String.t() | list) :: non_neg_integer
   def size(input) when is_list(input), do: Enum.count(input)
-  def size(input), do: String.length(input)
+  def size(input) when is_bitstring(input), do: String.length(input)
+  def size(input), do: 0
 
   @doc """
   Returns a substring of 1 character beginning at the index specified by the argument passed in.
@@ -535,8 +536,8 @@ defmodule Solid.Filter do
   """
   @spec slice(String.t(), integer, non_neg_integer | nil) :: String.t()
   def slice(input, offset, length \\ nil)
-  def slice(input, offset, nil), do: String.at(input, offset)
-  def slice(input, offset, length), do: String.slice(input, offset, length)
+  def slice(input, offset, nil), do: to_string(input) |> String.at(offset)
+  def slice(input, offset, length), do: to_string(input) |> String.slice(offset, length)
 
   @doc """
   Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.
@@ -566,7 +567,7 @@ defmodule Solid.Filter do
   "So much room for activities!"
   """
   @spec strip(String.t()) :: String.t()
-  def strip(input), do: String.trim(input)
+  def strip(input), do: to_string(input) |> String.trim()
 
   @doc """
   Multiplies a number by another number.
@@ -611,7 +612,7 @@ defmodule Solid.Filter do
   """
   @spec truncate(String.t(), non_neg_integer, String.t()) :: String.t()
   def truncate(input, length, ellipsis \\ "...") do
-    if String.length(input) > length do
+    if is_bitstring(input) and String.length(input) > length do
       length = max(0, length - String.length(ellipsis))
       slice(input, 0, length) <> ellipsis
     else
@@ -646,7 +647,7 @@ defmodule Solid.Filter do
   def truncatewords(nil, _max_words, _ellipsis), do: ""
 
   def truncatewords(input, max_words, ellipsis) do
-    words = String.split(input, " ")
+    words = to_string(input) |> String.split(" ")
 
     if length(words) > max_words do
       Enum.take(words, max_words)
