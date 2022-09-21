@@ -515,7 +515,7 @@ defmodule Solid.Filter do
   @spec size(String.t() | list) :: non_neg_integer
   def size(input) when is_list(input), do: Enum.count(input)
   def size(input) when is_bitstring(input), do: String.length(input)
-  def size(input), do: 0
+  def size(_input), do: 0
 
   @doc """
   Returns a substring of 1 character beginning at the index specified by the argument passed in.
