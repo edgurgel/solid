@@ -679,7 +679,7 @@ defmodule Solid.Filter do
   """
   @spec strip_newlines(iodata()) :: String.t()
   def strip_newlines(iodata) do
-    binary = IO.iodata_to_binary(iodata)
+    binary = IO.iodata_to_binary(iodata |> to_string())
     pattern = :binary.compile_pattern(["\r\n", "\n"])
     String.replace(binary, pattern, "")
   end
@@ -696,7 +696,7 @@ defmodule Solid.Filter do
   """
   @spec newline_to_br(iodata()) :: String.t()
   def newline_to_br(iodata) do
-    binary = IO.iodata_to_binary(iodata)
+    binary = IO.iodata_to_binary(iodata |> to_string())
     pattern = :binary.compile_pattern(["\r\n", "\n"])
     String.replace(binary, pattern, fn x -> "<br />#{x}" end)
   end
@@ -746,6 +746,7 @@ defmodule Solid.Filter do
   @spec strip_html(iodata()) :: String.t()
   def strip_html(iodata) do
     iodata
+    |> to_string()
     |> IO.iodata_to_binary()
     |> String.replace(@html_blocks, "")
     |> String.replace(@html_tags, "")
@@ -763,6 +764,7 @@ defmodule Solid.Filter do
   """
   def url_encode(iodata) do
     iodata
+    |> to_string()
     |> IO.iodata_to_binary()
     |> URI.encode_www_form()
   end
@@ -776,6 +778,7 @@ defmodule Solid.Filter do
   """
   def url_decode(iodata) do
     iodata
+    |> to_string()
     |> IO.iodata_to_binary()
     |> URI.decode_www_form()
   end
@@ -790,6 +793,7 @@ defmodule Solid.Filter do
   @spec escape(iodata()) :: String.t()
   def escape(iodata) do
     iodata
+    |> to_string()
     |> IO.iodata_to_binary()
     |> Solid.HTML.html_escape()
   end
@@ -809,6 +813,7 @@ defmodule Solid.Filter do
   @spec escape_once(iodata()) :: String.t()
   def escape_once(iodata) do
     iodata
+    |> to_string()
     |> IO.iodata_to_binary()
     |> String.replace(@escape_once_regex, &Solid.HTML.replacements/1)
   end
