@@ -20,13 +20,20 @@ defmodule Solid.Tag.Render do
       ),
       :arguments
     )
+    |> tag(
+      optional(
+        ignore(space)
+        |> concat(Argument.with_parameter())
+      ),
+      :with_parameter
+    )
     |> ignore(space)
     |> ignore(BaseTag.closing_tag())
   end
 
   @impl true
   def render(
-        [template: template_binding, arguments: argument_binding],
+        [template: template_binding, arguments: argument_binding, with_parameter: with_binding],
         context,
         options
       ) do
@@ -34,6 +41,7 @@ defmodule Solid.Tag.Render do
 
     {:ok, binding_vars, context} =
       Keyword.get(argument_binding || [], :named_arguments, [])
+      |> Keyword.merge(Enum.reverse(Keyword.get(with_binding || [], :with_parameter, [])))
       |> Solid.Argument.parse_named_arguments(context)
 
     binding_vars =
