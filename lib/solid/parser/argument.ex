@@ -57,7 +57,7 @@ defmodule Solid.Parser.Argument do
   def filter() do
     filter_name =
       ascii_string([?a..?z, ?A..?Z], 1)
-      |> concat(ascii_string([?a..?z, ?A..?Z, ?_], min: 0))
+      |> concat(ascii_string([?a..?z, ?A..?Z, ?_, ?0..?9], min: 0))
       |> reduce({Enum, :join, []})
 
     ignore(space())
