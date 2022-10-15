@@ -5,6 +5,13 @@ defmodule Solid.UndefinedVariableError do
   def message(exception), do: "Undefined variable #{exception.variable}"
 end
 
+defmodule Solid.UndefinedFilterError do
+  defexception [:filter]
+
+  @impl true
+  def message(exception), do: "Undefined filter #{exception.filter}"
+end
+
 defmodule Solid.Context do
   defstruct vars: %{}, counter_vars: %{}, iteration_vars: %{}, cycle_state: %{}, errors: []
 

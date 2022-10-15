@@ -9,28 +9,36 @@ defmodule Solid.Filter do
   Apply `filter` if it exists. Otherwise return the first input.
 
   iex> Solid.Filter.apply("upcase", ["ac"], [])
-  "AC"
+  {:ok, "AC"}
   iex> Solid.Filter.apply("no_filter_here", [1, 2, 3], [])
-  1
+  {:ok, 1}
+  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3], [strict_filters: true])
+  {:error, %Solid.UndefinedFilterError{filter: "no_filter_here"}, 1}
   """
   def apply(filter, args, opts) do
     custom_module =
       opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
 
+    strict_variables = Keyword.get(opts, :strict_filters, false)
+
     args_with_opts = args ++ [opts]
 
     cond do
       filter_exists?({custom_module, filter, Enum.count(args_with_opts)}) ->
-        apply_filter({custom_module, filter, args_with_opts})
+        {:ok, apply_filter({custom_module, filter, args_with_opts})}
 
       filter_exists?({custom_module, filter, Enum.count(args)}) ->
-        apply_filter({custom_module, filter, args})
+        {:ok, apply_filter({custom_module, filter, args})}
 
       filter_exists?({__MODULE__, filter, Enum.count(args)}) ->
-        apply_filter({__MODULE__, filter, args})
+        {:ok, apply_filter({__MODULE__, filter, args})}
 
       true ->
-        List.first(args)
+        if strict_variables do
+          {:error, %Solid.UndefinedFilterError{filter: filter}, List.first(args)}
+        else
+          {:ok, List.first(args)}
+        end
     end
   end
 
