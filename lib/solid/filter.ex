@@ -845,4 +845,30 @@ defmodule Solid.Filter do
     |> IO.iodata_to_binary()
     |> Base.decode64!()
   end
+
+  @doc """
+  Encodes a string to URL-safe Base64 format.
+
+  iex> Solid.Filter.base64_url_safe_encode("apples")
+  "YXBwbGVz"
+  """
+  @spec base64_url_safe_encode(iodata()) :: String.t()
+  def base64_url_safe_encode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> Base.url_encode64()
+  end
+
+  @doc """
+  Decodes a string in URL-safe Base64 format.
+
+  iex> Solid.Filter.base64_url_safe_decode("YXBwbGVz")
+  "apples"
+  """
+  @spec base64_url_safe_decode(iodata()) :: String.t()
+  def base64_url_safe_decode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> Base.url_decode64!()
+  end
 end
