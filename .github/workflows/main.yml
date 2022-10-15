@@ -48,8 +48,8 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.6.5
-          bundler: 2.1.4
+          ruby-version: 3.1.0
+          bundler: 2.3.23
 
       - name: Install dependencies
         run: mix deps.get --only test
