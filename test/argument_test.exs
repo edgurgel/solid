@@ -81,6 +81,35 @@ defmodule Solid.ArgumentTest do
       assert context.errors == [%UndefinedVariableError{variable: ["key"]}]
     end
 
+    test "missing filter strict_filters" do
+      context = %Solid.Context{vars: %{"key" => 123}}
+      filters = [filter: ["unknown", {:arguments, [value: 456]}]]
+
+      assert {:ok, 123, context} =
+               get([field: ["key"]], context, filters: filters, strict_filters: true)
+
+      assert context.errors == [%Solid.UndefinedFilterError{filter: "unknown"}]
+    end
+
+    test "missing arg and filter with strict_variables and strict_filters" do
+      context = %Solid.Context{vars: %{}}
+      filters = [filter: ["unknown", {:arguments, []}]]
+
+      assert {:ok, nil, context} =
+               get([field: ["key"]], context,
+                 filters: filters,
+                 strict_variables: true,
+                 strict_filters: true
+               )
+
+      assert context.errors == [
+               %Solid.UndefinedFilterError{
+                 filter: "unknown"
+               },
+               %UndefinedVariableError{variable: ["key"]}
+             ]
+    end
+
     test "multiple filters" do
       context = %Solid.Context{vars: %{"key" => nil}}
 

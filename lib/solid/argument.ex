@@ -49,9 +49,15 @@ defmodule Solid.Argument do
     {result, context} =
       filter
       |> Filter.apply([input | values], opts)
-      |> apply_filters(filters, context, opts)
+      |> case do
+        {:error, exception, value} ->
+          {value, Context.put_errors(context, exception)}
 
-    {result, context}
+        {:ok, value} ->
+          {value, context}
+      end
+
+    apply_filters(result, filters, context, opts)
   end
 
   defp apply_filters(input, [{:filter, [filter, {:arguments, args}]} | filters], context, opts) do
@@ -65,9 +71,15 @@ defmodule Solid.Argument do
     {result, context} =
       filter
       |> Filter.apply([input | Enum.reverse(values)], opts)
-      |> apply_filters(filters, context, opts)
+      |> case do
+        {:error, exception, value} ->
+          {value, Context.put_errors(context, exception)}
 
-    {result, context}
+        {:ok, value} ->
+          {value, context}
+      end
+
+    apply_filters(result, filters, context, opts)
   end
 
   @spec parse_named_arguments(list, Context.t(), Keyword.t()) :: {:ok, list, Context.t()}

@@ -4,7 +4,7 @@ defmodule Solid do
   """
   alias Solid.{Object, Tag, Context}
 
-  @type errors :: %Solid.UndefinedVariableError{}
+  @type errors :: %Solid.UndefinedVariableError{} | %Solid.UndefinedFilterError{}
 
   defmodule Template do
     @type rendered_data :: {:text, iodata()} | {:object, keyword()} | {:tag, list()}
