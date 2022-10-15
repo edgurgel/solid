@@ -819,4 +819,30 @@ defmodule Solid.Filter do
     |> IO.iodata_to_binary()
     |> String.replace(@escape_once_regex, &Solid.HTML.replacements/1)
   end
+
+  @doc """
+  Encodes a string to Base64 format.
+
+  iex> Solid.Filter.base64_encode("apples")
+  "YXBwbGVz"
+  """
+  @spec base64_encode(iodata()) :: String.t()
+  def base64_encode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> Base.encode64()
+  end
+
+  @doc """
+  Decodes a string in Base64 format.
+
+  iex> Solid.Filter.base64_decode("YXBwbGVz")
+  "apples"
+  """
+  @spec base64_decode(iodata()) :: String.t()
+  def base64_decode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> Base.decode64!()
+  end
 end
