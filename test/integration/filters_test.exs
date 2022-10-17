@@ -79,4 +79,11 @@ defmodule Solid.Integration.FiltersTest do
              %{}
            ) == "\n\n\n\n- apples\n\n- oranges\n\n- kale\n\n- cucumbers\n\n"
   end
+
+  test "replace_last" do
+    assert render("{{ \"mmmmm\" | replace_last: \"mmm\", \"eww\"  }}", %{}) == "mmeww"
+
+    assert render("{{ \"̀etudes for elixir\" | replace_last: \"elixir\", \"erlang\" }}", %{}) ==
+             "̀etudes for erlang"
+  end
 end
