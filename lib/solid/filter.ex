@@ -453,6 +453,17 @@ defmodule Solid.Filter do
   end
 
   @doc """
+  Removes only the last occurrence of the specified substring from a string.
+
+  iex> Solid.Filter.remove_last("I strained to see the train through the rain", "rain")
+  "I strained to see the train through the "
+  """
+  @spec remove_last(String.t(), String.t()) :: String.t()
+  def remove_last(input, string) do
+    replace_last(input, string, "")
+  end
+
+  @doc """
   Replaces every occurrence of an argument in a string with the second argument.
 
   iex> Solid.Filter.replace("Take my protein pills and put my helmet on", "my", "your")
@@ -472,6 +483,44 @@ defmodule Solid.Filter do
   @spec replace_first(String.t(), String.t(), String.t()) :: String.t()
   def replace_first(input, string, replacement \\ "") do
     input |> to_string |> String.replace(string, replacement, global: false)
+  end
+
+  @doc """
+  Replaces only the last occurrence of the first argument in a string with the second argument.
+
+  iex> Solid.Filter.replace_last("Take my protein pills and put my helmet on", "my", "your")
+  "Take my protein pills and put your helmet on"
+  """
+  @spec replace_last(String.t(), String.t(), String.t()) :: String.t()
+  def replace_last(input, string, replacement \\ "") do
+    input = to_string(input)
+
+    case last_index(input, string) do
+      nil ->
+        input
+
+      index ->
+        {prefix, suffix} = String.split_at(input, index)
+
+        prefix <> replace_first(suffix, string, replacement)
+    end
+  end
+
+  defp last_index(input, string) do
+    do_last_index(input, string, 0, nil)
+  end
+
+  defp do_last_index("", _string, _index, last), do: last
+
+  defp do_last_index(input, string, index, last) do
+    new_last =
+      if String.starts_with?(input, string) do
+        index
+      else
+        last
+      end
+
+    do_last_index(String.slice(input, 1..-1), string, index + 1, new_last)
   end
 
   @doc """
