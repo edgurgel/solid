@@ -43,10 +43,21 @@ defmodule Solid.Parser.Argument do
     |> tag(:named_arguments)
   end
 
+  def with_parameter() do
+    ignore(string("with"))
+    |> ignore(space())
+    |> concat(Variable.field())
+    |> ignore(space())
+    |> ignore(string("as"))
+    |> ignore(space())
+    |> concat(argument_name())
+    |> tag(:with_parameter)
+  end
+
   def filter() do
     filter_name =
       ascii_string([?a..?z, ?A..?Z], 1)
-      |> concat(ascii_string([?a..?z, ?A..?Z, ?_], min: 0))
+      |> concat(ascii_string([?a..?z, ?A..?Z, ?_, ?0..?9], min: 0))
       |> reduce({Enum, :join, []})
 
     ignore(space())

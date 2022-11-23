@@ -24,7 +24,7 @@ The package can be installed with:
 
 ```elixir
 def deps do
-  [{:solid, "~> 0.13"}]
+  [{:solid, "~> 0.14"}]
 end
 ```
 
@@ -110,11 +110,12 @@ opts = [custom_filters: MyCustomFilters, host: "http://example.com"]
 
 ## Strict rendering
 
-`Solid.render/3` doesn't raise or return errors unless `strict_variables: true` is passed as option.
+`Solid.render/3` doesn't raise or return errors unless `strict_variables: true` or `strict_filters: true` are passed as options.
 
-If there are any missing variables `Solid.render/3` returns `{:error, errors, result}` where errors is the list of collected errors and `result` is the rendered template.
+If there are any missing variables/filters `Solid.render/3` returns `{:error, errors, result}` where errors is the list of collected errors and `result` is the rendered template.
 
 `Solid.render!/3` raises if `strict_variables: true` is passed and there are missing variables.
+`Solid.render!/3` raises if `strict_filters: true` is passed and there are missing filters.
 
 ## Contributing
 

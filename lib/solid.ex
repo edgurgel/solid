@@ -4,7 +4,7 @@ defmodule Solid do
   """
   alias Solid.{Object, Tag, Context}
 
-  @type errors :: %Solid.UndefinedVariableError{}
+  @type errors :: %Solid.UndefinedVariableError{} | %Solid.UndefinedFilterError{}
 
   defmodule Template do
     @type rendered_data :: {:text, iodata()} | {:object, keyword()} | {:tag, list()}
@@ -106,7 +106,7 @@ defmodule Solid do
   @spec render(%Template{}, map, Keyword.t()) :: {:ok, iolist} | {:error, list(errors), iolist}
   @spec render(list, %Context{}, Keyword.t()) :: {iolist, %Context{}}
   def render(%Template{parsed_template: parsed_template}, hash, options) do
-    context = %Context{vars: hash}
+    context = %Context{counter_vars: hash}
 
     {result, context} = render(parsed_template, context, options)
 
