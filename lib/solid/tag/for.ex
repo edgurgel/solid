@@ -16,13 +16,15 @@ defmodule Solid.Tag.For do
       |> ignore(string(")"))
       |> tag(:range)
 
+    delimit = choice([concat(string(~s(,)), space), space])
+
     limit =
       ignore(string("limit"))
       |> ignore(space)
       |> ignore(string(":"))
       |> ignore(space)
       |> unwrap_and_tag(integer(min: 1), :limit)
-      |> ignore(space)
+      |> ignore(delimit)
 
     offset =
       ignore(string("offset"))
@@ -30,12 +32,12 @@ defmodule Solid.Tag.For do
       |> ignore(string(":"))
       |> ignore(space)
       |> unwrap_and_tag(integer(min: 1), :offset)
-      |> ignore(space)
+      |> ignore(delimit)
 
     reversed =
       string("reversed")
       |> replace({:reversed, 0})
-      |> ignore(space)
+      |> ignore(delimit)
 
     for_parameters =
       repeat(choice([limit, offset, reversed]))
@@ -49,7 +51,7 @@ defmodule Solid.Tag.For do
     |> ignore(string("in"))
     |> ignore(space)
     |> tag(choice([Variable.field(), range]), :enumerable)
-    |> ignore(space)
+    |> ignore(delimit)
     |> unwrap_and_tag(for_parameters, :parameters)
     |> ignore(BaseTag.closing_tag())
     |> tag(parsec({parser, :liquid_entry}), :result)
