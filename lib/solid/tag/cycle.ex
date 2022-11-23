@@ -7,23 +7,24 @@ defmodule Solid.Tag.Cycle do
   @impl true
   def spec(_parser) do
     space = Literal.whitespace(min: 0)
+    quoted = choice([Literal.double_quoted_string(), Literal.single_quoted_string()])
 
     ignore(BaseTag.opening_tag())
     |> ignore(string("cycle"))
     |> ignore(space)
     |> optional(
-      Literal.double_quoted_string()
+      quoted
       |> ignore(string(":"))
       |> ignore(space)
       |> unwrap_and_tag(:name)
     )
     |> concat(
-      Literal.double_quoted_string()
+      quoted
       |> repeat(
         ignore(space)
         |> ignore(string(","))
         |> ignore(space)
-        |> concat(Literal.double_quoted_string())
+        |> concat(quoted)
       )
       |> tag(:values)
     )

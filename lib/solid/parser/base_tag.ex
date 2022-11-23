@@ -9,6 +9,13 @@ defmodule Solid.Parser.BaseTag do
     |> concat(space())
   end
 
+  def comment_tag() do
+    string("{%")
+    |> ignore(space())
+    |> concat(string("#"))
+    |> concat(space())
+  end
+
   def closing_tag() do
     closing_wc_tag = string("-%}")
 

@@ -11,11 +11,19 @@ defmodule Solid.Tag.Comment do
       |> ignore(string("endcomment"))
       |> ignore(BaseTag.closing_tag())
 
-    ignore(BaseTag.opening_tag())
-    |> ignore(string("comment"))
-    |> ignore(BaseTag.closing_tag())
-    |> ignore(repeat(lookahead_not(ignore(end_comment_tag)) |> utf8_char([])))
-    |> ignore(end_comment_tag)
+    comment =
+      ignore(BaseTag.opening_tag())
+      |> ignore(string("comment"))
+      |> ignore(BaseTag.closing_tag())
+      |> ignore(repeat(lookahead_not(ignore(end_comment_tag)) |> utf8_char([])))
+      |> ignore(end_comment_tag)
+
+    inline_comment =
+      ignore(BaseTag.comment_tag())
+      |> ignore(repeat(lookahead_not(ignore(BaseTag.closing_tag())) |> utf8_char([])))
+      |> ignore(BaseTag.closing_tag())
+
+    choice([comment, inline_comment])
   end
 
   @impl true
