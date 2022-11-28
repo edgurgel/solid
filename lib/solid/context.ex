@@ -109,12 +109,12 @@ defmodule Solid.Context do
     {:ok, String.length(data)}
   end
 
-  defp do_get_in(data, ["last"]) when is_list(data) do
-    {:ok, List.last(data)}
+  defp do_get_in(data, ["last" | keys]) when is_list(data) do
+    List.last(data) |> do_get_in(keys)
   end
 
-  defp do_get_in(data, ["first"]) when is_list(data) do
-    {:ok, List.first(data)}
+  defp do_get_in(data, ["first" | keys]) when is_list(data) do
+    List.first(data) |> do_get_in(keys)
   end
 
   defp do_get_in(data, [key | keys]) when is_map(data) do
