@@ -711,6 +711,8 @@ defmodule Solid.Filter do
       |> Enum.intersperse(" ")
       |> to_string
       |> Kernel.<>(ellipsis)
+    else
+      input
     end
   end
 
