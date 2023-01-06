@@ -438,7 +438,9 @@ defmodule Solid.Filter do
   """
   @spec remove(String.t(), String.t()) :: String.t()
   def remove(input, string) do
-    input |> to_string |> String.replace(string, "")
+    input = IO.iodata_to_binary(input |> to_string())
+    string = IO.iodata_to_binary(string |> to_string())
+    String.replace(input, string, "")
   end
 
   @doc """
@@ -449,7 +451,9 @@ defmodule Solid.Filter do
   """
   @spec remove_first(String.t(), String.t()) :: String.t()
   def remove_first(input, string) do
-    input |> to_string |> String.replace(string, "", global: false)
+    input = IO.iodata_to_binary(input |> to_string())
+    string = IO.iodata_to_binary(string |> to_string())
+    String.replace(input, string, "", global: false)
   end
 
   @doc """
@@ -471,7 +475,10 @@ defmodule Solid.Filter do
   """
   @spec replace(String.t(), String.t(), String.t()) :: String.t()
   def replace(input, string, replacement \\ "") do
-    input |> to_string |> String.replace(string, replacement)
+    input = IO.iodata_to_binary(input |> to_string())
+    string = IO.iodata_to_binary(string |> to_string())
+    replacement = IO.iodata_to_binary(replacement |> to_string())
+    String.replace(input, string, replacement)
   end
 
   @doc """
@@ -482,7 +489,10 @@ defmodule Solid.Filter do
   """
   @spec replace_first(String.t(), String.t(), String.t()) :: String.t()
   def replace_first(input, string, replacement \\ "") do
-    input |> to_string |> String.replace(string, replacement, global: false)
+    input = IO.iodata_to_binary(input |> to_string())
+    string = IO.iodata_to_binary(string |> to_string())
+    replacement = IO.iodata_to_binary(replacement |> to_string())
+    String.replace(input, string, replacement, global: false)
   end
 
   @doc """
