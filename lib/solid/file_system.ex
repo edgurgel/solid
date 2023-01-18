@@ -83,7 +83,7 @@ defmodule Solid.LocalFileSystem do
   end
 
   def full_path(template_path, file_system) do
-    if String.match?(template_path, Regex.compile!("^[^./][a-zA-Z0-9_/]+$")) do
+    if String.match?(template_path, Regex.compile!("^[^./][a-zA-Z0-9_/-]+$")) do
       template_name = String.replace(file_system.pattern, "%s", Path.basename(template_path))
 
       full_path =
