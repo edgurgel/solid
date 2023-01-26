@@ -191,9 +191,16 @@ defmodule Solid.Tag.For do
 
   defp limit(enumerable, _), do: enumerable
 
-  defp sort_by(enumerable, %{sort_by: {:field, [key | _]}}) do
-    Enum.sort_by(enumerable, & &1[key])
+  defp sort_by(enumerable, %{sort_by: {:field, fields}}) do
+    Enum.sort_by(enumerable, fn elem ->
+      Enum.reduce(fields, elem, fn
+        field, %{} = acc -> acc[field]
+        _, acc -> acc
+      end)
+    end)
   end
+
+  defp sort_by(enumerable, _), do: enumerable
 
   defp reversed(enumerable, %{reversed: _}) do
     Enum.reverse(enumerable)
