@@ -34,13 +34,21 @@ defmodule Solid.Tag.For do
       |> unwrap_and_tag(integer(min: 1), :offset)
       |> ignore(delimit)
 
+    sort_by =
+      ignore(string("sort_by"))
+      |> ignore(space)
+      |> ignore(string(":"))
+      |> ignore(space)
+      |> unwrap_and_tag(Variable.field(), :sort_by)
+      |> ignore(delimit)
+
     reversed =
       string("reversed")
       |> replace({:reversed, 0})
       |> ignore(delimit)
 
     for_parameters =
-      repeat(choice([limit, offset, reversed]))
+      repeat(choice([limit, offset, sort_by, reversed]))
       |> reduce({Enum, :into, [%{}]})
 
     ignore(BaseTag.opening_tag())
@@ -167,6 +175,7 @@ defmodule Solid.Tag.For do
     enumerable
     |> offset(parameters)
     |> limit(parameters)
+    |> sort_by(parameters)
     |> reversed(parameters)
   end
 
@@ -181,6 +190,10 @@ defmodule Solid.Tag.For do
   end
 
   defp limit(enumerable, _), do: enumerable
+
+  defp sort_by(enumerable, %{sort_by: {:field, [key | _]}}) do
+    Enum.sort_by(enumerable, & &1[key])
+  end
 
   defp reversed(enumerable, %{reversed: _}) do
     Enum.reverse(enumerable)
