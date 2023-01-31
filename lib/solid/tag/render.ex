@@ -37,7 +37,7 @@ defmodule Solid.Tag.Render do
         context,
         options
       ) do
-    {:ok, template, context} = Solid.Argument.get(template_binding, context)
+    {_, template, context} = Solid.Argument.get(template_binding, context)
 
     {:ok, binding_vars, context} =
       Keyword.get(argument_binding || [], :named_arguments, [])

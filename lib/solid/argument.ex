@@ -27,7 +27,7 @@ defmodule Solid.Argument do
           end
 
         {value, context} = apply_filters(nil, filters, context, opts)
-        {:ok, value, context}
+        {:error, value, context}
     end
   end
 
@@ -64,7 +64,6 @@ defmodule Solid.Argument do
     {values, context} =
       Enum.reduce(args, {[], context}, fn arg, {values, context} ->
         {:ok, value, context} = get([arg], context, opts)
-
         {[value | values], context}
       end)
 

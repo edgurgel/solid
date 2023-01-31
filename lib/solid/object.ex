@@ -10,8 +10,7 @@ defmodule Solid.Object do
   def render(object, context, options) when is_list(object) do
     argument = object[:argument]
 
-    {:ok, value, context} =
-      Argument.get(argument, context, [filters: object[:filters]] ++ options)
+    {_, value, context} = Argument.get(argument, context, [filters: object[:filters]] ++ options)
 
     {:ok, stringify!(value), context}
   end

@@ -161,13 +161,13 @@ defmodule Solid.Tag.For do
   end
 
   defp enumerable([range: [first: first, last: last]], context) do
-    {:ok, first, context} = integer_or_field(first, context)
-    {:ok, last, context} = integer_or_field(last, context)
+    {_, first, context} = integer_or_field(first, context)
+    {_, last, context} = integer_or_field(last, context)
     {:ok, first..last, context}
   end
 
   defp enumerable(field, context) do
-    {:ok, value, context} = Solid.Argument.get(field, context)
+    {_, value, context} = Solid.Argument.get(field, context)
     {:ok, value || [], context}
   end
 
