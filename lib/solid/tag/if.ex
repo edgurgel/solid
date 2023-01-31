@@ -13,6 +13,7 @@ defmodule Solid.Tag.If do
 
   operator =
     choice([
+      string("="),
       string("=="),
       string("!="),
       string(">="),

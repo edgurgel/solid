@@ -1,7 +1,7 @@
 defmodule Solid.Expression do
   @moduledoc """
   Expression evaluation for the following binary operators:
-    == != > < >= <=
+   = == != > < >= <=
   Also combine expressions with `and`, `or`
   """
 
@@ -13,6 +13,8 @@ defmodule Solid.Expression do
   Evaluate a single expression
   iex> Solid.Expression.eval({"Beer Pack", :contains, "Pack"})
   true
+  iex> Solid.Expression.eval({1, :=, 2})
+  false
   iex> Solid.Expression.eval({1, :==, 2})
   false
   iex> Solid.Expression.eval({1, :==, 1})
@@ -79,6 +81,7 @@ defmodule Solid.Expression do
   def eval({v1, :<, nil}) when is_number(v1), do: false
   def eval({nil, :>=, v2}) when is_number(v2), do: false
   def eval({nil, :>, v2}) when is_number(v2), do: false
+  def eval({v1, :=, v2}), do: v1 == v2
   def eval({v1, op, v2}), do: apply(Kernel, op, [v1, v2])
 
   def eval(value) do
