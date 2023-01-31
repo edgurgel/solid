@@ -125,7 +125,7 @@ defmodule Solid.Expression do
   end
 
   defp do_eval(value, context, opts) do
-    {:ok, value, context} = get_argument(value, context, opts)
+    {_, value, context} = get_argument(value, context, opts)
     {eval(value), context}
   end
 
