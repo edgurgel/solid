@@ -5,6 +5,16 @@ defmodule Solid.Filter do
 
   import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1, apply: 2]
 
+  defp any_to_float(string) when byte_size(string) > 0 do
+    case Float.parse(string) do
+      :error -> 0.0
+      {number, _} -> number
+    end
+  end
+
+  defp any_to_float(number) when is_number(number), do: number
+  defp any_to_float(_), do: 0.0
+
   @doc """
   Apply `filter` if it exists. Otherwise return the first input.
 
@@ -67,8 +77,7 @@ defmodule Solid.Filter do
   """
   @spec abs(number | String.t()) :: number
   def abs(input) when is_binary(input) do
-    {float, _} = Float.parse(input)
-    abs(float)
+    any_to_float(input) |> abs()
   end
 
   def abs(input), do: Kernel.abs(input)
@@ -120,8 +129,7 @@ defmodule Solid.Filter do
   """
   @spec ceil(number | String.t()) :: number
   def ceil(input) when is_binary(input) do
-    {float, _} = Float.parse(input)
-    ceil(float)
+    any_to_float(input) |> ceil()
   end
 
   def ceil(input) when is_integer(input), do: input
@@ -202,11 +210,11 @@ defmodule Solid.Filter do
   """
   @spec divided_by(number, number) :: number
   def divided_by(input, operand) when is_integer(operand) do
-    (input / operand) |> Float.floor() |> trunc
+    (any_to_float(input) / operand) |> Float.floor() |> trunc
   end
 
   def divided_by(input, operand) when is_float(operand) do
-    input / operand
+    any_to_float(input) / operand
   end
 
   @doc """
@@ -266,8 +274,7 @@ defmodule Solid.Filter do
   """
   @spec floor(number | String.t()) :: integer
   def floor(input) when is_binary(input) do
-    {float, _} = Float.parse(input)
-    floor(float)
+    any_to_float(input) |> floor()
   end
 
   def floor(input), do: Float.floor(input) |> trunc
@@ -359,7 +366,7 @@ defmodule Solid.Filter do
   171.357
   """
   @spec minus(number, number) :: number
-  def minus(input, number), do: input - number
+  def minus(input, number), do: any_to_float(input) - any_to_float(number)
 
   @doc """
   Subtracts a number from another number.
@@ -379,7 +386,8 @@ defmodule Solid.Filter do
   # OTP 20+
   def modulo(dividend, divisor) do
     dividend
-    |> :math.fmod(divisor)
+    |> any_to_float
+    |> :math.fmod(any_to_float(divisor))
     |> Float.round(decimal_places(dividend))
   end
 
@@ -409,14 +417,7 @@ defmodule Solid.Filter do
   def plus(input, number) when is_number(input), do: input + number
 
   def plus(input, number) when is_binary(input) do
-    try do
-      plus(String.to_integer(input), number)
-    rescue
-      ArgumentError ->
-        plus(String.to_float(input), number)
-    end
-  rescue
-    ArgumentError -> nil
+    plus(any_to_float(input), number)
   end
 
   def plus(_input, number), do: number
@@ -647,7 +648,7 @@ defmodule Solid.Filter do
   2200.284
   """
   @spec times(number, number) :: number
-  def times(input, operand), do: input * operand
+  def times(input, operand), do: any_to_float(input) * any_to_float(operand)
 
   @doc """
   truncate shortens a string down to the number of characters passed as a parameter.
