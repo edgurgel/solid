@@ -4,7 +4,16 @@ defmodule Solid.Parser.Variable do
 
   @dialyzer :no_opaque
 
-  defp identifier(), do: ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-, ??], min: 1)
+  # ## Examples
+  # * "my_variable"
+  # * "is_valid?"
+  # * "variable_1"
+  defp identifier do
+    ascii_string([?a..?z, ?A..?Z, ?_], 1)
+    |> concat(ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?-], min: 0))
+    |> concat(optional(string("?")))
+    |> reduce({Enum, :join, []})
+  end
 
   def bracket_access do
     ignore(string("["))
