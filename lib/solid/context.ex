@@ -101,6 +101,10 @@ defmodule Solid.Context do
     {:ok, Enum.count(data)}
   end
 
+  defp do_get_in(data, ["size"]) when is_struct(data) do
+    {:ok, Map.get(data, "size", data |> Map.from_struct() |> Enum.count())}
+  end
+
   defp do_get_in(data, ["size"]) when is_map(data) do
     {:ok, Map.get(data, "size", Enum.count(data))}
   end
