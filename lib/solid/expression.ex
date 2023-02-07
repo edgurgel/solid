@@ -79,17 +79,9 @@ defmodule Solid.Expression do
   def eval({v1, :<, nil}) when is_number(v1), do: false
   def eval({nil, :>=, v2}) when is_number(v2), do: false
   def eval({nil, :>, v2}) when is_number(v2), do: false
-  # Customize
-  def eval({v1, :=, v2}), do: v1 == v2
   def eval({v1, op, v2}), do: apply(Kernel, op, [v1, v2])
-
-  def eval(value) do
-    if value do
-      true
-    else
-      false
-    end
-  end
+  def eval(nil), do: false
+  def eval(_value), do: true
 
   @doc """
   Evaluate a list of expressions combined with `or`, `and`
