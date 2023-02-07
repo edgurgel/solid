@@ -1,7 +1,7 @@
 defmodule Solid.Expression do
   @moduledoc """
   Expression evaluation for the following binary operators:
-   = == != > < >= <=
+   == != > < >= <=
   Also combine expressions with `and`, `or`
   """
 
