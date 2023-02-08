@@ -27,7 +27,7 @@ defmodule Solid.Argument do
           end
 
         {value, context} = apply_filters(nil, filters, context, opts)
-        {:error, value, context}
+        {:ok, value, context}
     end
   end
 

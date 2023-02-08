@@ -57,13 +57,32 @@ defmodule Solid.Filter do
 
   defp any_to_float(string) when byte_size(string) > 0 do
     case Float.parse(string) do
-      :error -> 0.0
-      {number, _} -> number
+      {number, ""} -> number
+      _ -> nil
     end
   end
 
   defp any_to_float(number) when is_number(number), do: number
-  defp any_to_float(_), do: 0.0
+  defp any_to_float(_), do: nil
+
+  defp number_trunc(number) do
+    number
+    |> Kernel.to_string()
+    |> String.split(".", trim: true)
+    |> _number_trunc()
+  end
+
+  defp _number_trunc([head]), do: String.to_integer(head)
+  defp _number_trunc([head, "0"]), do: String.to_integer(head)
+
+  defp _number_trunc([head, tail]) do
+    float = head <> "." <> tail
+
+    case Float.parse(float) do
+      {float, ""} -> float
+      _ -> nil
+    end
+  end
 
   @doc """
   Returns the absolute value of a number.
@@ -77,10 +96,13 @@ defmodule Solid.Filter do
   """
   @spec abs(number | String.t()) :: number
   def abs(input) when is_binary(input) do
-    any_to_float(input) |> abs()
+    if i = any_to_float(input) do
+      abs(i)
+    end
   end
 
-  def abs(input), do: Kernel.abs(input)
+  def abs(input) when is_number(input), do: Kernel.abs(input)
+  def abs(_), do: nil
 
   @doc """
   Concatenates two strings and returns the concatenated value.
@@ -122,17 +144,19 @@ defmodule Solid.Filter do
   "1"
   """
   @spec capitalize(any) :: String.t()
-  def capitalize(input), do: IO.iodata_to_binary(input) |> String.capitalize()
+  def capitalize(input), do: Kernel.to_string(input) |> String.capitalize()
 
   @doc """
   Rounds the input up to the nearest whole number. Liquid tries to convert the input to a number before the filter is applied.
   """
   @spec ceil(number | String.t()) :: number
   def ceil(input) when is_binary(input) do
-    any_to_float(input) |> ceil()
+    if i = any_to_float(input) do
+      ceil(i)
+    end
   end
 
-  def ceil(input) when is_integer(input), do: input
+  def ceil(input) when is_number(input), do: input
   def ceil(input), do: Float.ceil(input) |> trunc
 
   @doc """
@@ -212,11 +236,15 @@ defmodule Solid.Filter do
   """
   @spec divided_by(number, number) :: number
   def divided_by(input, operand) when is_integer(operand) do
-    (any_to_float(input) / operand) |> Float.floor() |> trunc
+    if i = any_to_float(input) do
+      (i / operand) |> Float.floor() |> trunc
+    end
   end
 
   def divided_by(input, operand) when is_float(operand) do
-    any_to_float(input) / operand
+    if i = any_to_float(input) do
+      i / operand
+    end
   end
 
   @doc """
@@ -233,7 +261,7 @@ defmodule Solid.Filter do
   ""
   """
   @spec upcase(any) :: String.t()
-  def upcase(input), do: input |> IO.iodata_to_binary |> String.upcase()
+  def upcase(input), do: input |> Kernel.to_string() |> String.upcase()
 
   @doc """
   Makes each character in a string lowercase.
@@ -249,7 +277,7 @@ defmodule Solid.Filter do
   ""
   """
   @spec downcase(any) :: String.t()
-  def downcase(input), do: input |> IO.iodata_to_binary |> String.downcase()
+  def downcase(input), do: input |> Kernel.to_string() |> String.downcase()
 
   @doc """
   Returns the first item of an array.
@@ -259,9 +287,9 @@ defmodule Solid.Filter do
   iex> Solid.Filter.first([])
   nil
   """
-  @spec first(list) :: any
-  def first(input) when is_list(input), do: List.first(input)
+  @spec first(list | binary) :: any
   def first(input) when is_bitstring(input), do: String.first(input)
+  def first(input) when is_list(input), do: List.first(input)
   def first(_), do: nil
 
   @doc """
@@ -276,7 +304,11 @@ defmodule Solid.Filter do
   3
   """
   @spec floor(number | String.t()) :: integer
-  def floor(input), do: any_to_float(input) |> Float.floor() |> trunc
+  def floor(input) do
+    if i = any_to_float(input) do
+      Float.floor(i) |> trunc
+    end
+  end
 
   @doc """
   Removes all occurrences of nil from a list
@@ -364,8 +396,15 @@ defmodule Solid.Filter do
   iex> Solid.Filter.minus(183.357, 12)
   171.357
   """
-  @spec minus(number, number) :: number
-  def minus(input, number), do: any_to_float(input) - any_to_float(number)
+  @spec minus(any, any) :: number
+  def minus(input, number) do
+    a = any_to_float(input)
+    b = any_to_float(number)
+
+    if a && b do
+      number_trunc(a - b)
+    end
+  end
 
   @doc """
   Subtracts a number from another number.
@@ -384,10 +423,14 @@ defmodule Solid.Filter do
 
   # OTP 20+
   def modulo(dividend, divisor) do
-    dividend
-    |> any_to_float
-    |> :math.fmod(any_to_float(divisor))
-    |> Float.round(decimal_places(dividend))
+    a = any_to_float(dividend)
+    b = any_to_float(divisor)
+
+    if a && b do
+      a
+      |> :math.fmod(b)
+      |> Float.round(decimal_places(dividend))
+    end
   end
 
   defp decimal_places(float) do
@@ -413,10 +456,16 @@ defmodule Solid.Filter do
   nil
   """
   @spec plus(number, number) :: number
-  def plus(input, number) when is_number(input), do: input + any_to_float(number)
+  def plus(input, number) when is_number(input) do
+    if y = any_to_float(number) do
+      number_trunc(input + y)
+    end
+  end
 
   def plus(input, number) when is_binary(input) do
-    any_to_float(input) |> plus(number)
+    if x = any_to_float(input) do
+      plus(x, number) |> number_trunc
+    end
   end
 
   def plus(_input, number), do: number
@@ -438,8 +487,8 @@ defmodule Solid.Filter do
   """
   @spec remove(String.t(), String.t()) :: String.t()
   def remove(input, string) do
-    input = IO.iodata_to_binary(input)
-    string = IO.iodata_to_binary(string)
+    input = Kernel.to_string(input)
+    string = Kernel.to_string(string)
     String.replace(input, string, "")
   end
 
@@ -451,8 +500,8 @@ defmodule Solid.Filter do
   """
   @spec remove_first(String.t(), String.t()) :: String.t()
   def remove_first(input, string) do
-    input = IO.iodata_to_binary(input)
-    string = IO.iodata_to_binary(string)
+    input = Kernel.to_string(input)
+    string = Kernel.to_string(string)
     String.replace(input, string, "", global: false)
   end
 
@@ -475,9 +524,9 @@ defmodule Solid.Filter do
   """
   @spec replace(String.t(), String.t(), String.t()) :: String.t()
   def replace(input, string, replacement \\ "") do
-    input = IO.iodata_to_binary(input)
-    string = IO.iodata_to_binary(string)
-    replacement = IO.iodata_to_binary(replacement)
+    input = Kernel.to_string(input)
+    string = Kernel.to_string(string)
+    replacement = Kernel.to_string(replacement)
     String.replace(input, string, replacement)
   end
 
@@ -489,9 +538,9 @@ defmodule Solid.Filter do
   """
   @spec replace_first(String.t(), String.t(), String.t()) :: String.t()
   def replace_first(input, string, replacement \\ "") do
-    input = IO.iodata_to_binary(input)
-    string = IO.iodata_to_binary(string)
-    replacement = IO.iodata_to_binary(replacement)
+    input = Kernel.to_string(input)
+    string = Kernel.to_string(string)
+    replacement = Kernel.to_string(replacement)
     String.replace(input, string, replacement, global: false)
   end
 
@@ -503,7 +552,7 @@ defmodule Solid.Filter do
   """
   @spec replace_last(String.t(), String.t(), String.t()) :: String.t()
   def replace_last(input, string, replacement \\ "") do
-    input = IO.iodata_to_binary(input)
+    input = Kernel.to_string(input)
 
     if index = last_index(input, string) do
       {prefix, suffix} = String.split_at(input, index)
@@ -566,7 +615,7 @@ defmodule Solid.Filter do
   "          So much room for activities!"
   """
   @spec rstrip(String.t()) :: String.t()
-  def rstrip(input), do: IO.iodata_to_binary(input) |> String.trim_trailing()
+  def rstrip(input), do: Kernel.to_string(input) |> String.trim_trailing()
 
   @doc """
   Returns the number of characters in a string or the number of items in an array.
@@ -602,8 +651,8 @@ defmodule Solid.Filter do
   """
   @spec slice(String.t(), integer, non_neg_integer | nil) :: String.t()
   def slice(input, offset, length \\ nil)
-  def slice(input, offset, nil), do: IO.iodata_to_binary(input) |> String.at(offset)
-  def slice(input, offset, length), do: IO.iodata_to_binary(input) |> String.slice(offset, length)
+  def slice(input, offset, nil), do: Kernel.to_string(input) |> String.at(offset)
+  def slice(input, offset, length), do: Kernel.to_string(input) |> String.slice(offset, length)
 
   @doc """
   Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.
@@ -633,7 +682,7 @@ defmodule Solid.Filter do
   "So much room for activities!"
   """
   @spec strip(String.t()) :: String.t()
-  def strip(input), do: IO.iodata_to_binary(input) |> String.trim()
+  def strip(input), do: Kernel.to_string(input) |> String.trim()
 
   @doc """
   Multiplies a number by another number.
@@ -646,7 +695,14 @@ defmodule Solid.Filter do
   2200.284
   """
   @spec times(number, number) :: number
-  def times(input, operand), do: any_to_float(input) * any_to_float(operand)
+  def times(input, operand) do
+    a = any_to_float(input)
+    b = any_to_float(operand)
+
+    if a && b do
+      number_trunc(a * b)
+    end
+  end
 
   @doc """
   truncate shortens a string down to the number of characters passed as a parameter.
@@ -747,7 +803,7 @@ defmodule Solid.Filter do
   """
   @spec strip_newlines(iodata()) :: String.t()
   def strip_newlines(iodata) do
-    binary = IO.iodata_to_binary(iodata)
+    binary = Kernel.to_string(iodata)
     pattern = :binary.compile_pattern(["\r\n", "\n"])
     String.replace(binary, pattern, "")
   end
@@ -764,7 +820,7 @@ defmodule Solid.Filter do
   """
   @spec newline_to_br(iodata()) :: String.t()
   def newline_to_br(iodata) do
-    binary = IO.iodata_to_binary(iodata)
+    binary = Kernel.to_string(iodata)
     pattern = :binary.compile_pattern(["\r\n", "\n"])
     String.replace(binary, pattern, fn x -> "<br />#{x}" end)
   end
@@ -814,7 +870,7 @@ defmodule Solid.Filter do
   @spec strip_html(iodata()) :: String.t()
   def strip_html(iodata) do
     iodata
-    |> IO.iodata_to_binary()
+    |> Kernel.to_string()
     |> String.replace(@html_blocks, "")
     |> String.replace(@html_tags, "")
   end
@@ -831,7 +887,7 @@ defmodule Solid.Filter do
   """
   def url_encode(iodata) do
     iodata
-    |> IO.iodata_to_binary()
+    |> Kernel.to_string()
     |> URI.encode_www_form()
   end
 
@@ -844,7 +900,7 @@ defmodule Solid.Filter do
   """
   def url_decode(iodata) do
     iodata
-    |> IO.iodata_to_binary()
+    |> Kernel.to_string()
     |> URI.decode_www_form()
   end
 
@@ -858,7 +914,7 @@ defmodule Solid.Filter do
   @spec escape(iodata()) :: String.t()
   def escape(iodata) do
     iodata
-    |> IO.iodata_to_binary()
+    |> Kernel.to_string()
     |> Solid.HTML.html_escape()
   end
 
@@ -877,7 +933,7 @@ defmodule Solid.Filter do
   @spec escape_once(iodata()) :: String.t()
   def escape_once(iodata) do
     iodata
-    |> IO.iodata_to_binary()
+    |> Kernel.to_string()
     |> String.replace(@escape_once_regex, &Solid.HTML.replacements/1)
   end
 
@@ -890,7 +946,7 @@ defmodule Solid.Filter do
   @spec base64_encode(iodata()) :: String.t()
   def base64_encode(iodata) do
     iodata
-    |> IO.iodata_to_binary()
+    |> Kernel.to_string()
     |> Base.encode64()
   end
 
@@ -903,7 +959,7 @@ defmodule Solid.Filter do
   @spec base64_decode(iodata()) :: String.t()
   def base64_decode(iodata) do
     iodata
-    |> IO.iodata_to_binary()
+    |> Kernel.to_string()
     |> Base.decode64!()
   end
 
@@ -916,7 +972,7 @@ defmodule Solid.Filter do
   @spec base64_url_safe_encode(iodata()) :: String.t()
   def base64_url_safe_encode(iodata) do
     iodata
-    |> IO.iodata_to_binary()
+    |> Kernel.to_string()
     |> Base.url_encode64()
   end
 
@@ -929,7 +985,7 @@ defmodule Solid.Filter do
   @spec base64_url_safe_decode(iodata()) :: String.t()
   def base64_url_safe_decode(iodata) do
     iodata
-    |> IO.iodata_to_binary()
+    |> Kernel.to_string()
     |> Base.url_decode64!()
   end
 end

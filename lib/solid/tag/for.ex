@@ -167,7 +167,7 @@ defmodule Solid.Tag.For do
   end
 
   defp enumerable(field, context) do
-    {_, value, context} = Solid.Argument.get(field, context)
+    {:ok, value, context} = Solid.Argument.get(field, context)
     {:ok, value || [], context}
   end
 

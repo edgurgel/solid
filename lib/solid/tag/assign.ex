@@ -26,7 +26,7 @@ defmodule Solid.Tag.Assign do
         context,
         options
       ) do
-    {_, new_value, context} =
+    {:ok, new_value, context} =
       Solid.Argument.get(argument, context, [{:filters, filters} | options])
 
     context = %{context | vars: Map.put(context.vars, field_name, new_value)}

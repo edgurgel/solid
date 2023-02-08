@@ -26,7 +26,7 @@ defmodule Solid.Tag.Counter do
 
   @impl true
   def render([{operation, default}, field], context, options) do
-    {_, value, context} = Argument.get([field], context, [{:scopes, [:counter_vars]} | options])
+    {:ok, value, context} = Argument.get([field], context, [{:scopes, [:counter_vars]} | options])
     value = value || default
 
     {:field, [field_name]} = field

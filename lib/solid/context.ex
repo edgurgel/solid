@@ -109,7 +109,7 @@ defmodule Solid.Context do
     {:ok, Map.get(data, "size", Enum.count(data))}
   end
 
-  defp do_get_in(data, ["size"]) when is_binary(data) do
+  defp do_get_in(data, ["size"]) when is_bitstring(data) do
     {:ok, String.length(data)}
   end
 
@@ -119,6 +119,10 @@ defmodule Solid.Context do
 
   defp do_get_in(data, ["first" | keys]) when is_list(data) do
     List.first(data) |> do_get_in(keys)
+  end
+
+  defp do_get_in(data, ["first" | keys]) when is_bitstring(data) do
+    String.first(data) |> do_get_in(keys)
   end
 
   defp do_get_in(data, [key | keys]) when is_map(data) do

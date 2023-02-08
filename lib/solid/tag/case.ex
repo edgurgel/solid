@@ -42,7 +42,7 @@ defmodule Solid.Tag.Case do
 
   @impl true
   def render([{:case_exp, field} | [{:whens, when_map} | _]] = tag, context, options) do
-    {_, value, context} = Solid.Argument.get(field, context, options)
+    {:ok, value, context} = Solid.Argument.get(field, context, options)
     result = when_map[value]
 
     if result do
