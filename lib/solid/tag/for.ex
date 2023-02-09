@@ -16,7 +16,7 @@ defmodule Solid.Tag.For do
       |> ignore(string(")"))
       |> tag(:range)
 
-    delimit = choice([concat(string(~s(,)), space), space])
+    delimit = choice([space |> concat(string(~s(,))) |> concat(space), space])
 
     limit =
       ignore(string("limit"))
@@ -42,13 +42,29 @@ defmodule Solid.Tag.For do
       |> unwrap_and_tag(Variable.field(), :sort_by)
       |> ignore(delimit)
 
+    order =
+      ignore(string("order"))
+      |> ignore(space)
+      |> ignore(string(":"))
+      |> ignore(space)
+      |> unwrap_and_tag(
+        choice([
+          string("descending") |> replace(:desc),
+          string("ascending") |> replace(:asc),
+          string("desc") |> replace(:desc),
+          string("asc") |> replace(:asc)
+        ]),
+        :order
+      )
+      |> ignore(delimit)
+
     reversed =
       string("reversed")
       |> replace({:reversed, 0})
       |> ignore(delimit)
 
     for_parameters =
-      repeat(choice([limit, offset, sort_by, reversed]))
+      repeat(choice([limit, offset, sort_by, order, reversed]))
       |> reduce({Enum, :into, [%{}]})
 
     ignore(BaseTag.opening_tag())
@@ -191,13 +207,22 @@ defmodule Solid.Tag.For do
 
   defp limit(enumerable, _), do: enumerable
 
-  defp sort_by(enumerable, %{sort_by: {:field, fields}}) do
-    Enum.sort_by(enumerable, fn elem ->
-      Enum.reduce(fields, elem, fn
-        field, %{} = acc -> acc[field]
-        _, acc -> acc
-      end)
-    end)
+  # Sort by with Order
+  defp sort_by(enumerable, %{sort_by: {:field, fields}, order: order}) do
+    Enum.sort_by(
+      enumerable,
+      fn elem ->
+        Enum.reduce(fields, elem, fn
+          field, %{} = acc -> acc[field]
+          _, acc -> acc
+        end)
+      end,
+      order
+    )
+  end
+
+  defp sort_by(enumerable, %{sort_by: {:field, _}} = parameters) do
+    sort_by(enumerable, Map.put(parameters, :order, :asc))
   end
 
   defp sort_by(enumerable, _), do: enumerable
