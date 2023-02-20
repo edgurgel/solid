@@ -118,9 +118,15 @@ defmodule Solid do
 
   def render(text, context = %Context{}, options) do
     {result, context} =
-      Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
+      text
+      |> Task.async_stream(&do_render(&1, context, options),
+        timeout: :timer.minutes(3),
+        on_timeout: :kill_task,
+        zip_input_on_exit: true
+      )
+      |> Enum.reduce({[], context}, fn entry, {acc, _context} ->
         try do
-          {result, context} = do_render(entry, context, options)
+          {result, context} = get_async_result(entry)
           {[result | acc], context}
         catch
           {:break_exp, result, context} ->
@@ -133,6 +139,9 @@ defmodule Solid do
 
     {Enum.reverse(result), context}
   end
+
+  defp get_async_result({:ok, entry}), do: entry
+  defp get_async_result({:exit, {entry, _}}), do: entry
 
   defp process_result(result, context) do
     if context.errors == [] do
@@ -155,12 +164,9 @@ defmodule Solid do
   end
 
   defp render_tag(tag, context, options) do
-    {result, context} = Tag.eval(tag, context, options)
-
-    if result do
-      render(result, context, options)
-    else
-      {"", context}
+    case Tag.eval(tag, context, options) do
+      {nil, context} -> {"", context}
+      {result, context} -> render(result, context, options)
     end
   end
 end
