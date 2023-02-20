@@ -10,7 +10,8 @@ defmodule Solid.Object do
   def render(object, context, options) when is_list(object) do
     argument = object[:argument]
 
-    {:ok, value, context} = Argument.get(argument, context, [filters: object[:filters]] ++ options)
+    {:ok, value, context} =
+      Argument.get(argument, context, [filters: object[:filters]] ++ options)
 
     {:ok, stringify!(value), context}
   end
@@ -18,6 +19,7 @@ defmodule Solid.Object do
   defp stringify!(value) when is_list(value) do
     value
     |> List.flatten()
+    |> Enum.map(&stringify!/1)
     |> Enum.join()
   end
 
