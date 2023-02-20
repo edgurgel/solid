@@ -23,6 +23,10 @@ defmodule Solid.Object do
     |> Enum.join()
   end
 
+  defp stringify!(value) when is_tuple(value) do
+    Tuple.to_list(value) |> stringify!()
+  end
+
   defp stringify!(value) when is_map(value) and not is_struct(value) do
     "#{inspect(value)}"
   end
