@@ -107,9 +107,7 @@ defmodule Solid do
   @spec render(list, %Context{}, Keyword.t()) :: {iolist, %Context{}}
   def render(%Template{parsed_template: parsed_template}, hash, options) do
     context = %Context{counter_vars: hash}
-
     {result, context} = render(parsed_template, context, options)
-
     process_result(result, context)
   catch
     {exp, result, context} when exp in [:break_exp, :continue_exp] ->
@@ -118,15 +116,9 @@ defmodule Solid do
 
   def render(text, context = %Context{}, options) do
     {result, context} =
-      text
-      |> Task.async_stream(&do_render(&1, context, options),
-        timeout: :timer.minutes(3),
-        on_timeout: :kill_task,
-        zip_input_on_exit: true
-      )
-      |> Enum.reduce({[], context}, fn entry, {acc, _context} ->
+      Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
         try do
-          {result, context} = get_async_result(entry)
+          {result, context} = do_render(entry, context, options)
           {[result | acc], context}
         catch
           {:break_exp, result, context} ->
@@ -139,9 +131,6 @@ defmodule Solid do
 
     {Enum.reverse(result), context}
   end
-
-  defp get_async_result({:ok, entry}), do: entry
-  defp get_async_result({:exit, {entry, _}}), do: entry
 
   defp process_result(result, context) do
     if context.errors == [] do
