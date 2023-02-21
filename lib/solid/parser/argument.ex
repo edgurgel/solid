@@ -65,7 +65,7 @@ defmodule Solid.Parser.Argument do
     |> ignore(space())
     |> concat(filter_name)
     |> tag(
-      optional(ignore(string(":")) |> ignore(space()) |> concat(arguments())),
+      optional(ignore(space()) |> ignore(string(":")) |> ignore(space()) |> concat(arguments())),
       :arguments
     )
     |> tag(:filter)
