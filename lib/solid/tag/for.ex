@@ -143,25 +143,25 @@ defmodule Solid.Tag.For do
     %{acc_context | iteration_vars: iteration_vars}
   end
 
-  defp maybe_put_forloop_map(acc_context, key, index, length) when key != "forloop" do
-    map = build_forloop_map(index, length)
+  defp maybe_put_forloop_map(acc_context, key, index, loop_length) when key != "forloop" do
+    map = build_forloop_map(index, loop_length)
     iteration_vars = Map.put(acc_context.iteration_vars, "forloop", map)
     %{acc_context | iteration_vars: iteration_vars}
   end
 
-  defp maybe_put_forloop_map(acc_context, _key, _index, _length) do
+  defp maybe_put_forloop_map(acc_context, _key, _index, _loop_length) do
     acc_context
   end
 
-  defp build_forloop_map(index, length) do
+  defp build_forloop_map(index, loop_length) do
     %{
       "index" => index + 1,
       "index0" => index,
-      "rindex" => length - index,
-      "rindex0" => length - index - 1,
+      "rindex" => loop_length - index,
+      "rindex0" => loop_length - index - 1,
       "first" => index == 0,
-      "last" => length == index + 1,
-      "length" => length
+      "last" => loop_length == index + 1,
+      "length" => loop_length
     }
   end
 
@@ -208,20 +208,23 @@ defmodule Solid.Tag.For do
   defp limit(enumerable, _), do: enumerable
 
   # Sort by with Order
-  defp sort_by(enumerable, %{sort_by: {:field, fields}, order: order}) do
-    Enum.sort_by(
-      enumerable,
-      fn elem ->
-        Enum.reduce(fields, elem, fn
-          field, %{} = acc -> acc[field]
-          _, acc -> acc
-        end)
-      end,
-      order
-    )
+  defp sort_by([%{} | _] = enumerable, %{sort_by: {:field, fields}, order: order_by}) do
+    if Enum.any?(fields, &(&1 in ~w(index index0 rindex rindex0 first last length))) do
+      Enum.sort(enumerable, order_by)
+    else
+      Enum.sort_by(
+        enumerable,
+        &(Enum.reduce(fields, &1, fn field, acc -> Map.get(acc, field) end) || &1),
+        order_by
+      )
+    end
   end
 
-  defp sort_by(enumerable, %{sort_by: {:field, _}} = parameters) do
+  defp sort_by(enumerable, %{sort_by: {:field, _fields}, order: order_by}) do
+    Enum.sort(enumerable, order_by)
+  end
+
+  defp sort_by(enumerable, %{sort_by: {:field, _fields}} = parameters) do
     sort_by(enumerable, Map.put(parameters, :order, :asc))
   end
 
