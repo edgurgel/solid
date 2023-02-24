@@ -127,6 +127,7 @@ defmodule Solid.Context do
 
   defp do_get_in(data, [key | keys]) when is_map(data) do
     case Map.fetch(data, key) do
+      {:ok, value} when is_tuple(value) -> Tuple.to_list(value) |> do_get_in(keys)
       {:ok, value} -> do_get_in(value, keys)
       _ -> {:error, :not_found}
     end
