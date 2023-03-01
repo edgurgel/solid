@@ -27,11 +27,23 @@ defmodule Solid.Tag.Capture do
       ) do
     {captured, context} = Solid.render(result, context, options)
 
-    context = %{
-      context
-      | vars: Map.put(context.vars, field_name, IO.iodata_to_binary(captured))
-    }
+    {[], %{context | vars: Map.put(context.vars, field_name, IO.iodata_to_binary(captured))}}
+  end
 
-    {[], context}
+  def render(
+        [field: fields_name, result: result],
+        context,
+        options
+      ) do
+    {captured, context} = Solid.render(result, context, options)
+
+    context_vars =
+      put_in(
+        context.vars,
+        Enum.map(fields_name, &Access.key(&1, %{})),
+        IO.iodata_to_binary(captured)
+      )
+
+    {[], %{context | vars: context_vars}}
   end
 end
