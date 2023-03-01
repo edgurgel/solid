@@ -17,6 +17,7 @@ defmodule Solid.Parser.Argument do
 
   def named_argument() do
     argument_name()
+    |> ignore(space())
     |> ignore(string(":"))
     |> ignore(space())
     |> choice([Literal.value(), Variable.field()])

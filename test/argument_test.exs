@@ -26,12 +26,12 @@ defmodule Solid.ArgumentTest do
 
     test "array access not found" do
       context = %Solid.Context{vars: %{"key" => "a string"}}
-      assert {:error, nil, ^context} = get([field: ["key", 1]], context)
+      assert {:ok, nil, ^context} = get([field: ["key", 1]], context)
     end
 
     test "array access not found with strict_variables" do
       context = %Solid.Context{vars: %{"key" => "a string"}}
-      assert {:error, nil, context} = get([field: ["key", 1]], context, strict_variables: true)
+      assert {:ok, nil, context} = get([field: ["key", 1]], context, strict_variables: true)
       assert context.errors == [%UndefinedVariableError{variable: ["key", 1]}]
     end
 
@@ -75,7 +75,7 @@ defmodule Solid.ArgumentTest do
       context = %Solid.Context{vars: %{}}
       filters = [filter: ["default", {:arguments, [value: 456]}]]
 
-      assert {:error, 456, context} =
+      assert {:ok, 456, context} =
                get([field: ["key"]], context, filters: filters, strict_variables: true)
 
       assert context.errors == [%UndefinedVariableError{variable: ["key"]}]
@@ -95,7 +95,7 @@ defmodule Solid.ArgumentTest do
       context = %Solid.Context{vars: %{}}
       filters = [filter: ["unknown", {:arguments, []}]]
 
-      assert {:error, nil, context} =
+      assert {:ok, nil, context} =
                get([field: ["key"]], context,
                  filters: filters,
                  strict_variables: true,

@@ -67,7 +67,7 @@ defmodule Solid.Filter do
 
   defp number_trunc(number) do
     number
-    |> Kernel.to_string()
+    |> to_string()
     |> String.split(".", trim: true)
     |> _number_trunc()
   end
@@ -96,13 +96,11 @@ defmodule Solid.Filter do
   """
   @spec abs(number | String.t()) :: number
   def abs(input) when is_binary(input) do
-    if i = any_to_float(input) do
-      abs(i)
-    end
+    if i = any_to_float(input), do: Kernel.abs(i), else: input
   end
 
   def abs(input) when is_number(input), do: Kernel.abs(input)
-  def abs(_), do: nil
+  def abs(input), do: input
 
   @doc """
   Concatenates two strings and returns the concatenated value.
@@ -151,13 +149,11 @@ defmodule Solid.Filter do
   """
   @spec ceil(number | String.t()) :: number
   def ceil(input) when is_binary(input) do
-    if i = any_to_float(input) do
-      ceil(i)
-    end
+    if i = any_to_float(input), do: Kernel.ceil(i), else: input
   end
 
-  def ceil(input) when is_number(input), do: input
-  def ceil(input), do: Float.ceil(input) |> trunc
+  def ceil(input) when is_number(input), do: Kernel.ceil(input)
+  def ceil(input), do: input
 
   @doc """
   Converts a `DateTime`/`NaiveDateTime` struct into another date format.
@@ -288,7 +284,6 @@ defmodule Solid.Filter do
   nil
   """
   @spec first(list | binary) :: any
-  def first(input) when is_bitstring(input), do: String.first(input)
   def first(input) when is_list(input), do: List.first(input)
   def first(_), do: nil
 
