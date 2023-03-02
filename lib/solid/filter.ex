@@ -100,7 +100,7 @@ defmodule Solid.Filter do
   end
 
   def abs(input) when is_number(input), do: Kernel.abs(input)
-  def abs(input), do: input
+  def abs(_), do: nil
 
   @doc """
   Concatenates two strings and returns the concatenated value.
@@ -153,7 +153,7 @@ defmodule Solid.Filter do
   end
 
   def ceil(input) when is_number(input), do: Kernel.ceil(input)
-  def ceil(input), do: input
+  def ceil(_), do: nil
 
   @doc """
   Converts a `DateTime`/`NaiveDateTime` struct into another date format.
@@ -168,15 +168,15 @@ defmodule Solid.Filter do
     try do
       Calendar.strftime(date, format)
     rescue
-      KeyError -> ""
-      ArgumentError -> ""
+      KeyError -> nil
+      ArgumentError -> nil
     end
   end
 
   def date(date, format) when is_integer(date) do
     case DateTime.from_unix(date) do
       {:ok, datetime} -> date(datetime, format)
-      _ -> ""
+      _ -> nil
     end
   end
 
@@ -191,7 +191,7 @@ defmodule Solid.Filter do
     end
   end
 
-  def date(_, _), do: ""
+  def date(_, _), do: nil
 
   @doc """
   Allows you to specify a fallback in case a value doesn’t exist.
@@ -336,7 +336,9 @@ defmodule Solid.Filter do
   "a-b-c"
   """
   @spec join(list, String.t()) :: String.t()
-  def join(input, glue \\ " ") when is_list(input), do: Enum.join(input, glue)
+  def join(input, glue \\ " ")
+  def join(input, glue) when is_list(input), do: Enum.join(input, glue)
+  def join(_, _), do: nil
 
   @doc """
   Returns the last item of an array.
