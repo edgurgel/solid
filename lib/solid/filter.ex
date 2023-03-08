@@ -497,9 +497,7 @@ defmodule Solid.Filter do
   """
   @spec remove_first(String.t(), String.t()) :: String.t()
   def remove_first(input, string) do
-    input = Kernel.to_string(input)
-    string = Kernel.to_string(string)
-    String.replace(input, string, "", global: false)
+    replace_first(input, string, "")
   end
 
   @doc """
@@ -538,7 +536,7 @@ defmodule Solid.Filter do
     input = Kernel.to_string(input)
     string = Kernel.to_string(string)
     replacement = Kernel.to_string(replacement)
-    String.replace(input, string, replacement, global: false)
+    String.replace_prefix(input, string, replacement)
   end
 
   @doc """
@@ -550,30 +548,9 @@ defmodule Solid.Filter do
   @spec replace_last(String.t(), String.t(), String.t()) :: String.t()
   def replace_last(input, string, replacement \\ "") do
     input = Kernel.to_string(input)
-
-    if index = last_index(input, string) do
-      {prefix, suffix} = String.split_at(input, index)
-      prefix <> replace_first(suffix, string, replacement)
-    else
-      input
-    end
-  end
-
-  defp last_index(input, string) do
-    do_last_index(input, string, 0, nil)
-  end
-
-  defp do_last_index("", _string, _index, last), do: last
-
-  defp do_last_index(input, string, index, last) do
-    new_last =
-      if String.starts_with?(input, string) do
-        index
-      else
-        last
-      end
-
-    do_last_index(String.slice(input, 1..-1), string, index + 1, new_last)
+    string = Kernel.to_string(string)
+    replacement = Kernel.to_string(replacement)
+    String.replace_suffix(input, string, replacement)
   end
 
   @doc """
