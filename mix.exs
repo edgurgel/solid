@@ -10,6 +10,7 @@ defmodule Solid.Mixfile do
       version: @version,
       elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
+      consolidate_protocols: Mix.env() != :test,
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       name: "solid",
@@ -19,7 +20,10 @@ defmodule Solid.Mixfile do
     ]
   end
 
-  def application, do: []
+  def application,
+    do: [
+      extra_applications: [:crypto]
+    ]
 
   defp deps do
     [
