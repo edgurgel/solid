@@ -117,16 +117,86 @@ If there are any missing variables/filters `Solid.render/3` returns `{:error, er
 `Solid.render!/3` raises if `strict_variables: true` is passed and there are missing variables.
 `Solid.render!/3` raises if `strict_filters: true` is passed and there are missing filters.
 
+## Caching
+
+In order to cache `render`-ed templates, you can write your own cache adapter. It should implement behaviour `Solid.Caching`. By default it uses `Solid.Caching.NoCache` trivial adapter.
+
+If you want to use for example [Cachex](https://github.com/whitfin/cachex) for that such implemention would look like:
+
+```elixir
+defmodule CachexCache do
+  @behaviour Solid.Caching
+
+  @impl true
+  def get(key) do
+    case Cachex.get(:your_cache_name, key) do
+      {_, nil} -> {:error, :not_found}
+      {:ok, value} -> {:ok, value}
+      {:error, error_msg} -> {:error, error_msg}
+    end
+  end
+
+  @impl true
+  def put(key, value) do
+    case Cachex.put(:my_cache, key, value) do
+      {:ok, true} -> :ok
+      {:error, error_msg} -> {:error, error_msg}
+    end
+  end
+end
+
+```
+
+And then pass it as an option to render `cache_module: CachexCache`.
+
+## Using structs in context
+
+In order to pass structs to context you need to implement protocol `Solid.Matcher` for that. That protocol consist of one function `def match(data, keys)`. First argument is struct being provided and second is list of string, which are keys passed after `.` to the struct.
+
+For example:
+
+```elixir
+defmodule UserProfile do
+  defstruct [:full_name]
+
+  defimpl Solid.Matcher do
+    def match(user_profile, ["full_name"]), do: {:ok, user_profile.full_name}
+  end
+end
+
+defmodule User do
+  defstruct [:email]
+
+  def load_profile(%User{} = _user) do
+    # implementation omitted
+    %UserProfile{full_name: "John Doe"}
+  end
+
+  defimpl Solid.Matcher do
+    def match(user, ["email"]), do: {:ok, user.email}
+    def match(user, ["profile" | keys]), do: user |> User.load_profile() |> @protocol.match(keys)
+  end
+end
+
+template = ~s({{ user.email}}: {{ user.profile.full_name }})
+context = %{
+  "user" => %User{email: "test@example.com"}
+}
+
+template |> Solid.parse!() |> Solid.render!(context) |> to_string()
+# => test@example.com: John Doe
+```
+
 ## Contributing
 
 When adding new functionality or fixing bugs consider adding a new test case here inside `test/cases`. These cases are tested against the Ruby gem so we can try to stay as close as possible to the original implementation.
 
 ## TODO
 
-* [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
-* [x] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
-* [x] Support to custom filters [#11](https://github.com/edgurgel/solid/issues/11)
-* [x] Tags (if, case, unless, etc)
+- [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
+- [x] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
+- [x] Support to custom filters [#11](https://github.com/edgurgel/solid/issues/11)
+- [x] Tags (if, case, unless, etc)
   - [x] `for`
     - [x] `else`
     - [x] `break`
@@ -141,9 +211,8 @@ When adding new functionality or fixing bugs consider adding a new test case her
   - [x] `capture` [#19](https://github.com/edgurgel/solid/issues/19)
   - [x] `increment` [#16](https://github.com/edgurgel/solid/issues/16)
   - [x] `decrement` [#16](https://github.com/edgurgel/solid/issues/16)
-* [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
-* [x] Whitespace control [#10](https://github.com/edgurgel/solid/issues/10)
-
+- [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
+- [x] Whitespace control [#10](https://github.com/edgurgel/solid/issues/10)
 
 ## Copyright and License
 
