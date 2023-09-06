@@ -82,46 +82,14 @@ defmodule Solid.Context do
   end
 
   defp get_from_scope(context, :vars, key) do
-    do_get_in(context.vars, key)
+    Solid.Matcher.match(context.vars, key)
   end
 
   defp get_from_scope(context, :counter_vars, key) do
-    do_get_in(context.counter_vars, key)
+    Solid.Matcher.match(context.counter_vars, key)
   end
 
   defp get_from_scope(context, :iteration_vars, key) do
-    do_get_in(context.iteration_vars, key)
+    Solid.Matcher.match(context.iteration_vars, key)
   end
-
-  defp do_get_in(nil, []), do: {:ok, nil}
-  defp do_get_in(nil, _), do: {:error, :not_found}
-  defp do_get_in(data, []), do: {:ok, data}
-
-  defp do_get_in(data, ["size"]) when is_list(data) do
-    {:ok, Enum.count(data)}
-  end
-
-  defp do_get_in(data, ["size"]) when is_map(data) do
-    {:ok, Map.get(data, "size", Enum.count(data))}
-  end
-
-  defp do_get_in(data, ["size"]) when is_binary(data) do
-    {:ok, String.length(data)}
-  end
-
-  defp do_get_in(data, [key | keys]) when is_map(data) do
-    case Map.fetch(data, key) do
-      {:ok, value} -> do_get_in(value, keys)
-      _ -> {:error, :not_found}
-    end
-  end
-
-  defp do_get_in(data, [key | keys]) when is_integer(key) and is_list(data) do
-    case Enum.fetch(data, key) do
-      {:ok, value} -> do_get_in(value, keys)
-      _ -> {:error, :not_found}
-    end
-  end
-
-  defp do_get_in(_, _), do: {:error, :not_found}
 end
