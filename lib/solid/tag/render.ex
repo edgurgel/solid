@@ -56,16 +56,16 @@ defmodule Solid.Tag.Render do
 
     cache_key = :md5 |> :crypto.hash(template_str) |> Base.encode16(case: :lower)
 
-    template =
+    result =
       case apply(cache_module, :get, [cache_key]) do
         {:ok, cached_template} ->
-          cached_template
+          {:ok, cached_template}
 
         {:error, :not_found} ->
           parse_and_cache_partial(template_str, options, cache_key, cache_module)
       end
 
-    case template do
+    case result do
       {:ok, template} ->
         case Solid.render(template, binding_vars, options) do
           {:ok, rendered_text} ->
@@ -81,14 +81,9 @@ defmodule Solid.Tag.Render do
   end
 
   defp parse_and_cache_partial(template_str, options, cache_key, cache_module) do
-    case Solid.parse(template_str, options) do
-      {:ok, template} = v ->
-        apply(cache_module, :put, [cache_key, template])
-
-        v
-
-      {:error, _exception} = v ->
-        v
+    with {:ok, template} <- Solid.parse(template_str, options) do
+      apply(cache_module, :put, [cache_key, template])
+      {:ok, template}
     end
   end
 end

@@ -25,7 +25,10 @@ defmodule Solid.Tag.RenderTest do
 
     @impl true
     def get(cache_key) do
-      Agent.get(__MODULE__, &Map.get(&1, cache_key, {:error, :not_found}))
+      case Agent.get(__MODULE__, &Map.get(&1, cache_key, {:error, :not_found})) do
+        {:error, :not_found} -> {:error, :not_found}
+        value -> {:ok, value}
+      end
     end
 
     def get_all() do
@@ -66,6 +69,12 @@ defmodule Solid.Tag.RenderTest do
 
     assert %{calculated_cache_key => %Solid.Template{parsed_template: [text: ["hello there"]]}} ==
              TestCache.get_all()
+
+    assert {[text: [["hello there"]]], %Context{}} ==
+             Render.render(parsed, %Context{},
+               cache_module: TestCache,
+               file_system: {Test.SolidFileSystem, nil}
+             )
   end
 
   test "must correctly return error from parsing" do
