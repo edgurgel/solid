@@ -8,14 +8,14 @@ defmodule Solid.Filter do
   @doc """
   Apply `filter` if it exists. Otherwise return the first input.
 
-  iex> Solid.Filter.apply("upcase", ["ac"], [])
+  iex> Solid.Filter.apply("upcase", "ac", [], [])
   {:ok, "AC"}
-  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3], [])
+  iex> Solid.Filter.apply("no_filter_here", 1, [2, 3], [])
   {:ok, 1}
-  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3], [strict_filters: true])
+  iex> Solid.Filter.apply("no_filter_here", 1, [2, 3], [strict_filters: true])
   {:error, %Solid.UndefinedFilterError{filter: "no_filter_here"}, 1}
   """
-  def apply(filter, args, opts) do
+  def apply(filter, input, args, opts) do
     custom_module =
       opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
 

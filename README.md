@@ -103,9 +103,27 @@ opts = [custom_filters: MyCustomFilters, host: "http://example.com"]
 
 "{{ file_path | asset_url }}"
 |> Solid.parse!()
-|> Solid.render(%{ "file_path" => "/styles/app.css"}, opts)
+|> Solid.render!(%{ "file_path" => "/styles/app.css"}, opts)
 |> IO.puts()
 # http://example.com/styles/app.css
+```
+
+If you also want to pass arguments to your custom filter, they are provided as a map in the second argument to the filter function:
+
+```
+defmodule MyCustomFilters do
+  def asset_url(path, %{"version" => version, "case" => case} = _args, opts) do
+    opts[:host] <> path <> "?v=" <> to_string(version) <> "&case=" <> case
+  end
+end
+
+opts = [custom_filters: MyCustomFilters, host: "http://example.com"]
+
+"{{ file_path | asset_url: version: 1, case: 'closed' }}"
+|> Solid.parse!()
+|> Solid.render!(%{ "file_path" => "/styles/app.css"}, opts)
+|> IO.puts()
+# http://example.com/styles/app.css?v=1&case=closed
 ```
 
 ## Strict rendering
