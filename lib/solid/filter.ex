@@ -8,39 +8,48 @@ defmodule Solid.Filter do
   @doc """
   Apply `filter` if it exists. Otherwise return the first input.
 
-  iex> Solid.Filter.apply("upcase", ["ac"], [])
+  iex> Solid.Filter.apply("upcase", "ac", [], [])
   {:ok, "AC"}
-  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3], [])
+  iex> Solid.Filter.apply("no_filter_here", 1, [2, 3], [])
   {:ok, 1}
-  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3], [strict_filters: true])
+  iex> Solid.Filter.apply("no_filter_here", 1, [2, 3], [strict_filters: true])
   {:error, %Solid.UndefinedFilterError{filter: "no_filter_here"}, 1}
   """
-  def apply(filter, args, opts) do
+  def apply(filter, input, args, opts) do
     custom_module =
       opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
 
     strict_variables = Keyword.get(opts, :strict_filters, false)
 
-    args_with_opts = args ++ [opts]
+    input = unwrap_input(input)
 
     cond do
-      filter_exists?({custom_module, filter, Enum.count(args_with_opts)}) ->
-        {:ok, apply_filter({custom_module, filter, args_with_opts})}
+      filter_exists?({custom_module, filter, 2 + Enum.count(args)}) ->
+        {:ok, apply_filter({custom_module, filter, [input] ++ args ++ [opts]})}
 
-      filter_exists?({custom_module, filter, Enum.count(args)}) ->
-        {:ok, apply_filter({custom_module, filter, args})}
+      filter_exists?({custom_module, filter, 1 + Enum.count(args)}) ->
+        {:ok, apply_filter({custom_module, filter, [input] ++ args})}
 
-      filter_exists?({__MODULE__, filter, Enum.count(args)}) ->
-        {:ok, apply_filter({__MODULE__, filter, args})}
+      filter_exists?({custom_module, filter, 1}) ->
+        {:ok, apply_filter({custom_module, filter, [input]})}
+
+      filter_exists?({__MODULE__, filter, 1 + Enum.count(args)}) ->
+        {:ok, apply_filter({__MODULE__, filter, [input] ++ args})}
+
+      filter_exists?({__MODULE__, filter, 1}) ->
+        {:ok, apply_filter({__MODULE__, filter, [input]})}
 
       true ->
         if strict_variables do
-          {:error, %Solid.UndefinedFilterError{filter: filter}, List.first(args)}
+          {:error, %Solid.UndefinedFilterError{filter: filter}, input}
         else
-          {:ok, List.first(args)}
+          {:ok, input}
         end
     end
   end
+
+  defp unwrap_input([input]), do: input
+  defp unwrap_input(input), do: input
 
   defp apply_filter({m, f, a}) do
     Kernel.apply(m, String.to_existing_atom(f), a)
@@ -49,6 +58,7 @@ defmodule Solid.Filter do
   defp filter_exists?({module, function, arity}) do
     try do
       function = String.to_existing_atom(function)
+      Code.ensure_loaded(module)
       function_exported?(module, function, arity)
     rescue
       ArgumentError -> false

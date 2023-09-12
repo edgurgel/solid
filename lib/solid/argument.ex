@@ -48,7 +48,7 @@ defmodule Solid.Argument do
 
     {result, context} =
       filter
-      |> Filter.apply([input | values], opts)
+      |> Filter.apply(input, values, opts)
       |> case do
         {:error, exception, value} ->
           {value, Context.put_errors(context, exception)}
@@ -70,7 +70,7 @@ defmodule Solid.Argument do
 
     {result, context} =
       filter
-      |> Filter.apply([input | Enum.reverse(values)], opts)
+      |> Filter.apply(input, Enum.reverse(values), opts)
       |> case do
         {:error, exception, value} ->
           {value, Context.put_errors(context, exception)}
