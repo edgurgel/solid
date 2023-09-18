@@ -179,11 +179,15 @@ defmodule Solid.Filter do
 
   iex> Solid.Filter.default([], 456)
   456
+
+  iex> Solid.Filter.default("", 456)
+  456
   """
   @spec default(any, any) :: any
   def default(nil, value), do: value
   def default(false, value), do: value
   def default([], value), do: value
+  def default("", value), do: value
   def default(input, _), do: input
 
   @doc """
