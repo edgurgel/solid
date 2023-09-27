@@ -58,7 +58,6 @@ defmodule Solid.Filter do
   defp filter_exists?({module, function, arity}) do
     try do
       function = String.to_existing_atom(function)
-      Code.ensure_loaded(module)
       function_exported?(module, function, arity)
     rescue
       ArgumentError -> false
