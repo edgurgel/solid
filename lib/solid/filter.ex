@@ -121,11 +121,10 @@ defmodule Solid.Filter do
   @spec ceil(number | String.t()) :: number
   def ceil(input) when is_binary(input) do
     {float, _} = Float.parse(input)
-    ceil(float)
+    Kernel.ceil(float)
   end
 
-  def ceil(input) when is_integer(input), do: input
-  def ceil(input), do: Float.ceil(input) |> trunc
+  def ceil(input) when is_number(input), do: Kernel.ceil(input)
 
   @doc """
   Converts a `DateTime`/`NaiveDateTime` struct into another date format.
@@ -267,10 +266,10 @@ defmodule Solid.Filter do
   @spec floor(number | String.t()) :: integer
   def floor(input) when is_binary(input) do
     {float, _} = Float.parse(input)
-    floor(float)
+    Kernel.floor(float)
   end
 
-  def floor(input), do: Float.floor(input) |> trunc
+  def floor(input) when is_number(input), do: Kernel.floor(input)
 
   @doc """
   Removes all occurrences of nil from a list
