@@ -20,39 +20,25 @@ defmodule Solid.Filter do
       opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
 
     strict_variables = Keyword.get(opts, :strict_filters, false)
-
     args_with_opts = args ++ [opts]
 
-    cond do
-      filter_exists?({custom_module, filter, Enum.count(args_with_opts)}) ->
-        {:ok, apply_filter({custom_module, filter, args_with_opts})}
-
-      filter_exists?({custom_module, filter, Enum.count(args)}) ->
-        {:ok, apply_filter({custom_module, filter, args})}
-
-      filter_exists?({__MODULE__, filter, Enum.count(args)}) ->
-        {:ok, apply_filter({__MODULE__, filter, args})}
-
-      true ->
-        if strict_variables do
-          {:error, %Solid.UndefinedFilterError{filter: filter}, List.first(args)}
-        else
-          {:ok, List.first(args)}
-        end
+    with :error <- apply_filter(custom_module, filter, args_with_opts),
+         :error <- apply_filter(custom_module, filter, args),
+         :error <- apply_filter(__MODULE__, filter, args) do
+      if strict_variables do
+        {:error, %Solid.UndefinedFilterError{filter: filter}, List.first(args)}
+      else
+        {:ok, List.first(args)}
+      end
     end
   end
 
-  defp apply_filter({m, f, a}) do
-    Kernel.apply(m, String.to_existing_atom(f), a)
-  end
-
-  defp filter_exists?({module, function, arity}) do
-    try do
-      function = String.to_existing_atom(function)
-      function_exported?(module, function, arity)
-    rescue
-      ArgumentError -> false
-    end
+  defp apply_filter(mod, func, args) do
+    func = String.to_existing_atom(func)
+    {:ok, Kernel.apply(mod, func, args)}
+  rescue
+    # Unknown function name atom or unknown function -> fallback
+    _ in [ArgumentError, UndefinedFunctionError] -> :error
   end
 
   @doc """
