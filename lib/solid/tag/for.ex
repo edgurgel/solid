@@ -66,10 +66,9 @@ defmodule Solid.Tag.For do
         context,
         options
       ) do
-    enumerable =
-      enumerable
-      |> enumerable(context)
-      |> apply_parameters(parameters)
+    {:ok, enumerable, context} = enumerable(enumerable, context)
+
+    enumerable = apply_parameters(enumerable, parameters)
 
     do_for(enumerable_key, enumerable, exp, context, options)
   end
@@ -97,11 +96,11 @@ defmodule Solid.Tag.For do
           acc_context = restore_initial_forloop_value(acc_context, acc_context_initial)
           {[result | acc_result], acc_context}
         catch
-          {:break_exp, partial_result, context} ->
-            throw({:result, [partial_result | acc_result], context})
+          {:break_exp, result, context} ->
+            throw({:result, [result | acc_result], context})
 
-          {:continue_exp, partial_result, context} ->
-            {[partial_result | acc_result], context}
+          {:continue_exp, result, context} ->
+            {[result | acc_result], context}
         end
       end)
 
@@ -152,12 +151,15 @@ defmodule Solid.Tag.For do
   end
 
   defp enumerable([range: [first: first, last: last]], context) do
-    first = integer_or_field(first, context)
-    last = integer_or_field(last, context)
-    first..last
+    {:ok, first, context} = integer_or_field(first, context)
+    {:ok, last, context} = integer_or_field(last, context)
+    {:ok, first..last, context}
   end
 
-  defp enumerable(field, context), do: Solid.Argument.get(field, context) || []
+  defp enumerable(field, context) do
+    {:ok, value, context} = Solid.Argument.get(field, context)
+    {:ok, value || [], context}
+  end
 
   defp apply_parameters(enumerable, parameters) do
     enumerable
@@ -184,6 +186,6 @@ defmodule Solid.Tag.For do
 
   defp reversed(enumerable, _), do: enumerable
 
-  defp integer_or_field(value, _context) when is_integer(value), do: value
+  defp integer_or_field(value, context) when is_integer(value), do: {:ok, value, context}
   defp integer_or_field(field, context), do: Solid.Argument.get([field], context)
 end

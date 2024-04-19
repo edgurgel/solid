@@ -4,44 +4,39 @@ defmodule Solid.Argument do
   a value (String, Integer, etc)
   """
 
-  alias Solid.{Context, Filter}
+  alias Solid.{Context, Filter, UndefinedVariableError}
 
-  @doc """
-  iex> Solid.Argument.get([field: ["key"]], %Solid.Context{vars: %{"key" => 123}})
-  123
-  iex> Solid.Argument.get([field: ["key1", "key2"]], %Solid.Context{vars: %{"key1" => %{"key2" => 123}}})
-  123
-  iex> Solid.Argument.get([value: "value"], %Solid.Context{})
-  "value"
-  iex> Solid.Argument.get([field: ["key", 1, 1]], %Solid.Context{vars: %{"key" => [1, [1,2,3], 3]}})
-  2
-  iex> Solid.Argument.get([field: ["key", 1]], %Solid.Context{vars: %{"key" => "a string"}})
-  nil
-  iex> Solid.Argument.get([field: ["key", 1, "foo"]], %Solid.Context{vars: %{"key" => [%{"foo" => "bar1"}, %{"foo" => "bar2"}]}})
-  "bar2"
-  iex> Solid.Argument.get([field: ["value"]], %Solid.Context{vars: %{"value" => nil}})
-  nil
-  iex> Solid.Argument.get([field: ["value"]], %Solid.Context{vars: %{"value" => false}})
-  false
-  iex> Solid.Argument.get([field: ["value"]], %Solid.Context{vars: %{"value" => true}})
-  true
-  """
-  @spec get([field: [String.t() | integer]] | [value: term], Context.t(), Keyword.t()) :: term
+  @spec get([field: [String.t() | integer]] | [value: term], Context.t(), Keyword.t()) ::
+          {:ok, term, Context.t()}
   def get(arg, context, opts \\ []) do
     scopes = Keyword.get(opts, :scopes, [:iteration_vars, :vars, :counter_vars])
     {filters, opts} = Keyword.pop(opts, :filters, [])
+    strict_variables = Keyword.get(opts, :strict_variables, false)
 
-    arg
-    |> do_get(context, scopes)
-    |> apply_filters(filters, context, opts)
+    case do_get(arg, context, scopes) do
+      {:ok, value} ->
+        {value, context} = apply_filters(value, filters, context, opts)
+        {:ok, value, context}
+
+      {:error, {:not_found, key}} ->
+        context =
+          if strict_variables do
+            Context.put_errors(context, %UndefinedVariableError{variable: key})
+          else
+            context
+          end
+
+        {value, context} = apply_filters(nil, filters, context, opts)
+        {:ok, value, context}
+    end
   end
 
-  defp do_get([value: val], _hash, _scopes), do: val
+  defp do_get([value: val], _hash, _scopes), do: {:ok, val}
 
   defp do_get([field: keys], context, scopes), do: Context.get_in(context, keys, scopes)
 
-  defp apply_filters(input, nil, _context, _opts), do: input
-  defp apply_filters(input, [], _context, _opts), do: input
+  defp apply_filters(input, nil, context, _opts), do: {input, context}
+  defp apply_filters(input, [], context, _opts), do: {input, context}
 
   defp apply_filters(
          input,
@@ -49,26 +44,54 @@ defmodule Solid.Argument do
          context,
          opts
        ) do
-    values = parse_named_arguments(args, context, opts)
+    {:ok, values, context} = parse_named_arguments(args, context, opts)
 
-    filter
-    |> Filter.apply([input | values], opts)
-    |> apply_filters(filters, context, opts)
+    {result, context} =
+      filter
+      |> Filter.apply([input | values], opts)
+      |> case do
+        {:error, exception, value} ->
+          {value, Context.put_errors(context, exception)}
+
+        {:ok, value} ->
+          {value, context}
+      end
+
+    apply_filters(result, filters, context, opts)
   end
 
   defp apply_filters(input, [{:filter, [filter, {:arguments, args}]} | filters], context, opts) do
-    values = for arg <- args, do: get([arg], context)
+    {values, context} =
+      Enum.reduce(args, {[], context}, fn arg, {values, context} ->
+        {:ok, value, context} = get([arg], context, opts)
 
-    filter
-    |> Filter.apply([input | values], opts)
-    |> apply_filters(filters, context, opts)
+        {[value | values], context}
+      end)
+
+    {result, context} =
+      filter
+      |> Filter.apply([input | Enum.reverse(values)], opts)
+      |> case do
+        {:error, exception, value} ->
+          {value, Context.put_errors(context, exception)}
+
+        {:ok, value} ->
+          {value, context}
+      end
+
+    apply_filters(result, filters, context, opts)
   end
 
-  @spec parse_named_arguments(list, Context.t()) :: list
+  @spec parse_named_arguments(list, Context.t(), Keyword.t()) :: {:ok, list, Context.t()}
   def parse_named_arguments(ast, context, opts \\ []) do
-    ast
-    |> Enum.chunk_every(2)
-    |> Map.new(fn [key, value_or_field] -> {key, get([value_or_field], context, opts)} end)
-    |> List.wrap()
+    {named_arguments, context} =
+      ast
+      |> Enum.chunk_every(2)
+      |> Enum.reduce({%{}, context}, fn [key, value_or_field], {named_arguments, context} ->
+        {:ok, value, context} = get([value_or_field], context, opts)
+        {Map.put(named_arguments, key, value), context}
+      end)
+
+    {:ok, List.wrap(named_arguments), context}
   end
 end

@@ -4,14 +4,16 @@ defmodule Solid.Object do
   """
   alias Solid.{Argument, Context}
 
-  @spec render(Keyword.t(), Context.t(), Keyword.t()) :: String.t()
-  def render([], _context, _options), do: []
+  @spec render(Keyword.t(), Context.t(), Keyword.t()) :: {:ok, String.t(), Context.t()}
+  def render([], context, _options), do: {:ok, [], context}
 
   def render(object, context, options) when is_list(object) do
     argument = object[:argument]
-    value = Argument.get(argument, context, [filters: object[:filters]] ++ options)
 
-    stringify!(value)
+    {:ok, value, context} =
+      Argument.get(argument, context, [filters: object[:filters]] ++ options)
+
+    {:ok, stringify!(value), context}
   end
 
   defp stringify!(value) when is_list(value) do

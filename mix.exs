@@ -2,7 +2,7 @@ defmodule Solid.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/edgurgel/solid"
-  @version "0.12.0"
+  @version "0.15.2"
 
   def project do
     [
@@ -10,24 +10,28 @@ defmodule Solid.Mixfile do
       version: @version,
       elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
+      consolidate_protocols: Mix.env() != :test,
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       name: "solid",
       package: package(),
       docs: docs(),
-      deps: deps(),
-      dialyzer: [ignore_warnings: "dialyzer.ignore-warnings"]
+      deps: deps()
     ]
   end
 
-  def application, do: []
+  def application,
+    do: [
+      extra_applications: [:crypto]
+    ]
 
   defp deps do
     [
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.0", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
   end
 

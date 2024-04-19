@@ -1,6 +1,7 @@
 defmodule Solid.Integration.TagsTest do
   use ExUnit.Case, async: true
   import Solid.Helpers
+  alias Solid.UndefinedVariableError
 
   describe "if" do
     test "true expression" do
@@ -9,6 +10,13 @@ defmodule Solid.Integration.TagsTest do
 
     test "false expression" do
       assert render("{% if 1 != 1 %}True{% endif %}False?", %{"key" => 123}) == "False?"
+    end
+
+    test "if expression with strict_variables" do
+      assert render("{% if other_key == nil %}True{% endif %} is True", %{"key" => 123},
+               strict_variables: true
+             ) ==
+               {:error, [%UndefinedVariableError{variable: ["other_key"]}], "True is True"}
     end
 
     test "true" do
@@ -29,6 +37,15 @@ defmodule Solid.Integration.TagsTest do
              }) == "True is True"
     end
 
+    test "nested if with strict_variables" do
+      assert render(
+               "{% if 1 == 1 %}{% if other_key != 2 %}True{% endif %}{% endif %} is True",
+               %{"key" => 123},
+               strict_variables: true
+             ) ==
+               {:error, [%UndefinedVariableError{variable: ["other_key"]}], "True is True"}
+    end
+
     test "with object" do
       assert render("{% if 1 != 2 %}{{ key }}{% endif %}", %{"key" => 123}) == "123"
     end
@@ -46,6 +63,12 @@ defmodule Solid.Integration.TagsTest do
     test "elsif" do
       assert render("{% if 1 != 1 %}if{% elsif 1 == 1 %}elsif{% endif %}") == "elsif"
     end
+
+    test "elsif strict_variables" do
+      assert render("{% if 1 != 1 %}if{% elsif other_key != 1 %}elsif{% endif %}", %{},
+               strict_variables: true
+             ) == {:error, [%UndefinedVariableError{variable: ["other_key"]}], "elsif"}
+    end
   end
 
   describe "unless" do
@@ -56,6 +79,13 @@ defmodule Solid.Integration.TagsTest do
     test "false expression" do
       assert render("{% unless 1 != 1 %}True{% endunless %} is True", %{"key" => 123}) ==
                "True is True"
+    end
+
+    test "unless expression with strict_variables" do
+      assert render("{% unless other_key != nil %}True{% endunless %} is True", %{"key" => 123},
+               strict_variables: true
+             ) ==
+               {:error, [%UndefinedVariableError{variable: ["other_key"]}], "True is True"}
     end
 
     test "true" do
@@ -74,12 +104,29 @@ defmodule Solid.Integration.TagsTest do
              ) == "True is True"
     end
 
+    test "nested unless with strict_variables" do
+      assert render(
+               "{% unless 1 != 1 %}{% unless other_key == 2 %}True{% endunless %}{% endunless %} is True",
+               %{"key" => 123},
+               strict_variables: true
+             ) ==
+               {:error, [%UndefinedVariableError{variable: ["other_key"]}], "True is True"}
+    end
+
     test "with object" do
       assert render("{% unless 1 == 2 %}{{ key }}{% endunless %}", %{"key" => 123}) == "123"
     end
 
     test "elsif" do
       assert render("{% unless 1 == 1 %}unless{% elsif 1 == 1 %}elsif{% endunless %}") == "elsif"
+    end
+
+    test "elsif strict_variables" do
+      assert render(
+               "{% unless 1 == 1 %}unless{% elsif other_key != 1 %}elsif{% endunless %}",
+               %{},
+               strict_variables: true
+             ) == {:error, [%UndefinedVariableError{variable: ["other_key"]}], "elsif"}
     end
   end
 
@@ -119,6 +166,34 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{"handle" => "cake"}) == "\nThis is a cake\n\n"
+    end
+
+    test "no matching when strict_variables" do
+      text = """
+      {% case handle %}
+      {% when 'cake' %}
+      This is a cake
+      {% endcase %}
+      """
+
+      assert {:error, errors, result} = render(text, %{}, strict_variables: true)
+      assert errors == [%UndefinedVariableError{variable: ["handle"]}]
+      assert result == "\n"
+    end
+
+    test "no matching when with else strict_variables" do
+      text = """
+      {% case handle %}
+      {% when 'cake' %}
+      This is a cake
+      {% else %}
+      Else
+      {% endcase %}
+      """
+
+      assert {:error, errors, result} = render(text, %{}, strict_variables: true)
+      assert errors == [%UndefinedVariableError{variable: ["handle"]}]
+      assert result == "\nElse\n\n"
     end
   end
 
@@ -189,6 +264,24 @@ defmodule Solid.Integration.TagsTest do
 
       assert render(text, %{}) == "test \nelse\n\n"
     end
+
+    test "for strict_variables" do
+      text = """
+      {% for value in values %}
+        Got: {{ value }}{{variable1}}
+      {% endfor %}
+      """
+
+      assert {:error, errors, result} =
+               render(text, %{"values" => [1, 2]}, strict_variables: true)
+
+      assert result == "\n  Got: 1\n\n  Got: 2\n\n"
+
+      assert errors == [
+               %UndefinedVariableError{variable: ["variable1"]},
+               %UndefinedVariableError{variable: ["variable1"]}
+             ]
+    end
   end
 
   describe "assign" do
@@ -212,6 +305,17 @@ defmodule Solid.Integration.TagsTest do
              Variable: 123
              """
     end
+
+    test "assign strict_variables" do
+      text = """
+      {% assign variable = missing %}
+      Variable: {{ variable }}
+      """
+
+      assert {:error, errors, result} = render(text, %{}, strict_variables: true)
+      assert errors == [%UndefinedVariableError{variable: ["missing"]}]
+      assert result == "\nVariable: \n"
+    end
   end
 
   describe "increment" do
@@ -222,6 +326,21 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{}) == """
+             0
+             counter value: 1
+             """
+    end
+
+    test "increment strict_variables" do
+      text = """
+      {% increment counter %}
+      counter value: {{ counter }}
+      """
+
+      assert {:error, errors, result} = render(text, %{}, strict_variables: true)
+      assert errors == [%UndefinedVariableError{variable: ["counter"]}]
+
+      assert result == """
              0
              counter value: 1
              """
@@ -250,6 +369,21 @@ defmodule Solid.Integration.TagsTest do
       """
 
       assert render(text, %{}) == """
+             -1
+             counter value: -2
+             """
+    end
+
+    test "increment strict_variables" do
+      text = """
+      {% decrement counter %}
+      counter value: {{ counter }}
+      """
+
+      assert {:error, errors, result} = render(text, %{}, strict_variables: true)
+      assert errors == [%UndefinedVariableError{variable: ["counter"]}]
+
+      assert result == """
              -1
              counter value: -2
              """
@@ -290,6 +424,33 @@ defmodule Solid.Integration.TagsTest do
 
              """
     end
+
+    test "capture strict_variables" do
+      text = """
+      {% capture value %}
+      the text is here{{ variable1 }}
+      {% endcapture %}
+      Outside of capture
+
+      {{ value }}{{ variable2 }}
+      """
+
+      assert {:error, errors, result} = render(text, %{}, strict_variables: true)
+
+      assert errors == [
+               %UndefinedVariableError{variable: ["variable1"]},
+               %UndefinedVariableError{variable: ["variable2"]}
+             ]
+
+      assert assert result == """
+
+                    Outside of capture
+
+
+                    the text is here
+
+                    """
+    end
   end
 
   describe "break" do
@@ -302,6 +463,58 @@ defmodule Solid.Integration.TagsTest do
 
       assert render(text, %{}) == """
              pre-break
+             """
+    end
+
+    test "break strict_variables" do
+      text = """
+      pre-break
+      {{ variable1 }}
+      {% break %}
+      {{ variable2 }}
+      post-break
+      """
+
+      assert {:error, errors, result} = render(text, %{}, strict_variables: true)
+
+      assert errors == [%UndefinedVariableError{variable: ["variable1"]}]
+
+      assert result == """
+             pre-break
+
+             """
+    end
+  end
+
+  describe "continue" do
+    test "continue" do
+      text = """
+      pre-continue
+      {% continue %}
+      post-continue
+      """
+
+      assert render(text, %{}) == """
+             pre-continue
+             """
+    end
+
+    test "continue strict_variables" do
+      text = """
+      pre-continue
+      {{ variable1 }}
+      {% continue %}
+      {{ variable2 }}
+      post-continue
+      """
+
+      assert {:error, errors, result} = render(text, %{}, strict_variables: true)
+
+      assert errors == [%UndefinedVariableError{variable: ["variable1"]}]
+
+      assert result == """
+             pre-continue
+
              """
     end
   end
@@ -351,6 +564,75 @@ defmodule Solid.Integration.TagsTest do
                """
                barbaz-show-me
                """
+    end
+  end
+
+  describe "excluded standard tag" do
+    test "a standard tag can be removed from the parser" do
+      text = """
+      test: {% render "nope" %}
+      """
+
+      assert {:ok, _} = Solid.parse(text)
+
+      assert {:error, %Solid.TemplateError{line: {1, 0}}} =
+               Solid.parse(text, parser: NoRenderParser)
+    end
+  end
+
+  defmodule FakeFileSystem do
+    def read_template_file("file1", _opts) do
+      "{{ name }}{{ variable1 }}{{ variable2 }}"
+    end
+  end
+
+  describe "render" do
+    test "variable scope is respected" do
+      text = """
+      template:
+      {% render "file1", name: "abc" %}
+      {{ variable1 }}
+      {{ variable2 }}
+      end
+      """
+
+      assert render(text, %{"variable1" => "123"}, file_system: {FakeFileSystem, []}) == """
+             template:
+             abc
+             123
+
+             end
+             """
+    end
+
+    test "strict_variables" do
+      text = """
+      template:
+      {% render "file1", name: "abc" %}
+      {{ variable1 }}
+      {{ variable3 }}
+      end
+      """
+
+      assert {:error, errors, result} =
+               render(text, %{"variable1" => "123"},
+                 file_system: {FakeFileSystem, []},
+                 strict_variables: true
+               )
+
+      assert errors == [
+               %UndefinedVariableError{variable: ["variable1"]},
+               %UndefinedVariableError{variable: ["variable2"]},
+               %UndefinedVariableError{variable: ["variable3"]}
+             ]
+
+      assert result == """
+             template:
+             abc
+             123
+
+             end
+             """
     end
   end
 end

@@ -109,39 +109,51 @@ defmodule Solid.Tag.If do
   end
 
   @impl true
-  def render([{:if_exp, exp} | _] = tag, context, _options) do
-    if eval_expression(exp[:expression], context), do: throw({:result, exp})
-    elsif_exps = tag[:elsif_exps]
+  def render([{:if_exp, exp} | _] = tag, context, options) do
+    {result, context} = eval_expression(exp[:expression], context, options)
+    if result, do: throw({:result, exp, context})
 
-    if elsif_exps do
-      result = Enum.find(elsif_exps, &eval_elsif(&1, context))
-      if result, do: throw({:result, elem(result, 1)})
-    end
+    context = eval_elsif_exps(tag[:elsif_exps], context, options)
 
     else_exp = tag[:else_exp]
-    if else_exp, do: throw({:result, else_exp})
+    if else_exp, do: throw({:result, else_exp, context})
+    {nil, context}
   catch
-    {:result, result} -> result[:result]
+    {:result, result, context} -> {result[:result], context}
   end
 
-  def render([{:unless_exp, exp} | _] = tag, context, _options) do
-    unless eval_expression(exp[:expression], context), do: throw({:result, exp})
-    elsif_exps = tag[:elsif_exps]
+  def render([{:unless_exp, exp} | _] = tag, context, options) do
+    {result, context} = eval_expression(exp[:expression], context, options)
+    unless result, do: throw({:result, exp, context})
 
-    if elsif_exps do
-      result = Enum.find(elsif_exps, &eval_elsif(&1, context))
-      if result, do: throw({:result, elem(result, 1)})
-    end
+    context = eval_elsif_exps(tag[:elsif_exps], context, options)
 
     else_exp = tag[:else_exp]
-    if else_exp, do: throw({:result, else_exp})
+    if else_exp, do: throw({:result, else_exp, context})
+    {nil, context}
   catch
-    {:result, result} -> result[:result]
+    {:result, result, context} -> {result[:result], context}
   end
 
-  defp eval_elsif({:elsif_exp, elsif_exp}, context) do
-    eval_expression(elsif_exp[:expression], context)
+  defp eval_elsif_exps(nil, context, _options), do: context
+
+  defp eval_elsif_exps(elsif_exps, context, options) do
+    {result, context} = eval_elsifs(elsif_exps, context, options)
+    if result, do: throw({:result, elem(result, 1), context})
+    context
   end
 
-  defp eval_expression(exps, context), do: Expression.eval(exps, context)
+  defp eval_elsifs(elsif_exps, context, options) do
+    Enum.reduce_while(elsif_exps, {nil, context}, fn {:elsif_exp, elsif_exp}, {nil, context} ->
+      {result, context} = eval_expression(elsif_exp[:expression], context, options)
+
+      if result do
+        {:halt, {{:elsif_exp, elsif_exp}, context}}
+      else
+        {:cont, {nil, context}}
+      end
+    end)
+  end
+
+  defp eval_expression(exps, context, options), do: Expression.eval(exps, context, options)
 end

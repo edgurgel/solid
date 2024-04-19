@@ -5,7 +5,7 @@ defmodule Solid.Expression do
   Also combine expressions with `and`, `or`
   """
 
-  alias Solid.Argument
+  alias Solid.{Argument, Context}
 
   @type value :: number | iolist | boolean | nil
 
@@ -92,40 +92,45 @@ defmodule Solid.Expression do
   @doc """
   Evaluate a list of expressions combined with `or`, `and`
   """
-  @spec eval(list, map) :: boolean
-  def eval(exps, context) when is_list(exps) do
+  @spec eval(list, Context.t(), Keyword.t()) :: {boolean, Context.t()}
+  def eval(exps, context, opts \\ []) when is_list(exps) do
     exps
     |> Enum.chunk_every(2)
     |> Enum.reverse()
-    |> Enum.reduce(nil, fn
-      [exp, :bool_and], acc ->
-        do_eval(exp, context) and acc
+    |> Enum.reduce({nil, context}, fn
+      [exp, :bool_and], {acc, context} ->
+        {result, context} = do_eval(exp, context, opts)
+        {result and acc, context}
 
-      [exp, :bool_or], acc ->
-        do_eval(exp, context) or acc
+      [exp, :bool_or], {acc, context} ->
+        {result, context} = do_eval(exp, context, opts)
+        {result or acc, context}
 
-      [exp], nil ->
-        do_eval(exp, context)
+      [exp], {nil, context} ->
+        do_eval(exp, context, opts)
     end)
   end
 
-  defp do_eval([arg1: v1, op: [op], arg2: v2], context) do
-    v1 = get_argument(v1, context)
-    v2 = get_argument(v2, context)
-    eval({v1, op, v2})
+  defp do_eval([arg1: v1, op: [op], arg2: v2], context, opts) do
+    {:ok, v1, context} = get_argument(v1, context, opts)
+    {:ok, v2, context} = get_argument(v2, context, opts)
+    {eval({v1, op, v2}), context}
   end
 
-  defp do_eval(value, context), do: eval(get_argument(value, context))
-
-  defp get_argument([argument: argument, filters: filters], context) do
-    Argument.get(argument, context, filters: filters)
+  defp do_eval(value, context, opts) do
+    {:ok, value, context} = get_argument(value, context, opts)
+    {eval(value), context}
   end
 
-  defp get_argument([argument: argument], context) do
-    Argument.get(argument, context)
+  defp get_argument([argument: argument, filters: filters], context, opts) do
+    Argument.get(argument, context, [{:filters, filters} | opts])
   end
 
-  defp get_argument(argument, context) do
-    Argument.get(argument, context)
+  defp get_argument([argument: argument], context, opts) do
+    Argument.get(argument, context, opts)
+  end
+
+  defp get_argument(argument, context, opts) do
+    Argument.get(argument, context, opts)
   end
 end

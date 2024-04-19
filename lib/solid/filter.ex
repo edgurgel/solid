@@ -9,42 +9,36 @@ defmodule Solid.Filter do
   Apply `filter` if it exists. Otherwise return the first input.
 
   iex> Solid.Filter.apply("upcase", ["ac"], [])
-  "AC"
+  {:ok, "AC"}
   iex> Solid.Filter.apply("no_filter_here", [1, 2, 3], [])
-  1
+  {:ok, 1}
+  iex> Solid.Filter.apply("no_filter_here", [1, 2, 3], [strict_filters: true])
+  {:error, %Solid.UndefinedFilterError{filter: "no_filter_here"}, 1}
   """
   def apply(filter, args, opts) do
     custom_module =
       opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
 
+    strict_variables = Keyword.get(opts, :strict_filters, false)
     args_with_opts = args ++ [opts]
 
-    cond do
-      filter_exists?({custom_module, filter, Enum.count(args_with_opts)}) ->
-        apply_filter({custom_module, filter, args_with_opts})
-
-      filter_exists?({custom_module, filter, Enum.count(args)}) ->
-        apply_filter({custom_module, filter, args})
-
-      filter_exists?({__MODULE__, filter, Enum.count(args)}) ->
-        apply_filter({__MODULE__, filter, args})
-
-      true ->
-        List.first(args)
+    with :error <- apply_filter(custom_module, filter, args_with_opts),
+         :error <- apply_filter(custom_module, filter, args),
+         :error <- apply_filter(__MODULE__, filter, args) do
+      if strict_variables do
+        {:error, %Solid.UndefinedFilterError{filter: filter}, List.first(args)}
+      else
+        {:ok, List.first(args)}
+      end
     end
   end
 
-  defp apply_filter({m, f, a}) do
-    Kernel.apply(m, String.to_existing_atom(f), a)
-  end
-
-  defp filter_exists?({module, function, arity}) do
-    try do
-      function = String.to_existing_atom(function)
-      function_exported?(module, function, arity)
-    rescue
-      ArgumentError -> false
-    end
+  defp apply_filter(mod, func, args) do
+    func = String.to_existing_atom(func)
+    {:ok, Kernel.apply(mod, func, args)}
+  rescue
+    # Unknown function name atom or unknown function -> fallback
+    _ in [ArgumentError, UndefinedFunctionError] -> :error
   end
 
   @doc """
@@ -113,11 +107,10 @@ defmodule Solid.Filter do
   @spec ceil(number | String.t()) :: number
   def ceil(input) when is_binary(input) do
     {float, _} = Float.parse(input)
-    ceil(float)
+    Kernel.ceil(float)
   end
 
-  def ceil(input) when is_integer(input), do: input
-  def ceil(input), do: Float.ceil(input) |> trunc
+  def ceil(input) when is_number(input), do: Kernel.ceil(input)
 
   @doc """
   Converts a `DateTime`/`NaiveDateTime` struct into another date format.
@@ -172,11 +165,15 @@ defmodule Solid.Filter do
 
   iex> Solid.Filter.default([], 456)
   456
+
+  iex> Solid.Filter.default("", 456)
+  456
   """
   @spec default(any, any) :: any
   def default(nil, value), do: value
   def default(false, value), do: value
   def default([], value), do: value
+  def default("", value), do: value
   def default(input, _), do: input
 
   @doc """
@@ -259,10 +256,10 @@ defmodule Solid.Filter do
   @spec floor(number | String.t()) :: integer
   def floor(input) when is_binary(input) do
     {float, _} = Float.parse(input)
-    floor(float)
+    Kernel.floor(float)
   end
 
-  def floor(input), do: Float.floor(input) |> trunc
+  def floor(input) when is_number(input), do: Kernel.floor(input)
 
   @doc """
   Removes all occurrences of nil from a list
@@ -445,6 +442,17 @@ defmodule Solid.Filter do
   end
 
   @doc """
+  Removes only the last occurrence of the specified substring from a string.
+
+  iex> Solid.Filter.remove_last("I strained to see the train through the rain", "rain")
+  "I strained to see the train through the "
+  """
+  @spec remove_last(String.t(), String.t()) :: String.t()
+  def remove_last(input, string) do
+    replace_last(input, string, "")
+  end
+
+  @doc """
   Replaces every occurrence of an argument in a string with the second argument.
 
   iex> Solid.Filter.replace("Take my protein pills and put my helmet on", "my", "your")
@@ -464,6 +472,44 @@ defmodule Solid.Filter do
   @spec replace_first(String.t(), String.t(), String.t()) :: String.t()
   def replace_first(input, string, replacement \\ "") do
     input |> to_string |> String.replace(string, replacement, global: false)
+  end
+
+  @doc """
+  Replaces only the last occurrence of the first argument in a string with the second argument.
+
+  iex> Solid.Filter.replace_last("Take my protein pills and put my helmet on", "my", "your")
+  "Take my protein pills and put your helmet on"
+  """
+  @spec replace_last(String.t(), String.t(), String.t()) :: String.t()
+  def replace_last(input, string, replacement \\ "") do
+    input = to_string(input)
+
+    case last_index(input, string) do
+      nil ->
+        input
+
+      index ->
+        {prefix, suffix} = String.split_at(input, index)
+
+        prefix <> replace_first(suffix, string, replacement)
+    end
+  end
+
+  defp last_index(input, string) do
+    do_last_index(input, string, 0, nil)
+  end
+
+  defp do_last_index("", _string, _index, last), do: last
+
+  defp do_last_index(input, string, index, last) do
+    new_last =
+      if String.starts_with?(input, string) do
+        index
+      else
+        last
+      end
+
+    do_last_index(String.slice(input, 1..-1), string, index + 1, new_last)
   end
 
   @doc """
@@ -810,5 +856,57 @@ defmodule Solid.Filter do
     iodata
     |> IO.iodata_to_binary()
     |> String.replace(@escape_once_regex, &Solid.HTML.replacements/1)
+  end
+
+  @doc """
+  Encodes a string to Base64 format.
+
+  iex> Solid.Filter.base64_encode("apples")
+  "YXBwbGVz"
+  """
+  @spec base64_encode(iodata()) :: String.t()
+  def base64_encode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> Base.encode64()
+  end
+
+  @doc """
+  Decodes a string in Base64 format.
+
+  iex> Solid.Filter.base64_decode("YXBwbGVz")
+  "apples"
+  """
+  @spec base64_decode(iodata()) :: String.t()
+  def base64_decode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> Base.decode64!()
+  end
+
+  @doc """
+  Encodes a string to URL-safe Base64 format.
+
+  iex> Solid.Filter.base64_url_safe_encode("apples")
+  "YXBwbGVz"
+  """
+  @spec base64_url_safe_encode(iodata()) :: String.t()
+  def base64_url_safe_encode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> Base.url_encode64()
+  end
+
+  @doc """
+  Decodes a string in URL-safe Base64 format.
+
+  iex> Solid.Filter.base64_url_safe_decode("YXBwbGVz")
+  "apples"
+  """
+  @spec base64_url_safe_decode(iodata()) :: String.t()
+  def base64_url_safe_decode(iodata) do
+    iodata
+    |> IO.iodata_to_binary()
+    |> Base.url_decode64!()
   end
 end
