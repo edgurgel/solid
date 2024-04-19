@@ -33,6 +33,22 @@ defmodule Solid.Integration.ObjectsTest do
     assert render("Number {{ key1.key2.key3 }} !", hash) == "Number 123 !"
   end
 
+  test "key rendering with function" do
+    hash = %{"key1" => %{"key2" => %{"key3" => fn _, _ -> {:ok, 123} end}}}
+    assert render("Number {{ key1.key2.key3 }} !", hash) == "Number 123 !"
+  end
+
+  test "key rendering with function and incorrect return signature" do
+    hash_bad_return = %{"key1" => %{"key2" => %{"key3" => fn _, _ -> 123 end}}}
+
+    hash_error_return = %{
+      "key1" => %{"key2" => %{"key3" => fn _, _ -> {:error, "some error"} end}}
+    }
+
+    assert render("Number {{ key1.key2.key3 }} !", hash_bad_return) == "Number  !"
+    assert render("Number {{ key1.key2.key3 }} !", hash_error_return) == "Number  !"
+  end
+
   test "whitespace control" do
     template = """
     Hi

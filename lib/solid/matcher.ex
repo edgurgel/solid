@@ -36,15 +36,33 @@ defimpl Solid.Matcher, for: Map do
 
   def match(data, [key | []]) do
     case Map.fetch(data, key) do
-      {:ok, value} -> {:ok, value}
-      _ -> {:error, :not_found}
+      {:ok, value} when is_function(value, 2) ->
+        case value.(key, data) do
+          {:ok, value} -> {:ok, value}
+          _ -> {:error, :not_found}
+        end
+
+      {:ok, value} ->
+        {:ok, value}
+
+      _ ->
+        {:error, :not_found}
     end
   end
 
   def match(data, [key | keys]) do
     case Map.fetch(data, key) do
-      {:ok, value} -> @protocol.match(value, keys)
-      _ -> {:error, :not_found}
+      {:ok, value} when is_function(value, 2) ->
+        case value.(key, data) do
+          {:ok, value} -> @protocol.match(value, keys)
+          _ -> {:error, :not_found}
+        end
+
+      {:ok, value} ->
+        @protocol.match(value, keys)
+
+      _ ->
+        {:error, :not_found}
     end
   end
 end
