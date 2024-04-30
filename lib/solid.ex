@@ -74,11 +74,10 @@ defmodule Solid do
   end
 
   @doc """
-  It renders the compiled template using a map with vars
-  See `render/3` for more details
-
   It returns the rendered template or it raises an exception
   with the accumulated errors and a partial result
+
+  See `render/3` for more details
   """
   @spec render!(Solid.Template.t(), map, Keyword.t()) :: iolist
   def render!(%Template{} = template, hash, options \\ []) do
@@ -99,6 +98,10 @@ defmodule Solid do
   - `file_system`: a tuple of {FileSystemModule, options}. If this option is not specified, `Solid` uses `Solid.BlankFileSystem` which raises an error when the `render` tag is used. `Solid.LocalFileSystem` can be used or a custom module may be implemented. See `Solid.FileSystem` for more details.
 
   - `custom_filters`: a module name where additional filters are defined. The base filters (thos from `Solid.Filter`) still can be used, however, custom filters always take precedence.
+
+  - `strict_variables`: if `true`, it collects an error when a variable is referenced in the template, but not given in the map
+
+  - `strict_filters`: if `true`, it collects an error when a filter is referenced in the template, but not built-in or provided via `custom_filters`
 
   ## Example
 
