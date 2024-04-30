@@ -54,11 +54,14 @@ defimpl Solid.Matcher, for: Map do
     case Map.fetch(data, key) do
       {:ok, value} when is_function(value, 1) ->
         case value.(data) do
-          {:ok, value} -> @protocol.match(value, keys)
-          _ -> {:error, :not_found}
+          {:ok, value} ->
+            @protocol.match(value, keys)
+
+          _ ->
+            {:error, :not_found}
         end
 
-      {:ok, value} when not is_function(value) ->
+      {:ok, value} ->
         @protocol.match(value, keys)
 
       _ ->
