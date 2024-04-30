@@ -35,7 +35,7 @@ defimpl Solid.Matcher, for: Map do
   end
 
   def match(data, [key | []]) do
-    case Map.fetch(data, key) do
+    case get_data(data, key) do
       {:ok, value} when is_function(value, 1) ->
         case value.(data) do
           {:ok, value} -> {:ok, value}
@@ -51,7 +51,7 @@ defimpl Solid.Matcher, for: Map do
   end
 
   def match(data, [key | keys]) do
-    case Map.fetch(data, key) do
+    case get_data(data, key) do
       {:ok, value} when is_function(value, 1) ->
         case value.(data) do
           {:ok, value} ->
@@ -66,6 +66,19 @@ defimpl Solid.Matcher, for: Map do
 
       _ ->
         {:error, :not_found}
+    end
+  end
+
+  defp get_data(data, key) do
+    string_key = if is_atom(key), do: Atom.to_string(key), else: key
+    atom_key = if is_bitstring(key), do: String.to_atom(key), else: key
+
+    case Map.fetch(data, atom_key) do
+      :error ->
+        Map.fetch(data, string_key)
+
+      {:ok, data} ->
+        {:ok, data}
     end
   end
 end
