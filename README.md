@@ -49,7 +49,7 @@ defmodule MyCustomTag do
   end
 
   @impl true
-  def render(tag, _context, _options) do
+  def render(_tag, _context, _options) do
     [text: "my first tag"]
   end
 end
