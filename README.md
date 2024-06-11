@@ -28,6 +28,69 @@ def deps do
 end
 ```
 
+## Including Solid in your project
+
+Solid comes with bundled matchers for the basic Elixir data types. To enable you to use your own
+implementations instead, the bundled matchers aren't included by default. This is necessary,
+because matchers implement a protocol, which means they can only be defined once for each type.
+
+If you're happy to use the bundled matchers (the defaults), all you need to to do is to include a
+call to `use Solid` or `use Solid.Matcher.Builtins` in your application code. Which one you choose
+is up to you and effectually makes no difference. If you, on the other hand, want to replace some
+of the defaults in Solid, there is some nuance.
+
+By default, calling `use Solid` includes the bundled matchers and creates local methods for
+`render/3`, `render!/3`, `parse/2` and `parse!/2` in your wrapper module. To select which
+delegates are created, use the `:delegates` argument. The empty list or `false` omits all
+delegates.
+
+If you want to wrap Solid &ndash; it can be a convenient way to wrap calls to public methods for
+e.g. always including specific options &ndash; and _also_ want to bring your own matchers, pass
+the `:nomatchers` argument with any value.
+
+```elixir
+defmodule MyProject.Solid do
+  # `use Solid` by default creates delegates to `render/3`, `render!/3`, `parse/2` and
+  # `parse!/2` in your wrapper module. That means you can call `MyProject.Solid.render/3` etc,
+  # instead of using Solid methods directly. Using wrapper methods in your module can be a
+  # convenient way to e.g. including custom options. Always calling the public methods on
+  # your wrapper module makes it convenient to change from delegate to wrapped method later on.
+  #
+  # To pick which local methods are created, use the `delegates` argument.
+  # To not import the bundled matchers, use the `nomatchers` argument.
+
+  # wrap Solid, using all defaults
+  use Solid
+
+  # wrap Solid, but exclude the bundled matchers
+  use Solid, nomatchers: true
+
+  # wrap Solid, but exclude the delegated render methods
+  use Solid, delegates: [:parse, :parse!]
+end
+```
+
+The `use Solid.Matcher.Builtins` macro has options for cherry-picking the bundled matchers,
+refer to the module documentation for more details. Call `use Solid.Matcher.Builtins` in your
+module alongside your custom matchers and you're good to go.
+
+```elixir
+defmodule MyProject.Solid.Matchers do
+  # `use Solid.Matcher.Builtins` includes the bundled matchers for basic Elixir data types.
+  # If you want to bring your own custom implementation, use the `except` and `only`
+  # arguments for cherry-picking and add your own implementations to this module.
+
+  # use all the bundled matchers
+  use Solid.Matcher.Builtins
+
+  # exclude the matcher for the Map type
+  use Solid.Matcher.Builtins, except: [:map]
+
+  # only include the matchers for the Any and Atom types
+  use Solid.Matcher.Builtins, only: [:any, :atom]
+end
+```
+
 ## Custom tags
 
 To implement a new tag you need to create a new module that implements the `Tag` behaviour:
