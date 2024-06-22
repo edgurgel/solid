@@ -18,6 +18,14 @@ defmodule Solid.FileSystem do
 
   # Called by Solid to retrieve a template file
   @callback read_template_file(binary(), options :: any()) :: String.t() | no_return()
+
+  defmodule Error do
+    defexception [:reason]
+
+    def message(reason) do
+      reason
+    end
+  end
 end
 
 defmodule Solid.BlankFileSystem do
@@ -28,7 +36,7 @@ defmodule Solid.BlankFileSystem do
 
   @impl true
   def read_template_file(_template_path, _opts) do
-    raise File.Error, reason: "This solid context does not allow includes."
+    raise Solid.FileSystem.Error, reason: "This solid context does not allow includes."
   end
 end
 
@@ -78,7 +86,7 @@ defmodule Solid.LocalFileSystem do
     if File.exists?(full_path) do
       File.read!(full_path)
     else
-      raise File.Error, reason: "No such template '#{template_path}'"
+      raise Solid.FileSystem.Error, reason: "No such template '#{template_path}'"
     end
   end
 
@@ -101,10 +109,10 @@ defmodule Solid.LocalFileSystem do
       if String.starts_with?(full_path, Path.expand(file_system.root)) do
         full_path
       else
-        raise File.Error, reason: "Illegal template path '#{Path.expand(full_path)}'"
+        raise Solid.FileSystem.Error, reason: "Illegal template path '#{Path.expand(full_path)}'"
       end
     else
-      raise File.Error, reason: "Illegal template name '#{template_path}'"
+      raise Solid.FileSystem.Error, reason: "Illegal template name '#{template_path}'"
     end
   end
 end
