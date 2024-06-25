@@ -12,7 +12,7 @@ defmodule Solid.Tag.RawTest do
     {:ok, parsed, _, _, _, _} =
       "{% raw %} {{liquid}} {% increment counter %} {% endraw %}" |> Parser.parse()
 
-    assert {[text: ' {{liquid}} {% increment counter %} '], %Context{}} ==
+    assert {[text: ~c" {{liquid}} {% increment counter %} "], %Context{}} ==
              Raw.render(parsed, %Context{}, [])
   end
 end
