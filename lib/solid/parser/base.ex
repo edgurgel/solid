@@ -68,8 +68,11 @@ defmodule Solid.Parser.Base do
       all_tags = base_tags ++ (custom_tags || [])
 
       tags =
-        choice(all_tags)
-        |> tag(:tag)
+        case all_tags do
+          [] -> []
+          [single_tag] -> single_tag |> tag(:tag)
+          _ -> choice(all_tags) |> tag(:tag)
+        end
 
       text =
         lookahead_not(
