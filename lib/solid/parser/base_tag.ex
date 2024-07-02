@@ -1,30 +1,32 @@
 defmodule Solid.Parser.BaseTag do
   import NimbleParsec
 
-  defp space(), do: Solid.Parser.Literal.whitespace(min: 0)
+  space = Solid.Parser.Literal.whitespace(min: 0)
 
-  def opening_tag() do
-    string("{%")
-    |> concat(optional(string("-")))
-    |> concat(space())
-  end
+  @opening_tag string("{%")
+               |> concat(optional(string("-")))
+               |> concat(space)
 
-  def closing_tag() do
-    closing_wc_tag = string("-%}")
+  def opening_tag(), do: @opening_tag
 
-    closing_wc_tag_and_whitespace =
-      closing_wc_tag
-      |> concat(space())
-      |> ignore()
+  defcombinator(:opening_tag, @opening_tag)
 
-    space()
-    |> concat(choice([closing_wc_tag_and_whitespace, string("%}")]))
-  end
+  closing_wc_tag_and_whitespace =
+    string("-%}")
+    |> concat(space)
+    |> ignore()
+
+  @closing_tag space
+               |> concat(choice([closing_wc_tag_and_whitespace, string("%}")]))
+
+  def closing_tag(), do: @closing_tag
+
+  defcombinator(:closing_tag, @closing_tag)
 
   def else_tag(parser) do
-    ignore(opening_tag())
+    ignore(parsec({__MODULE__, :opening_tag}))
     |> ignore(string("else"))
-    |> ignore(closing_tag())
+    |> ignore(parsec({__MODULE__, :closing_tag}))
     |> tag(parsec({parser, :liquid_entry}), :result)
   end
 end

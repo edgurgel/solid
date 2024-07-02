@@ -41,7 +41,7 @@ defmodule Solid.Tag.For do
       repeat(choice([limit, offset, reversed]))
       |> reduce({Enum, :into, [%{}]})
 
-    ignore(BaseTag.opening_tag())
+    ignore(parsec({BaseTag, :opening_tag}))
     |> ignore(string("for"))
     |> ignore(space)
     |> concat(Argument.argument())
@@ -51,12 +51,12 @@ defmodule Solid.Tag.For do
     |> tag(choice([Variable.field(), range]), :enumerable)
     |> ignore(space)
     |> unwrap_and_tag(for_parameters, :parameters)
-    |> ignore(BaseTag.closing_tag())
+    |> ignore(parsec({BaseTag, :closing_tag}))
     |> tag(parsec({parser, :liquid_entry}), :result)
     |> optional(tag(BaseTag.else_tag(parser), :else_exp))
-    |> ignore(BaseTag.opening_tag())
+    |> ignore(parsec({BaseTag, :opening_tag}))
     |> ignore(string("endfor"))
-    |> ignore(BaseTag.closing_tag())
+    |> ignore(parsec({BaseTag, :closing_tag}))
   end
 
   @impl true

@@ -67,43 +67,43 @@ defmodule Solid.Tag.If do
     space = Literal.whitespace(min: 0)
 
     if_tag =
-      ignore(BaseTag.opening_tag())
+      ignore(parsec({BaseTag, :opening_tag}))
       |> ignore(string("if"))
       |> tag(parsec({__MODULE__, :__boolean_expression__}), :expression)
-      |> ignore(BaseTag.closing_tag())
+      |> ignore(parsec({BaseTag, :closing_tag}))
       |> tag(parsec({parser, :liquid_entry}), :result)
 
     elsif_tag =
-      ignore(BaseTag.opening_tag())
+      ignore(parsec({BaseTag, :opening_tag}))
       |> ignore(string("elsif"))
       |> tag(parsec({__MODULE__, :__boolean_expression__}), :expression)
-      |> ignore(BaseTag.closing_tag())
+      |> ignore(parsec({BaseTag, :closing_tag}))
       |> tag(parsec({parser, :liquid_entry}), :result)
       |> tag(:elsif_exp)
 
     unless_tag =
-      ignore(BaseTag.opening_tag())
+      ignore(parsec({BaseTag, :opening_tag}))
       |> ignore(string("unless"))
       |> tag(parsec({__MODULE__, :__boolean_expression__}), :expression)
       |> ignore(space)
-      |> ignore(BaseTag.closing_tag())
+      |> ignore(parsec({BaseTag, :closing_tag}))
       |> tag(parsec({parser, :liquid_entry}), :result)
 
     cond_if_tag =
       tag(if_tag, :if_exp)
       |> tag(times(elsif_tag, min: 0), :elsif_exps)
       |> optional(tag(BaseTag.else_tag(parser), :else_exp))
-      |> ignore(BaseTag.opening_tag())
+      |> ignore(parsec({BaseTag, :opening_tag}))
       |> ignore(string("endif"))
-      |> ignore(BaseTag.closing_tag())
+      |> ignore(parsec({BaseTag, :closing_tag}))
 
     cond_unless_tag =
       tag(unless_tag, :unless_exp)
       |> tag(times(elsif_tag, min: 0), :elsif_exps)
       |> optional(tag(BaseTag.else_tag(parser), :else_exp))
-      |> ignore(BaseTag.opening_tag())
+      |> ignore(parsec({BaseTag, :opening_tag}))
       |> ignore(string("endunless"))
-      |> ignore(BaseTag.closing_tag())
+      |> ignore(parsec({BaseTag, :closing_tag}))
 
     choice([cond_if_tag, cond_unless_tag])
   end
