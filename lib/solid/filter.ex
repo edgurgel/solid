@@ -509,7 +509,7 @@ defmodule Solid.Filter do
         last
       end
 
-    do_last_index(String.slice(input, 1..-1), string, index + 1, new_last)
+    do_last_index(String.slice(input, 1..-1//1), string, index + 1, new_last)
   end
 
   @doc """

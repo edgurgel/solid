@@ -169,7 +169,7 @@ defmodule Solid.Tag.For do
   end
 
   defp offset(enumerable, %{offset: offset}) do
-    Enum.slice(enumerable, offset..-1)
+    Enum.slice(enumerable, offset..-1//1)
   end
 
   defp offset(enumerable, _), do: enumerable

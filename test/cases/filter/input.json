@@ -1,0 +1,15 @@
+{
+  "words" : ["a", null, "b", null, "c"],
+  "hashes" : [{ "a" : "A" }, { "a" : null }, { "a" : "C "}],
+  "var" : 1000,
+  "array" : ["a", "b", "c"],
+  "my_array" : [1, 2, 3],
+  "string" : "A string",
+  "fruits" : "apples, oranges, peaches, plums",
+  "input": "hello %{first_name}, %{last_name}", "surname": "john",
+  "my_string" : "abba abba cde cde",
+  "var_nil": null,
+  "var_false": false,
+  "var_empty_array": [],
+  "var_empty_string": ""
+}

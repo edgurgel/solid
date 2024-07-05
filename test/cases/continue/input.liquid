@@ -1,0 +1,12 @@
+{% for i in (1..5) %}
+  {% if i == 4 %}
+    x
+    {% continue %}
+  {% else %}
+    {{ i }}
+  {% endif %}
+{% endfor %}
+
+this should print
+{% continue %}
+this should not print

@@ -1,0 +1,6 @@
+{
+  "outer_product": {
+    "name": "my_product"
+  },
+  "my_var": "42"
+}
