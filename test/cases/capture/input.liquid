@@ -1,0 +1,31 @@
+{% assign favorite_food = 'pizza' %}
+{% assign age = 35 %}
+
+{% capture about_me %}
+I am {{ age }} and my favorite food is {{ favorite_food }}.
+{% assign new = 10 %}
+{% endcapture %}
+
+{{ about_me }}
+{{ new }}
+
+{% capture string_with_newlines %}
+Hello
+there
+{% endcapture %}
+
+{{ string_with_newlines | strip_newlines }}
+
+
+{% capture string_with_newlines %}
+Hello
+there
+{% endcapture %}
+
+{{ string_with_newlines | newline_to_br }}
+
+{% capture captured %}
+  World
+{% endcapture %}
+
+Hello, {{ captured | strip }}
