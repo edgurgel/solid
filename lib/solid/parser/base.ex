@@ -49,7 +49,8 @@ defmodule Solid.Parser.Base do
           Solid.Tag.For,
           Solid.Tag.Raw,
           Solid.Tag.Cycle,
-          Solid.Tag.Render
+          Solid.Tag.Render,
+          Solid.Tag.Echo
         ]
         |> Enum.reject(&(&1 in excluded_tags))
         |> Enum.map(fn tag ->
