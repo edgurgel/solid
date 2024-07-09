@@ -103,6 +103,8 @@ defmodule Solid do
 
   - `strict_filters`: if `true`, it collects an error when a filter is referenced in the template, but not built-in or provided via `custom_filters`
 
+  - `matcher_module`: a module to replace `Solid.Matcher` when resolving variables.
+
   ## Example
 
       fs = Solid.LocalFileSystem.new("/path/to/template/dir/")
@@ -113,7 +115,8 @@ defmodule Solid do
   @spec render(%Template{}, map, Keyword.t()) :: {:ok, iolist} | {:error, list(errors), iolist}
   @spec render(list, %Context{}, Keyword.t()) :: {iolist, %Context{}}
   def render(%Template{parsed_template: parsed_template}, hash, options) do
-    context = %Context{counter_vars: hash}
+    matcher_module = Keyword.get(options, :matcher_module, Solid.Matcher)
+    context = %Context{counter_vars: hash, matcher_module: matcher_module}
 
     {result, context} = render(parsed_template, context, options)
 

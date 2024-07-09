@@ -13,14 +13,20 @@ defmodule Solid.UndefinedFilterError do
 end
 
 defmodule Solid.Context do
-  defstruct vars: %{}, counter_vars: %{}, iteration_vars: %{}, cycle_state: %{}, errors: []
+  defstruct vars: %{},
+            counter_vars: %{},
+            iteration_vars: %{},
+            cycle_state: %{},
+            errors: [],
+            matcher_module: Solid.Matcher
 
   @type t :: %__MODULE__{
           vars: map,
           counter_vars: map,
           iteration_vars: %{optional(String.t()) => term},
           cycle_state: map,
-          errors: list(Solid.UndefinedVariableError)
+          errors: list(Solid.UndefinedVariableError),
+          matcher_module: module
         }
   @type scope :: :counter_vars | :vars | :iteration_vars
 
@@ -82,14 +88,15 @@ defmodule Solid.Context do
   end
 
   defp get_from_scope(context, :vars, key) do
-    Solid.Matcher.match(context.vars, key)
+    IO.inspect({context, key})
+    context.matcher_module.match(context.vars, key)
   end
 
   defp get_from_scope(context, :counter_vars, key) do
-    Solid.Matcher.match(context.counter_vars, key)
+    context.matcher_module.match(context.counter_vars, key)
   end
 
   defp get_from_scope(context, :iteration_vars, key) do
-    Solid.Matcher.match(context.iteration_vars, key)
+    context.matcher_module.match(context.iteration_vars, key)
   end
 end
