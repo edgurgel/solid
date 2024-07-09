@@ -50,5 +50,20 @@ defmodule SolidTest do
       assert IO.iodata_to_binary(result) == "var1: "
       assert errors == [%Solid.UndefinedVariableError{variable: ["var1"]}]
     end
+
+    defmodule CustomMatcher do
+      def match(_, _), do: {:ok, 42}
+    end
+
+    test "custom matcher" do
+      template = "var1: {{ var1 }}"
+
+      assert {:ok, result} =
+               template
+               |> Solid.parse!()
+               |> Solid.render(%{"var1" => "value1"}, matcher_module: CustomMatcher)
+
+      assert IO.iodata_to_binary(result) == "var1: 42"
+    end
   end
 end

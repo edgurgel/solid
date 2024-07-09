@@ -187,6 +187,17 @@ template |> Solid.parse!() |> Solid.render!(context) |> to_string()
 # => test@example.com: John Doe
 ```
 
+If the `Solid.Matcher` protocol is not enough one can provide their own module like this:
+
+```elixir
+defmodule MyMatcher do
+  def match(data, keys), do: {:ok, 42}
+end
+
+# ...
+Solid.render(template, %{"number" => 4}, matcher_module: MyMatcher)
+```
+
 ## Contributing
 
 When adding new functionality or fixing bugs consider adding a new test case here inside `test/cases`. These cases are tested against the Ruby gem so we can try to stay as close as possible to the original implementation.

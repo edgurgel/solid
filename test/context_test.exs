@@ -74,6 +74,42 @@ defmodule Solid.ContextTest do
     end
   end
 
+  defmodule CustomMatcher do
+    def match(_, _), do: {:ok, 42}
+  end
+
+  describe "get_in/3 with custom matcher module" do
+    setup do
+      context = %Context{matcher_module: CustomMatcher}
+      {:ok, context: context}
+    end
+
+    test "counter_vars scope only", %{context: context} do
+      context = %{context | counter_vars: %{"x" => 1}}
+      assert Context.get_in(context, ["x"], [:counter_vars]) == {:ok, 42}
+    end
+
+    test "vars scope only", %{context: context} do
+      context = %{context | vars: %{"x" => 1}}
+      assert Context.get_in(context, ["x"], [:vars]) == {:ok, 42}
+    end
+
+    test "var scope with false value", %{context: context} do
+      context = %{context | vars: %{"x" => false}}
+      assert Context.get_in(context, ["x"], [:vars]) == {:ok, 42}
+    end
+
+    test "var scope with nil value", %{context: context} do
+      context = %{context | vars: %{"x" => nil}}
+      assert Context.get_in(context, ["x"], [:vars]) == {:ok, 42}
+    end
+
+    test "iteration_vars scope only", %{context: context} do
+      context = %{context | iteration_vars: %{"x" => 1}}
+      assert Context.get_in(context, ["x"], [:iteration_vars]) == {:ok, 42}
+    end
+  end
+
   describe "run_cycle/2" do
     test "first run" do
       cycle = [values: ["one", "two", "three"]]
