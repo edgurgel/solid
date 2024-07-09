@@ -88,7 +88,6 @@ defmodule Solid.Context do
   end
 
   defp get_from_scope(context, :vars, key) do
-    IO.inspect({context, key})
     context.matcher_module.match(context.vars, key)
   end
 
