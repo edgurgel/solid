@@ -51,7 +51,7 @@ defmodule Solid.Tag.RenderTest do
   end
 
   setup do
-    {:ok, cache} = TestCache.start_link([])
+    {:ok, cache} = start_supervised(TestCache, [])
     %{cache: cache}
   end
 
