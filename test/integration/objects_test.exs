@@ -28,6 +28,67 @@ defmodule Solid.Integration.ObjectsTest do
     assert render("Number {{ key[1] }}", %{"key" => [1, 2, 3]}) == "Number 2"
   end
 
+  test "field access by literal string" do
+    template = """
+    {%- assign greeting = greetings['casual'].text -%}
+    <p>{{ greeting }} world</p>
+    """
+
+    data = %{
+      "greetings" => %{
+        "formal" => %{"text" => "Hello"},
+        "casual" => %{"text" => "Hey!"},
+        "friendly" => %{"text" => "Yo!"}
+      }
+    }
+
+    assert render(template, data) == """
+           <p>Hey! world</p>
+           """
+  end
+
+  test "field access by variable" do
+    template = """
+    {%- assign greet_as = 'friendly' -%}
+    {%- assign greeting = greetings[greet_as].text -%}
+    <p>{{ greeting }} world</p>
+    """
+
+    data = %{
+      "greetings" => %{
+        "formal" => %{"text" => "Hello"},
+        "casual" => %{"text" => "Hey!"},
+        "friendly" => %{"text" => "Yo!"}
+      }
+    }
+
+    assert render(template, data) == """
+    <p>Yo! world</p>
+    """
+  end
+
+  test "field access through many variables" do
+    template = """
+    {%- assign greet_as = 'casual' -%}
+    {%- assign really_greet_as = greet_as -%}
+    {%- assign really_really_greet_as = really_greet_as -%}
+    {%- assign greeting = greetings[really_really_greet_as].text -%}
+    <p>{{ greeting }} world</p>
+    """
+
+    data = %{
+      "greetings" => %{
+        "formal" => %{"text" => "Hello"},
+        "casual" => %{"text" => "Hey!"},
+        "friendly" => %{"text" => "Yo!"}
+      }
+    }
+
+    assert render(template, data) == """
+    <p>Hey! world</p>
+    """
+  end
+
   test "complex key rendering" do
     hash = %{"key1" => %{"key2" => %{"key3" => 123}}}
     assert render("Number {{ key1.key2.key3 }} !", hash) == "Number 123 !"
