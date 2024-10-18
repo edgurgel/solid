@@ -53,6 +53,24 @@ defmodule Solid.ContextTest do
       assert Context.get_in(context, ["x"], [:vars, :counter_vars]) == {:ok, 2}
     end
 
+    test "counter_vars & vars scopes with nested access by a reference" do
+      context = %Context{
+        counter_vars: %{"x" => %{"y" => 1, "z" => "2"}},
+        vars: %{"variable" => "y"}
+      }
+
+      assert Context.get_in(context, ["x", {:reference, "variable"}], [:vars, :counter_vars]) == {:ok, 1}
+    end
+
+    test "missing reference" do
+      context = %Context{
+        counter_vars: %{"x" => %{"y" => %{"z" => "2"}}},
+        vars: %{"variable" => "q"}
+      }
+
+      assert Context.get_in(context, ["x", "y", {:reference, "missing"}], [:vars, :counter_vars]) == {:error, {:not_found, ["x", "y", "missing"]}}
+    end
+
     test "list access" do
       context = %Context{vars: %{"x" => ["a", "b", "c"]}}
       assert Context.get_in(context, ["x", 1], [:vars]) == {:ok, "b"}

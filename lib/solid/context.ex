@@ -45,14 +45,9 @@ defmodule Solid.Context do
   """
   @spec get_in(t(), [term()], [scope]) :: {:ok, term} | {:error, {:not_found, [term()]}}
   def get_in(context, key, scopes) do
-    scopes
-    |> Enum.reverse()
-    |> Enum.map(&get_from_scope(context, &1, key))
-    |> Enum.reduce({:error, {:not_found, key}}, fn
-      {:ok, nil}, acc = {:ok, _} -> acc
-      value = {:ok, _}, _acc -> value
-      _value, acc -> acc
-    end)
+    resolved_key = resolve_references(context, key, scopes)
+
+    lookup_key(context, resolved_key, scopes)
   end
 
   @doc """
@@ -79,6 +74,30 @@ defmodule Solid.Context do
         {%{context | cycle_state: Map.put_new(cycle_state, name, {current_index, cycle_map})},
          cycle_map[current_index]}
     end
+  end
+
+  defp resolve_references(context, key, scopes) do
+    Enum.map(key, fn
+      {:reference, reference} ->
+        case lookup_key(context, [reference], scopes) do
+          {:ok, resolved} -> resolved
+          {:error, _} -> reference
+        end
+
+      part ->
+        part
+    end)
+  end
+
+  defp lookup_key(context, key, scopes) do
+    scopes
+    |> Enum.reverse()
+    |> Enum.map(&get_from_scope(context, &1, key))
+    |> Enum.reduce({:error, {:not_found, key}}, fn
+      {:ok, nil}, acc = {:ok, _} -> acc
+      value = {:ok, _}, _acc -> value
+      _value, acc -> acc
+    end)
   end
 
   defp cycle_to_map(cycle) do

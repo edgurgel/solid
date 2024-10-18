@@ -8,7 +8,12 @@ defmodule Solid.Parser.Variable do
 
   def bracket_access do
     ignore(string("["))
-    |> choice([Literal.int(), Literal.single_quoted_string(), Literal.double_quoted_string()])
+    |> choice([
+      Literal.int(),
+      Literal.single_quoted_string(),
+      Literal.double_quoted_string(),
+      unwrap_and_tag(identifier(), :reference)
+    ])
     |> ignore(string("]"))
   end
 
