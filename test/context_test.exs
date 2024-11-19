@@ -59,7 +59,8 @@ defmodule Solid.ContextTest do
         vars: %{"variable" => "y"}
       }
 
-      assert Context.get_in(context, ["x", {:reference, "variable"}], [:vars, :counter_vars]) == {:ok, 1}
+      assert Context.get_in(context, ["x", {:reference, "variable"}], [:vars, :counter_vars]) ==
+               {:ok, 1}
     end
 
     test "missing reference" do
@@ -68,7 +69,8 @@ defmodule Solid.ContextTest do
         vars: %{"variable" => "q"}
       }
 
-      assert Context.get_in(context, ["x", "y", {:reference, "missing"}], [:vars, :counter_vars]) == {:error, {:not_found, ["x", "y", "missing"]}}
+      assert Context.get_in(context, ["x", "y", {:reference, "missing"}], [:vars, :counter_vars]) ==
+               {:error, {:not_found, ["x", "y", "missing"]}}
     end
 
     test "list access" do
