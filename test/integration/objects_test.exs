@@ -63,8 +63,8 @@ defmodule Solid.Integration.ObjectsTest do
     }
 
     assert render(template, data) == """
-    <p>Yo! world</p>
-    """
+           <p>Yo! world</p>
+           """
   end
 
   test "field access through many variables" do
@@ -85,8 +85,8 @@ defmodule Solid.Integration.ObjectsTest do
     }
 
     assert render(template, data) == """
-    <p>Hey! world</p>
-    """
+           <p>Hey! world</p>
+           """
   end
 
   test "complex key rendering" do
