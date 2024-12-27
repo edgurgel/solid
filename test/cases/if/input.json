@@ -18,5 +18,6 @@
     }
   },
  "enabled?" : true,
-  "enabled2?" : false
+  "enabled2?" : false,
+  "var4": ""
 }

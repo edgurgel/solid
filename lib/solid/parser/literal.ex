@@ -50,6 +50,10 @@ defmodule Solid.Parser.Literal do
       string("nil")
       |> replace(nil)
 
+    empty =
+      string("empty")
+      |> replace(:empty)
+
     frac =
       string(".")
       |> concat(integer(min: 1))
@@ -72,6 +76,7 @@ defmodule Solid.Parser.Literal do
       true_value,
       false_value,
       null,
+      empty,
       single_quoted_string(),
       double_quoted_string()
     ])
