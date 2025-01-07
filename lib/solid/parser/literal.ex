@@ -38,22 +38,6 @@ defmodule Solid.Parser.Literal do
   end
 
   def value do
-    true_value =
-      string("true")
-      |> replace(true)
-
-    false_value =
-      string("false")
-      |> replace(false)
-
-    null =
-      string("nil")
-      |> replace(nil)
-
-    empty =
-      string("empty")
-      |> replace(:empty)
-
     frac =
       string(".")
       |> concat(integer(min: 1))
@@ -73,10 +57,6 @@ defmodule Solid.Parser.Literal do
     choice([
       float,
       int(),
-      true_value,
-      false_value,
-      null,
-      empty,
       single_quoted_string(),
       double_quoted_string()
     ])
