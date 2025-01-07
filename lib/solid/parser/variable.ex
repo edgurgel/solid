@@ -26,5 +26,15 @@ defmodule Solid.Parser.Variable do
     identifier()
     |> repeat(choice([dot_access(), bracket_access()]))
     |> tag(:field)
+    |> map({__MODULE__, :reserved_words, []})
+  end
+
+  @reserved_words ~w(true false nil empty)
+
+  def reserved_words(field) do
+    case field do
+      {:field, [word]} when word in @reserved_words -> {:value, String.to_atom(word)}
+      _ -> field
+    end
   end
 end
