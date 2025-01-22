@@ -75,3 +75,20 @@ defimpl Solid.Matcher, for: Atom do
   """
   def match(_current, [key]) when is_binary(key), do: {:error, :not_found}
 end
+
+defimpl Solid.Matcher, for: Tuple do
+  def match(data, []), do: {:ok, data}
+
+  def match(data, ["size"]) do
+    {:ok, tuple_size(data)}
+  end
+
+  def match(data, [key | keys]) when is_integer(key) do
+    try do
+      elem(data, key)
+      |> @protocol.match(keys)
+    rescue
+      ArgumentError -> {:error, :not_found}
+    end
+  end
+end

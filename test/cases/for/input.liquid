@@ -104,6 +104,10 @@ end for
   {{ forloop.index0 }}
 {% endfor %}
 
+{% for item in hash %}
+  {{ item[0] }} :: {{ item[1] }}
+{% endfor %}
+
 {% if enabled? %}
 ON
 {% else %}
