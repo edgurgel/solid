@@ -15,5 +15,12 @@
       "title": "vase",
       "type": "livingroom"
     }
-  ]
+  ],
+  "hash": {
+    "lorem": 1,
+    "ipsum": 2,
+    "dolor": 3,
+    "sit": 4,
+    "amet": 5
+  }
 }
