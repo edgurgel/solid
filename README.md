@@ -18,6 +18,24 @@ iex> Solid.render!(template, %{ "user" => %{ "name" => "José" } }) |> to_string
 "My name is José"
 ```
 
+## Sigil Support
+
+Solid provides a `~LIQUID` sigil for validating and compiling templates at compile time:
+
+```elixir
+import Solid.Sigil
+
+# Validates syntax at compile time
+template = ~LIQUID"""
+Hello, {{ name }}!
+"""
+
+# Use the compiled template
+Solid.render!(template, %{"name" => "World"})
+```
+
+The sigil will raise helpful CompileError messages with line numbers and context when templates contain syntax errors.
+
 ## Installation
 
 The package can be installed with:
