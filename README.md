@@ -35,6 +35,7 @@ Solid.render!(template, %{"name" => "World"})
 ```
 
 The sigil will raise helpful CompileError messages with line numbers and context when templates contain syntax errors.
+Experimental VSCode syntax highlighting is available with the [Liquid Sigil](https://marketplace.visualstudio.com/items?itemName=JakubSkalecki.liquid-sigil) extension.
 
 ## Installation
 
