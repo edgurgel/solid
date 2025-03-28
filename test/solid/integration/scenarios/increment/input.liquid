@@ -1,0 +1,51 @@
+<ul>
+<li class="item-{% increment counter %}">apples</li>
+<li class="item-{% increment counter %}">oranges</li>
+<li class="item-{% increment counter %}">peaches</li>
+<li class="item-{% increment counter %}">plums</li>
+</ul>
+
+{% increment my_number %}
+{% increment my_number %}
+{% increment my_number %}
+
+{{ my_number }}
+
+{% assign new_number = 22 %}
+{% increment new_number %}
+
+{% assign var[1][2][3] = 44 %}
+{% increment var[1][2][3] %}
+
+{{ new_number }}
+
+{% increment my_number %}
+{{ my_number }}
+{% assign my_number = 33 %}
+{{ my_number }}
+{% increment my_number %}
+
+{% assign my_number = 33 %}
+{% increment my_number %}
+{{ my_number }}
+{% assign my_number = 42 %}
+{{ my_number }}
+{% increment my_number %}
+
+increment with initial value
+
+{% increment my_existing_number %}
+{% increment my_existing_number %}
+{% increment my_existing_number %}
+
+{{ my_existing_number }}
+
+{% increment new_number[23] %}
+{% increment new_number[23] %}
+
+{% increment new_number['23'] %}
+{% increment new_number['23'] %}
+
+{% increment "yo" %}
+{% increment "yo" %}
+{% increment "yo" %}

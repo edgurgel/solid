@@ -1,6 +1,6 @@
 defmodule Solid.FileSystem do
   @moduledoc """
-  A Solid file system is a way to let your templates retrieve other templates for use with the include tag.
+  A file system is a way to let your templates retrieve other templates for use with the include tag.
 
   You can implement a module that retrieve templates from the database, from the file system using a different path structure, you can provide them as hard-coded inline strings, or any manner that you see fit.
 
@@ -17,26 +17,26 @@ defmodule Solid.FileSystem do
   """
 
   # Called by Solid to retrieve a template file
-  @callback read_template_file(binary(), options :: any()) :: String.t() | no_return()
+  @callback read_template_file(binary(), options :: any()) ::
+              {:ok, String.t()} | {:error, Exception.t()}
 
   defmodule Error do
-    defexception [:reason]
+    @type t :: %__MODULE__{}
+    defexception [:reason, :loc]
 
-    def message(reason) do
-      reason
-    end
+    def message(reason), do: reason
   end
 end
 
 defmodule Solid.BlankFileSystem do
   @moduledoc """
-  Default file system that raise error on call
+  Default file system that return error on call
   """
   @behaviour Solid.FileSystem
 
   @impl true
   def read_template_file(_template_path, _opts) do
-    raise Solid.FileSystem.Error, reason: "This solid context does not allow includes."
+    {:error, %Solid.FileSystem.Error{reason: "This solid context does not allow includes."}}
   end
 end
 
@@ -81,16 +81,16 @@ defmodule Solid.LocalFileSystem do
 
   @impl true
   def read_template_file(template_path, file_system) do
-    full_path = full_path(template_path, file_system)
-
-    if File.exists?(full_path) do
-      File.read!(full_path)
-    else
-      raise Solid.FileSystem.Error, reason: "No such template '#{template_path}'"
+    with {:ok, full_path} <- full_path(template_path, file_system) do
+      if File.exists?(full_path) do
+        {:ok, File.read!(full_path)}
+      else
+        {:error, %Solid.FileSystem.Error{reason: "No such template '#{template_path}'"}}
+      end
     end
   end
 
-  def full_path(template_path, file_system) do
+  defp full_path(template_path, file_system) do
     if String.match?(template_path, Regex.compile!("^[^./][a-zA-Z0-9_/-]+$")) do
       template_name = String.replace(file_system.pattern, "%s", Path.basename(template_path))
 
@@ -107,12 +107,13 @@ defmodule Solid.LocalFileSystem do
         end
 
       if String.starts_with?(full_path, Path.expand(file_system.root)) do
-        full_path
+        {:ok, full_path}
       else
-        raise Solid.FileSystem.Error, reason: "Illegal template path '#{Path.expand(full_path)}'"
+        {:error,
+         %Solid.FileSystem.Error{reason: "Illegal template path '#{Path.expand(full_path)}'"}}
       end
     else
-      raise Solid.FileSystem.Error, reason: "Illegal template name '#{template_path}'"
+      {:error, %Solid.FileSystem.Error{reason: "Illegal template name '#{template_path}'"}}
     end
   end
 end

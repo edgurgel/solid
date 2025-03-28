@@ -1,0 +1,29 @@
+Anything you put between {% comment %} and {% endcomment %} tags
+is turned into a comment.
+
+{{ value }}
+{% comment %}
+{{ value }}
+{% endcomment %}
+
+{% comment %}
+{% assign value = 12 %}
+{{ value }}
+{% endcomment %}
+
+{{ value }}
+
+test comment block contain invalid syntax
+
+{% comment %}
+hi {% myblock %}
+{{ and this is so wrong }}
+{% endcomment %}
+
+{% comment arg1 arg2 arg3 %}
+{% endcomment arg1 arg2 arg3 %}
+
+{% liquid
+comment
+echo 'true'
+endcomment %}

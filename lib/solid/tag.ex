@@ -1,99 +1,46 @@
 defmodule Solid.Tag do
-  @moduledoc """
-  This module define behaviour for tags.
+  alias Solid.{Lexer, ParserContext, Renderable, Tags}
+  alias Solid.Parser.Loc
 
-  To implement new tag you need to create new module that implement the `Tag` behaviour:
+  @callback parse(
+              tag_name :: binary,
+              Loc.t(),
+              ParserContext.t()
+            ) ::
+              {:ok, Renderable.t(), ParserContext.t()}
+              | {:error, reason :: binary, Lexer.loc()}
 
-      defmodule MyCustomTag do
-        import NimbleParsec
-        @behaviour Solid.Tag
-
-        @impl true
-        def spec(_parser) do
-          space = Solid.Parser.Literal.whitespace(min: 0)
-
-          ignore(string("{%"))
-          |> ignore(space)
-          |> ignore(string("my_tag"))
-          |> ignore(space)
-          |> ignore(string("%}"))
-        end
-
-        @impl true
-        def render(_tag, _context, _options) do
-          [text: "my first tag"]
-        end
-      end
-
-  - `spec` define how to parse your tag
-  - `render` define how to render your tag
-
-  Then add the tag to your parser
-
-      defmodule MyParser do
-        use Solid.Parser.Base, custom_tags: [MyCustomTag]
-      end
-
-  Then pass the custom parser as option
-
-      "{% my_tag %}"
-      |> Solid.parse!(parser: MyParser)
-      |> Solid.render()
-
-  Control flow tags can change the information Liquid shows using programming logic.
-
-  More info: https://shopify.github.io/liquid/tags/control-flow/
-  """
-
-  alias Solid.Context
-
-  @doc """
-  Build and return `NimbleParsec` expression to parse your tag. There are some helper expressions that can be used:
-  - `Solid.Parser.Literal`
-  - `Solid.Parser.Variable`
-  - `Solid.Parser.Argument`
-  """
-
-  @callback spec(module) :: NimbleParsec.t()
-
-  @doc """
-  Define how to render your tag.
-  Third argument are the options passed to `Solid.render/3`
-  """
-
-  @callback render(list(), Solid.Context.t(), keyword()) ::
-              {list(Solid.Template.rendered_data()), Solid.Context.t()} | String.t()
-
-  @doc """
-  Basic custom tag spec that accepts optional arguments
-  """
-  @spec basic(String.t()) :: NimbleParsec.t()
-  def basic(name) do
-    import NimbleParsec
-    space = Solid.Parser.Literal.whitespace(min: 0)
-
-    ignore(Solid.Parser.BaseTag.opening_tag())
-    |> ignore(string(name))
-    |> ignore(space)
-    |> tag(optional(Solid.Parser.Argument.arguments()), :arguments)
-    |> ignore(Solid.Parser.BaseTag.closing_tag())
+  def default_tags do
+    %{
+      "#" => Tags.InlineCommentTag,
+      "assign" => Tags.AssignTag,
+      "break" => Tags.BreakTag,
+      "capture" => Tags.CaptureTag,
+      "case" => Tags.CaseTag,
+      "comment" => Tags.CommentTag,
+      "continue" => Tags.ContinueTag,
+      "cycle" => Tags.CycleTag,
+      "decrement" => Tags.CounterTag,
+      "echo" => Tags.EchoTag,
+      "for" => Tags.ForTag,
+      "if" => Tags.IfTag,
+      "increment" => Tags.CounterTag,
+      "raw" => Tags.RawTag,
+      "render" => Tags.RenderTag,
+      "unless" => Tags.IfTag
+    }
   end
 
-  @doc """
-  Evaluate a tag and return the condition that succeeded or nil
-  """
-  @spec eval(any, Context.t(), keyword()) :: {iolist | nil, Context.t()}
-  def eval(tag, context, options) do
-    case do_eval(tag, context, options) do
-      {text, context} -> {text, context}
-      text when is_binary(text) -> {[text: text], context}
-      text -> {text, context}
+  @spec parse(tag_name :: binary, Loc.t(), ParserContext.t()) ::
+          {:ok, Renderable.t(), ParserContext.t()}
+          | {:error, reason :: binary, Lexer.loc()}
+  def parse(tag_name, loc, context) do
+    module = (context.tags || default_tags())[tag_name]
+
+    if module do
+      module.parse(tag_name, loc, context)
+    else
+      {:error, "Unexpected tag '#{tag_name}'", %{line: loc.line, column: loc.column}}
     end
-  end
-
-  defp do_eval([], _context, _options), do: nil
-
-  defp do_eval([{tag_module, tag_data}], context, options) do
-    tag_module.render(tag_data, context, options)
   end
 end

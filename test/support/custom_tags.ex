@@ -1,101 +1,64 @@
 defmodule CustomTags do
-  defmodule CurrentDate do
-    import NimbleParsec
-    alias Solid.Parser.{Literal, BaseTag}
+  defmodule CurrentLine do
+    @enforce_keys [:loc]
+    defstruct [:loc]
 
     @behaviour Solid.Tag
 
     @impl true
-    def spec(_parser) do
-      ignore(BaseTag.opening_tag())
-      |> ignore(string("get_current_date"))
-      |> ignore(BaseTag.closing_tag())
+    def parse("current_line", loc, context) do
+      with {:ok, [{:end, _}], context} <- Solid.Lexer.tokenize_tag_end(context) do
+        {:ok, %__MODULE__{loc: loc}, context}
+      end
     end
 
-    @impl true
-    def render(_arguments, _context, _options) do
-      DateTime.utc_now().year |> to_string
+    defimpl Solid.Renderable do
+      def render(tag, context, _options) do
+        {to_string(tag.loc.line), context}
+      end
     end
   end
 
-  defmodule GetYearOfDate do
-    import NimbleParsec
-    alias Solid.Parser.{Literal, Argument, BaseTag}
+  defmodule CurrentYear do
+    @enforce_keys [:loc]
+    defstruct [:loc]
 
     @behaviour Solid.Tag
 
     @impl true
-    def spec(_parser) do
-      space = Literal.whitespace(min: 0)
-
-      ignore(BaseTag.opening_tag())
-      |> ignore(string("get_year"))
-      |> ignore(space)
-      |> tag(Argument.arguments(), :arguments)
-      |> ignore(BaseTag.closing_tag())
+    def parse("get_current_year", loc, context) do
+      with {:ok, [{:end, _}], context} <- Solid.Lexer.tokenize_tag_end(context) do
+        {:ok, %__MODULE__{loc: loc}, context}
+      end
     end
 
-    @impl true
-    def render([arguments: [value: dt_str]], _context, _options) do
-      {:ok, dt, _} = DateTime.from_iso8601(dt_str)
-      "#{dt.year}-#{dt.month}-#{dt.day}"
-    end
-
-    def render([arguments: [field: [var_name]]], context, _options) do
-      dt_str = Map.fetch!(context.iteration_vars, var_name)
-      {:ok, dt, _} = DateTime.from_iso8601(dt_str)
-      "#{dt.year}-#{dt.month}-#{dt.day}"
+    defimpl Solid.Renderable do
+      def render(_tag, context, _options) do
+        {[to_string(Date.utc_today().year)], context}
+      end
     end
   end
 
   defmodule CustomBrackedWrappedTag do
-    import NimbleParsec
-    alias Solid.Parser.{Literal, BaseTag}
+    alias Solid.Parser
 
+    @enforce_keys [:loc, :body]
+    defstruct [:loc, :body]
     @behaviour Solid.Tag
 
     @impl true
-    def spec(parser) do
-      space = Literal.whitespace(min: 0)
-
-      ignore(BaseTag.opening_tag())
-      |> ignore(string("myblock"))
-      |> ignore(BaseTag.closing_tag())
-      |> tag(parsec({parser, :liquid_entry}), :result)
-      |> ignore(BaseTag.opening_tag())
-      |> ignore(space)
-      |> ignore(string("endmyblock"))
-      |> ignore(BaseTag.closing_tag())
+    def parse("myblock", loc, context) do
+      with {:ok, [{:end, _}], context} <- Solid.Lexer.tokenize_tag_end(context),
+           {:ok, body, _tag, _tokens, context} <-
+             Parser.parse_until(context, "endmyblock", "Expected endmyblock") do
+        {:ok, %__MODULE__{loc: loc, body: body}, context}
+      end
     end
 
-    @impl true
-    def render([result: result], context, options) do
-      {text, context} = Solid.render(result, context, options)
-      {[text: ["[[", text, "]]"]], context}
-    end
-  end
-
-  defmodule FoobarTag do
-    @behaviour Solid.Tag
-
-    @impl true
-    def spec(_parser), do: Solid.Tag.basic("foobar")
-
-    @impl true
-    def render(_arguments, _context, _opts) do
-      "barbaz"
-    end
-  end
-
-  defmodule FoobarValTag do
-    @behaviour Solid.Tag
-
-    @impl true
-    def spec(_parser), do: Solid.Tag.basic("foobarval")
-
-    @impl true
-    def render([arguments: [value: string]], _context, _opts) do
-      "barbaz#{string}"
+    defimpl Solid.Renderable do
+      def render(tag, context, _options) do
+        {tag.body, context}
+      end
     end
   end
 end

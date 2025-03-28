@@ -15,9 +15,6 @@ defmodule Solid.Sigil do
       {:ok, "Hello, World!"}
   """
 
-  # Import Solid to use parse! function
-  require Solid
-
   # Custom sigil for validating and compiling Liquid templates using Solid
   defmacro sigil_LIQUID({:<<>>, _meta, [string]}, _modifiers) do
     line = __CALLER__.line
@@ -31,8 +28,10 @@ defmodule Solid.Sigil do
       Macro.escape(parsed_template)
     rescue
       e in Solid.TemplateError ->
+        # Grab just the first error
+        error = hd(e.errors)
         # Extract template line number (first element of the tuple)
-        template_line = elem(e.line, 0)
+        template_line = error.meta.line
         # Calculate actual line number in the file
         actual_line = line + template_line
 
@@ -56,7 +55,7 @@ defmodule Solid.Sigil do
 
         #{context_lines}
 
-        Error: #{e.reason}
+        Error: #{error.reason}
         """
 
         # Re-raise with better context

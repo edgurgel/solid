@@ -1,0 +1,20 @@
+{
+  "foo" : "bar",
+  "var" : [1, 2, 3],
+  "multiarray" : [["a", "b", "c"], [1, 2, 3]],
+  "string" : "string",
+  "number" : 12,
+  "empty" : [1, 2],
+  "true" : [1, 2],
+  "false" : [1, 2],
+  "nil" : [1, 2],
+  "blank" : [1, 2],
+  "complexarray" : [[1, 2, 3], [4, 5, 6], [7, [8, 9, "ten"]]],
+  "list" : [{ "key" : "about-us" }, { "key" : "sitemap" }],
+  "name": "John",
+  "hash" : {
+    "key" : "value",
+    "numbers" : [1, [], 0.2]
+  },
+  "question?" : "?"
+}

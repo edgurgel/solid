@@ -1,0 +1,39 @@
+{% case shipping_method.title %}
+{% when 'International Shipping' %}
+   You're shipping internationally. Your order should arrive in 2–3 weeks.
+{% when 'Domestic Shipping' %}
+  Your order should arrive in 3–4 days.
+{% when 'Local Pick-Up' %}
+  Your order will be ready for pick-up tomorrow.
+{% else %}
+   Thank you for your order!
+{% endcase %}
+
+"Blank" tags inside when
+{% case 'x' %}{% when 'x' %} {% assign y = 1 %} {% endcase %}
+"Blank" tags inside else
+{% case 'x' %}{% else %} {% assign y = 1 %} {% endcase %}
+
+{% case title %}{% endcase %}
+{% case title %}{% when other %}foo{% when 'other' %}bar{% else %} else {% endcase %}
+{% case title %}{% when other %}foo{% else %} else {% when 'other' %}bar{% endcase %}
+{% case title %}{% when 'wont match' %}nope{% else %} else {% endcase %}
+{% case multiple_elses %} {% else %} else1 {% when 'wont match' %}nope{% else %} else2 {% else %} else3 {% endcase %}
+{% case title %}{% when 'wont match' %}{% else %} else {% endcase %}
+{% case title %}{% when 'ABC' %}{% else %} else {% endcase %}
+
+{% case title %}{% when 'wont match' %}foo{% else %}bar{% else %}baz{% when 'ABC' %}match!{% endcase %}
+
+{% case title %}{% when 'wont match' %}foo{% else %}bar{% else %}baz{% when 'ABC' %}match! {% else %}baba{% endcase %}
+
+{% case 'not a variable' %}{% when 'ABC' %}{% else %} else {% endcase %}
+
+{% case product -%} {%- when 'shoes' -%} Shoes {%- when 'shoes' -%} Shoes also {%- endcase -%}
+
+{% case condition %}{% when 1, 2, 3 %} its 1 or 2 or 3 {% when 3, 4 %} its 4 {% endcase %}
+
+{% case condition %}{% when 1 or 2 or 3 %} its 1 or 2 or 3 {% when 4 %} its 4 {% endcase %}
+
+{% case condition %}{% when 1 or 2 or 3 or 3 %} its 1 or 2 or 3 {% when 4 %} its 4 {% endcase %}
+
+{%- case condition -%}{%- when 1 or 2 or 3 or 3 -%}{%- when 4 -%}{%- endcase %}

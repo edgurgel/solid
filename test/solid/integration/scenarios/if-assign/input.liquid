@@ -1,0 +1,27 @@
+{% if var == -1 %}
+equal
+{% else %}
+not equal
+{% endif %}
+
+{% if var %}
+true
+{% else %}
+false
+{% endif %}
+
+%{ assign var = true %}
+
+{% if var %}
+true
+{% else %}
+false
+{% endif %}
+
+{% liquid
+if var
+  echo 'true'
+else
+  echo 'false'
+endif
+%}

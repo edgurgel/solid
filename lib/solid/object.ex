@@ -1,30 +1,44 @@
 defmodule Solid.Object do
-  @moduledoc """
-  Liquid objects are arguments with filter(s) applied to them
-  """
-  alias Solid.{Argument, Context}
+  @enforce_keys [:loc, :argument, :filters]
+  defstruct [:loc, :argument, :filters]
+  alias Solid.Parser.Loc
+  alias Solid.{Argument, Filter, Lexer}
 
-  @spec render(Keyword.t(), Context.t(), Keyword.t()) :: {:ok, String.t(), Context.t()}
-  def render([], context, _options), do: {:ok, [], context}
+  @type t :: %__MODULE__{loc: Loc.t(), argument: Argument.t(), filters: [Filter]}
 
-  def render(object, context, options) when is_list(object) do
-    argument = object[:argument]
-
-    {:ok, value, context} =
-      Argument.get(argument, context, [filters: object[:filters]] ++ options)
-
-    {:ok, stringify!(value), context}
+  @spec parse(Lexer.tokens()) :: {:ok, t, Lexer.tokens()} | {:error, binary, Lexer.loc()}
+  def parse([{:end, meta}]) do
+    # Let's use a null literal if the object is empty
+    argument = %Solid.Literal{value: nil, loc: struct!(Loc, meta)}
+    object = %__MODULE__{loc: struct!(Loc, meta), argument: argument, filters: []}
+    {:ok, object, [{:end, meta}]}
   end
 
-  defp stringify!(value) when is_list(value) do
-    value
-    |> List.flatten()
-    |> Enum.join()
+  def parse(tokens) do
+    with {:ok, argument, filters, [{:end, _}] = rest} <- Argument.parse_with_filters(tokens) do
+      object =
+        %__MODULE__{
+          loc: struct!(Loc, Solid.Parser.meta_head(tokens)),
+          argument: argument,
+          filters: filters
+        }
+
+      {:ok, object, rest}
+    else
+      {:ok, _argument, _filters, rest} ->
+        {:error, "Unexpected token", Solid.Parser.meta_head(rest)}
+
+      {:error, reason, meta} ->
+        {:error, reason, meta}
+    end
   end
 
-  defp stringify!(value) when is_map(value) and not is_struct(value) do
-    "#{inspect(value)}"
-  end
+  defimpl Solid.Renderable do
+    def render(object, context, options) do
+      {:ok, result, context} =
+        Solid.Argument.render(object.argument, context, object.filters, options)
 
-  defp stringify!(value), do: to_string(value)
+      {result, context}
+    end
+  end
 end

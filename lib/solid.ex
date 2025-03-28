@@ -1,39 +1,80 @@
 defmodule Solid do
   @moduledoc """
-  Main module to interact with Solid
+  Solid is an implementation in Elixir of the [Liquid](https://shopify.github.io/liquid/) template language with
+  strict parsing.
   """
-  alias Solid.{Object, Tag, Context}
 
-  @type errors :: %Solid.UndefinedVariableError{} | %Solid.UndefinedFilterError{}
+  alias Solid.{Context, Object, Parser, Text}
+
+  @type errors :: [error]
+  @type error ::
+          Solid.UndefinedVariableError.t()
+          | Solid.UndefinedFilterError.t()
+          | Solid.ArgumentError.t()
+          | Solid.WrongFilterArityError.t()
+          | Solid.FileSystem.Error.t()
+          | Solid.TemplateError.t()
 
   defmodule Template do
-    @type rendered_data :: {:text, iodata()} | {:object, keyword()} | {:tag, list()}
-    @type t :: %__MODULE__{parsed_template: list(rendered_data())}
+    @type t :: %__MODULE__{parsed_template: Parser.parse_tree()}
 
     @enforce_keys [:parsed_template]
     defstruct [:parsed_template]
   end
 
-  defmodule TemplateError do
-    defexception [:message, :line, :reason, :header]
-
-    @impl true
-    def exception([reason, line, header]) do
-      %__MODULE__{
-        message: "Reason: #{reason}, line: #{elem(line, 0)}, header: #{header}",
-        reason: reason,
-        line: line,
-        header: header
-      }
-    end
-  end
-
   defmodule RenderError do
+    @type t :: %__MODULE__{message: binary, errors: Solid.errors(), result: iolist}
     defexception [:message, :errors, :result]
 
     @impl true
     def message(exception) do
-      "#{length(exception.errors)} error(s) found while rendering"
+      message = "#{length(exception.errors)} error(s) found while rendering"
+
+      errors =
+        exception.errors
+        |> Enum.map(&Exception.message/1)
+        |> Enum.join("\n")
+
+      message <> "\n" <> errors
+    end
+  end
+
+  defmodule ParserError do
+    @type t :: %__MODULE__{
+            reason: binary,
+            meta: %{line: pos_integer, column: pos_integer},
+            text: binary
+          }
+    defexception [:reason, :meta, :text]
+
+    @impl true
+    def message(%{text: text, reason: reason, meta: %{line: line, column: column}}) do
+      line_size = String.length(to_string(line))
+      "#{reason}\n#{line}: #{text}\n#{String.pad_leading("^", column + line_size + 2)}"
+    end
+  end
+
+  defmodule TemplateError do
+    @type t :: %__MODULE__{errors: [ParserError.t()]}
+    defexception [:errors]
+
+    @impl true
+    def message(exception) do
+      exception.errors
+      |> Enum.map(&Exception.message/1)
+      |> Enum.join("\n")
+    end
+  end
+
+  @doc """
+  It generates the compiled template
+
+  This function returns the compiled template or raises an error. Same options as `parse/2`
+  """
+  def parse!(text, opts \\ []) do
+    case parse(text, opts) do
+      {:ok, template} -> template
+      {:error, template_error} -> raise template_error
     end
   end
 
@@ -44,45 +85,36 @@ defmodule Solid do
 
   # Options
 
-  * `parser` - a custom parser module can be passed. See `Solid.Tag` for more information
+  - `tags` - Override tags allowed during compilation. See `Solid.Tag.default_tags/0` for more information on the default set of tags
 
   """
-  @spec parse(String.t(), Keyword.t()) :: {:ok, %Template{}} | {:error, %TemplateError{}}
+  @spec parse(binary, keyword) :: {:ok, Template.t()} | {:error, TemplateError.t()}
   def parse(text, opts \\ []) do
-    parser = Keyword.get(opts, :parser, Solid.Parser)
+    with {:ok, parse_tree} <- Parser.parse(text, opts) do
+      {:ok, %Template{parsed_template: parse_tree}}
+    else
+      {:error, errors} ->
+        lines = String.splitter(text, "\n")
 
-    case parser.parse(text) do
-      {:ok, result, _, _, _, _} ->
-        {:ok, %Template{parsed_template: result}}
+        errors =
+          Enum.map(errors, fn {reason, meta} ->
+            %ParserError{text: Enum.at(lines, meta[:line] - 1), reason: reason, meta: meta}
+          end)
 
-      {:error, reason, _, _, line, _} ->
-        {:error, TemplateError.exception([reason, line, String.slice(text, 0..20)])}
+        {:error, %TemplateError{errors: errors}}
     end
   end
 
   @doc """
-  It generates the compiled template
+  It renders the compiled template using a map with vars
 
-  This function returns the compiled template or raises an error. Same options as `parse/2`
+  Same options as `render/3`
   """
-  @spec parse!(String.t(), Keyword.t()) :: Template.t() | no_return
-  def parse!(text, opts \\ []) do
-    case parse(text, opts) do
-      {:ok, template} -> template
-      {:error, template_error} -> raise template_error
-    end
-  end
-
-  @doc """
-  It returns the rendered template or it raises an exception
-  with the accumulated errors and a partial result
-
-  See `render/3` for more details
-  """
-  @spec render!(Solid.Template.t(), map, Keyword.t()) :: iolist
+  @spec render!(Template.t(), map, keyword) :: iolist | no_return
   def render!(%Template{} = template, hash, options \\ []) do
     case render(template, hash, options) do
-      {:ok, result} ->
+      # Ignore errors here unless `strict_variables` or `strict_filters` are used
+      {:ok, result, _error} ->
         result
 
       {:error, errors, result} ->
@@ -91,13 +123,13 @@ defmodule Solid do
   end
 
   @doc """
-  It renders the compiled template using a map with vars
+  It renders the compiled template using a map with initial vars
 
   ## Options
 
-  - `file_system`: a tuple of {FileSystemModule, options}. If this option is not specified, `Solid` uses `Solid.BlankFileSystem` which raises an error when the `render` tag is used. `Solid.LocalFileSystem` can be used or a custom module may be implemented. See `Solid.FileSystem` for more details.
+  - `file_system`: a tuple of {FileSystemModule, options}. If this option is not specified, `Solid` uses `Solid.BlankFileSystem` which returns an error when the `render` tag is used. `Solid.LocalFileSystem` can be used or a custom module may be implemented. See `Solid.FileSystem` for more details.
 
-  - `custom_filters`: a module name where additional filters are defined. The base filters (thos from `Solid.Filter`) still can be used, however, custom filters always take precedence.
+  - `custom_filters`: a module name where additional filters are defined. The base filters (those from `Solid.StandardFilter`) still can be used, however, custom filters always take precedence.
 
   - `strict_variables`: if `true`, it collects an error when a variable is referenced in the template, but not given in the map
 
@@ -107,28 +139,36 @@ defmodule Solid do
 
   ## Example
 
-      fs = Solid.LocalFileSystem.new("/path/to/template/dir/")
-      Solid.render(template, vars, [file_system: {Solid.LocalFileSystem, fs}])
+  fs = Solid.LocalFileSystem.new("/path/to/template/dir/")
+  Solid.render(template, vars, [file_system: {Solid.LocalFileSystem, fs}])
   """
+  @spec render(Template.t(), map, keyword) ::
+          {:ok, result :: iolist, errors} | {:error, errors, partial_result :: iolist}
+  @spec render(Parser.parse_tree(), Context.t(), keyword) :: {iolist, Context.t()}
   def render(template_or_text, values, options \\ [])
 
-  @spec render(%Template{}, map, Keyword.t()) :: {:ok, iolist} | {:error, list(errors), iolist}
-  @spec render(list, %Context{}, Keyword.t()) :: {iolist, %Context{}}
-  def render(%Template{parsed_template: parsed_template}, hash, options) do
+  def render(%Template{parsed_template: parse_tree}, context = %Context{}, options) do
+    matcher_module = Keyword.get(options, :matcher_module, Solid.Matcher)
+    context = %{context | matcher_module: matcher_module}
+
+    {result, context} = render(parse_tree, context, options)
+
+    process_result(result, context, options)
+  catch
+    {exp, result, context} when exp in [:break_exp, :continue_exp] ->
+      process_result(result, context, options)
+  end
+
+  def render(%Template{} = template, hash, options) do
     matcher_module = Keyword.get(options, :matcher_module, Solid.Matcher)
     context = %Context{counter_vars: hash, matcher_module: matcher_module}
 
-    {result, context} = render(parsed_template, context, options)
-
-    process_result(result, context)
-  catch
-    {exp, result, context} when exp in [:break_exp, :continue_exp] ->
-      process_result(result, context)
+    render(template, context, options)
   end
 
   def render(text, context = %Context{}, options) do
     {result, context} =
-      Enum.reduce(text, {[], context}, fn entry, {acc, context} ->
+      Enum.reduce(List.wrap(text), {[], context}, fn entry, {acc, context} ->
         try do
           {result, context} = do_render(entry, context, options)
           {[result | acc], context}
@@ -144,33 +184,40 @@ defmodule Solid do
     {Enum.reverse(result), context}
   end
 
-  defp process_result(result, context) do
-    if context.errors == [] do
-      {:ok, result}
-    else
-      # Errors are accumulated by prepending to the errors list
+  # Optimisation for object and text to avoid extra render calls
+  defp do_render(renderable, context, options)
+       when is_struct(renderable, Text) or is_struct(renderable, Object) do
+    Solid.Renderable.render(renderable, context, options)
+  end
+
+  defp do_render(tag, context, options) when is_struct(tag) do
+    {result, context} = Solid.Renderable.render(tag, context, options)
+
+    render(result, context, options)
+  end
+
+  defp do_render(iolist, context, _options) do
+    {iolist, context}
+  end
+
+  defp process_result(result, context, options) do
+    if strict_errors?(context.errors, options) do
       {:error, Enum.reverse(context.errors), result}
+    else
+      {:ok, result, Enum.reverse(context.errors)}
     end
   end
 
-  defp do_render({:text, string}, context, _options), do: {string, context}
+  defp strict_errors?(errors, options) do
+    cond do
+      options[:strict_variables] == true ->
+        Enum.any?(errors, &match?(%Solid.UndefinedVariableError{}, &1))
 
-  defp do_render({:object, object}, context, options) do
-    {:ok, object_text, context} = Object.render(object, context, options)
-    {object_text, context}
-  end
+      options[:strict_filters] == true ->
+        Enum.any?(errors, &match?(%Solid.UndefinedFilterError{}, &1))
 
-  defp do_render({:tag, tag}, context, options) do
-    render_tag(tag, context, options)
-  end
-
-  defp render_tag(tag, context, options) do
-    {result, context} = Tag.eval(tag, context, options)
-
-    if result do
-      render(result, context, options)
-    else
-      {"", context}
+      true ->
+        false
     end
   end
 end
