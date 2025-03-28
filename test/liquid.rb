@@ -8,11 +8,11 @@ module SubstituteFilter
 end
 
 if ARGV[2]
-  Liquid::Template.file_system = Liquid::LocalFileSystem.new(ARGV[2])
+  Liquid::Environment.default.file_system = Liquid::LocalFileSystem.new(ARGV[2])
 end
 
 context = Liquid::Context.new(JSON.parse(ARGV[1]))
 context.add_filters(SubstituteFilter)
 
 
-puts Liquid::Template.parse(ARGV[0]).render(context)
+puts Liquid::Template.parse(ARGV[0], error_mode: :strict, line_numbers: true).render(context)

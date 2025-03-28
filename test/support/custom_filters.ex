@@ -20,8 +20,7 @@ defmodule Solid.CustomFilters do
     Regex.replace(~r/%\{(\w+)\}/, message, fn _, key -> Map.get(bindings, key) || "" end)
   end
 
-  def asset_url(input, opts) do
-    url = Keyword.get(opts, :"#{input}", "")
-    url <> input
+  def asset_url(input) do
+    input
   end
 end

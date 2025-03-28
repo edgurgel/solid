@@ -1,0 +1,7 @@
+{
+  "shipping_method" : { "title" : "Local Pick-Up" },
+  "title" : "ABC",
+  "other" : "ABC",
+  "condition" : 3,
+  "product" : "shoes"
+}

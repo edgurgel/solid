@@ -1,0 +1,22 @@
+{
+  "string" : "1, 2, 3",
+  "integer" : 1,
+  "integers" : [1, 2, 3],
+  "float" : 0.333,
+  "floats" : [0.333, 0.666, 1.0],
+  "hash" : {
+    "key" : "value",
+    "numbers" : [1, 0.2]
+  },
+  "var" : {
+    "value1" : {
+      "pt_BR" : "sucesso"
+    }
+  },
+  "test" : {
+    "var2" : "value1"
+  },
+  "context" : {
+    "locale" : "pt_BR"
+  }
+}

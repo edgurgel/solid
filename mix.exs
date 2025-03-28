@@ -1,17 +1,16 @@
-defmodule Solid.Mixfile do
+defmodule Solid.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/edgurgel/solid"
-  @version "0.18.0"
+  @version "1.0.0-rc.0"
 
   def project do
     [
       app: :solid,
       version: @version,
-      elixir: "~> 1.16",
+      elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       consolidate_protocols: Mix.env() != :test,
-      build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       name: "solid",
       package: package(),
@@ -20,17 +19,18 @@ defmodule Solid.Mixfile do
     ]
   end
 
-  def application,
-    do: [
-      extra_applications: [:crypto]
+  def application do
+    [
+      extra_applications: [:logger]
     ]
+  end
 
+  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:nimble_parsec, "~> 1.0"},
-      {:jason, "~> 1.0", only: :test},
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:jason, "~> 1.0", only: :test},
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
   end

@@ -1,0 +1,305 @@
+compact
+
+{{words | compact | join}}
+{{ '123' | compact | first }}
+
+{ "hashes" : [{ "a" : "A" }, { "a" : null }, { "a" : "C "}] }
+
+{{ var | xyzzy }}
+
+{{ array[1] | upcase }}
+
+abs
+
+{{ -17 | abs }}
+{{ 4 | abs }}
+{{ "-19.86" | abs }}
+{{ "-5" | abs }}
+{{ -3 | abs: 1 }}
+{{ var_empty_hash | abs }}
+
+append
+
+{{ "apples, oranges, and bananas" | append: "Some fruit: " }}
+{{ "apples, oranges, and bananas" | append: unknown }}
+{{ "apples, oranges, and bananas" | append: empty }}
+{{ "apples, oranges, and bananas" | append: array }}
+{% comment %}{{ "apples, oranges, and bananas" | append: post }} {% endcomment %}
+{{ empty | append: "text" }}
+{{ unknown | append: "Some text" }}
+{{ 1 | append: 5 }}
+{{ (1..5) | append: 5 }}
+{{ (1..5) | append: empty }}
+
+capitalize
+
+{{ "my great title" | capitalize }}
+{{ 1 | capitalize }}
+{{ (1..5) | capitalize }}
+{{ array | capitalize }}
+{{ empty | capitalize }}
+{{ unknown | capitalize }}
+
+upcase
+
+{{ "my great title" | upcase }}
+{{ 1 | upcase }}
+{{ (1..5) | upcase }}
+{{ array | upcase }}
+{{ empty | upcase }}
+{{ unknown | upcase }}
+
+downcase
+
+{{ "My Great title" | downcase }}
+{{ 1 | downcase }}
+{{ (1..5) | downcase }}
+{{ array | downcase }}
+{{ nested_array | downcase }}
+{{ empty | downcase }}
+{{ unknown | downcase }}
+
+ceil
+
+{{ 1.2 | ceil }}
+{{ 2.0 | ceil }}
+{{ 2 | ceil }}
+{{ 183.357 | ceil }}
+{{ "3.5" | ceil }}
+{{ 1 | ceil }}
+{{ "123" | ceil }}
+{{ "hello" | ceil }}
+{{ var_empty_hash | ceil }}
+{{ does_not_exist | ceil }}
+
+divided_by
+
+{{ 16 | divided_by: 4}}
+{{ 5 | divided_by: 3 }}
+{{ 20 | divided_by: 7 }}
+{{ 20 | divided_by: 7.0 }}
+{{ 20 | divided_by: '7.0' }}
+{{ '20' | divided_by: 7.0 }}
+{{ 20 | divided_by: 'foo' }}
+{{ 'foo' | divided_by: 20 }}
+{{ 9.0 | divided_by: 2 }}
+
+{{ my_array | first }}
+{{ string | first }}
+{{ does_not_exist | first }}
+
+{{ my_array | last }}
+{{ string | last }}
+{{ does_not_exist | last }}
+{{ (1..3) | last }}
+
+{{ 1.2 | floor }}
+{{ 2.0 | floor }}
+{{ 183.357 | floor }}
+{{ "3.5" | floor }}
+{{ 1 | floor }}
+{{ "123" | floor }}
+{{ "not a number" | floor }}
+
+lstrip
+
+{{ "          So much room for activities!          " | lstrip }}
+{{ "          So much room for activities!          " | rstrip }}
+{{ "          So much room for activities!          " | strip }}
+{{ 5 | lstrip }}
+{{ (1..5) | lstrip }}
+{{ array | lstrip }}
+{{ unknown | lstrip }}
+
+minus
+
+{{ 4 | minus: 2 }}
+{{ 16 | minus: 4 }}
+{{ 183.357 | minus: 12 }}
+{{ 13 | minus: "12" }}
+{{ 10 | minus: unknown }}
+{{ "not a number" | minus: "2.0" }}
+{{ '10' | minus: '2' }}
+
+plus
+
+{{ 4 | plus: 2 }}
+{{ 16 | plus: 4 }}
+{{ 183.357 | plus: 12 }}
+{{ '183.357' | plus: 12 }}
+{{ 123 | plus: '12' }}
+{{ '183.1ABC357' | plus: '12' }}
+
+{{ 1.2 | round }}
+{{ 2.7 | round }}
+{{ 183.357 | round: 2 }}
+{{ '183.357' | round: 2 }}
+{{ 183.357 | round: '2' }}
+
+{{ 3 | times: 2 }}
+{{ 24 | times: 7 }}
+{{ 183.357 | times: 12 }}
+{{ '183.357' | times: 12 }}
+{{ 183.357 | times: '12' }}
+
+prepend
+
+{{ "apples, oranges, and bananas" | prepend: "Some fruit: " }}
+{{ "apples, oranges, and bananas" | prepend: unknown }}
+{{ "apples, oranges, and bananas" | prepend: empty }}
+{{ "apples, oranges, and bananas" | prepend: array }}
+{% comment %}{{ "apples, oranges, and bananas" | prepend: post }} {% endcomment %}
+{{ empty | prepend: "text" }}
+{{ unknown | prepend: "Some text" }}
+{{ 1 | prepend: 5 }}
+{{ (1..5) | prepend: 5 }}
+{{ (1..5) | prepend: empty }}
+
+replace
+
+{{ "I strained to see the train through the rain" | replace: "rain", "rap" }}
+{{ "I strained to see the train through the rain" | replace: nil, nil }}
+{{ "654321" | replace: 5, "five" }}
+{{ 654321 | replace: 5, "five" }}
+{{ "654321" | replace: empty, "empty" }}
+{{ "654321" | replace: array, "array" }}
+{{ unknown | replace: "rain", "unknown" }}
+{{ (1..5) | replace: 1, "one" }}
+{{ 1 | replace: (1..5), "range" }}
+
+remove
+
+{{ "I strained to see the train through the rain" | remove: "rain" }}
+{{ "I strained to see the train through the rain" | remove: nil }}
+{{ "654321" | remove: 5 }}
+{{ 654321 | remove: 5 }}
+{{ "654321" | remove: empty }}
+{{ "654321" | remove: array }}
+{{ unknown | remove: "rain" }}
+{{ (1..5) | remove: 1 }}
+{{ 1 | remove: (1..5) }}
+
+remove_first
+
+{{ "I strained to see the train through the rain" | remove_first: "rain" }}
+{{ "I strained to see the train through the rain" | remove_first: nil }}
+{{ "654321" | remove_first: 5 }}
+{{ 654321 | remove_first: 5 }}
+{{ "654321" | remove_first: empty }}
+{{ "654321" | remove_first: array }}
+{{ unknown | remove_first: "rain" }}
+{{ (1..5) | remove_first: 1 }}
+{{ 1 | remove_first: (1..5) }}
+
+{% assign my_string = "Take my protein pills and put my helmet on" %}
+{{ my_string | replace: "my", "your" }}
+{{ my_string | replace_first: "my", "your" }}
+
+split
+
+{{ fruits | split: ", " | reverse | join: ", " }}
+{{ fruits | split: "," |  size }}
+{{ "Ground control to Major Tom." | size }}
+{{ fruits | split: ", " | sort | join: ", " }}
+{{ fruits | split: ", " | sort_natural | join: ", " }}
+{{ unknown | split: ", " | sort_natural | join: ", " }}
+{{ (1..5) | split: ", " | sort_natural | join: ", " }}
+{{ empty | split: ", " | sort_natural | join: ", " }}
+{{ nested_array | split: ", " | sort_natural | join: ", " }}
+{% comment %}{{ post | split: ", " | sort_natural | join: ", " }}{%endcomment %}
+
+{{ "Liquid" | slice: 0 }}
+{{ "Liquid" | slice: 2 }}
+{{ "Liquid" | slice: 2, 5 }}
+{{ "Liquid" | slice: -3, 2 }}
+
+{{ "Ground control to Major Tom." | truncate: 20 }}
+{{ "Ground control to Major Tom." | truncate: 25, ", and so on" }}
+{{ "Ground control to Major Tom." | truncate: 20, "" }}
+
+{{ "Ground control to Major Tom." | truncatewords: 3 }}
+{{ "Ground control to Major Tom." | truncatewords: 3, "--" }}
+{{ "Ground control to Major Tom." | truncatewords: 3, "" }}
+{{ empty_string | truncatewords: 3, "" }}
+
+{{ fruits | split: ","| uniq | join: ", " }}
+
+{{ "2000-01-01 00:00:00Z" | date: "%a, %b %d, %y" }}
+{{ 946684800 | date: "%Y" }}
+{{ "now" | date: "%Y-%m-%d %H:%M" }}
+{{ "invalid-date" | date: "%Y" }}
+
+{{ 183.357 | modulo: 12 }}
+{{ 183.35 | modulo: 12 }}
+{{ 183.3 | modulo: 12 }}
+{{ 183 | modulo: 12 }}
+
+{{ input | substitute: first_name: surname, last_name: 'doe' }}
+
+base64
+
+{{ "one two three" | base64_encode }}
+{{ 1 | base64_encode }}
+
+{{ "b25lIHR3byB0aHJlZQ==" | base64_decode }}
+{{ unknown | base64_decode }}
+{{ "" | base64_decode }}
+{{ 1 | base64_decode }}
+
+{{ "https://github.com/edgurgel/solid" | base64_url_safe_encode }}
+{{ 1 | base64_url_safe_encode }}
+
+{{ "aHR0cHM6Ly9naXRodWIuY29tL2VkZ3VyZ2VsL3NvbGlk" | base64_url_safe_decode }}
+{{ unknown | base64_url_safe_decode }}
+{{ "" | base64_url_safe_decode }}
+{{ 1 | base64_url_safe_decode }}
+
+{{ my_string | remove_last: "cde" }}
+{{ my_string | replace_last: "cde", "fgh" }}
+
+default
+
+{{ var_nil | default: "nil" }}
+{{ var_false | default: "false" }}
+{{ var_empty_hash | default: "text" }}
+{{ var_empty_array | default: "empty array" }}
+{{ var_empty_string | default: "empty string" }}
+{{ false | default: 'baar', allow_false: true }}
+{{ false | default }}
+{% # {{ false | default: allow_false: true }} %}
+{{ empty | default: bar }}
+
+at_least
+
+{{ 3 | at_least: unknown }}
+{{ unknown | at_least: 3  }}
+
+at_most
+
+{{ unknown | at_most: 3 }}
+{{ 3 | at_most: unknown }}
+
+concat
+
+{{ words | concat: array | join: '#' }}
+{{ string | concat: array | join: '#' }}
+{{ string | concat | join: '#' }}
+{{ nested_array | concat: array | join: '#' }}
+{{ array | concat: var | join: '#' }}
+{{ array | concat: unknown | join: '#' }}
+{{ unknown | concat: array | join: '#' }}
+{{ (1..3) | concat: 'foo' | join: '#' }}
+
+join
+
+{{ array | join: 5 }}
+{{ array | join: unknown }}
+{{ 123 | join: '#' }}
+
+map
+
+{{ posts | map: 'title' | join: ', ' }}
+{{ post | map: 'title' | join: ', ' }}
+{{ 1000 | map: 'title' | join: ', ' }}
+{{ 'not a list' | map: 'title' | join: ', ' }}
+{{ (0..5) | map: 'title' | join: ', ' }}

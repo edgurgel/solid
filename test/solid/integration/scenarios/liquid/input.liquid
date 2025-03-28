@@ -1,0 +1,59 @@
+{% liquid
+  echo var1
+  # A comment
+  echo var2
+%}
+
+{% if true %}
+  {% liquid
+    # comment
+    echo '456'
+  %}
+{% endif %}
+
+{% if true %}
+  {% liquid
+    if true
+      echo 'true inside'
+    endif
+  %}
+{% endif %}
+
+{% echo '123' %}
+
+{% liquid
+  assign var3 = 'value3'
+%}
+
+{% liquid
+  comment
+  completely ignored
+  ===
+  {{
+  endcomment
+%}
+
+{% liquid
+comment first line
+second line
+endcomment text
+%}
+
+{% liquid
+comment this is a comment
+endcomment
+%}
+
+{% liquid
+##
+# inline comment
+##
+#inlinecomment
+%}
+
+
+{%- liquid echo "a" -%}
+b
+{%- liquid echo "c" -%}
+
+{{ value3 }}

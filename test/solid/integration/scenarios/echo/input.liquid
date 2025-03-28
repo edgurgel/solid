@@ -1,0 +1,12 @@
+{% echo 'a string' %}
+{% echo string %}
+{% echo string | upcase | split: ',' %}
+
+{% echo integer %}
+{% echo integers %}
+
+{% echo float %}
+{% echo floats %}
+
+{% echo var[test.var2][context.locale] %}
+{% echo var[test["var2"]][context.locale] %}

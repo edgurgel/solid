@@ -31,13 +31,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - otp: 26.x
-            elixir: 1.16.x
-            coverage: true
           - otp: 27.x
             elixir: 1.17.x
           - otp: 27.x
             elixir: 1.18.x
+            coverage: true
     env:
       MIX_ENV: test
     steps:
@@ -59,7 +57,7 @@ jobs:
         run: mix deps.get --only test
 
       - name: Install liquid gem
-        run: gem install liquid -v 5.4.0
+        run: gem install liquid -v 5.8.1
 
       - name: Run tests
         run: mix test --trace

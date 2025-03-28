@@ -1,13 +1,11 @@
 # Solid
-
-[![Build Status](https://github.com/edgurgel/solid/workflows/CI/badge.svg?branch=master)](https://github.com/edgurgel/solid/actions?query=workflow%3ACI)
 [![Module Version](https://img.shields.io/hexpm/v/solid.svg)](https://hex.pm/packages/solid)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/solid/)
 [![Total Download](https://img.shields.io/hexpm/dt/solid.svg)](https://hex.pm/packages/solid)
 [![License](https://img.shields.io/hexpm/l/solid.svg)](https://github.com/edgurgel/solid/blob/master/LICENSE.md)
 [![Last Updated](https://img.shields.io/github/last-commit/edgurgel/solid.svg)](https://github.com/edgurgel/solid/commits/master)
 
-Solid is an implementation in Elixir of the template language [Liquid](https://shopify.github.io/liquid/). It uses [nimble_parsec](https://github.com/plataformatec/nimble_parsec) to generate the parser.
+Solid is an implementation in Elixir of the [Liquid](https://shopify.github.io/liquid/) template language with strict parsing.
 
 ## Basic Usage
 
@@ -18,79 +16,68 @@ iex> Solid.render!(template, %{ "user" => %{ "name" => "José" } }) |> to_string
 "My name is José"
 ```
 
-## Sigil Support
-
-Solid provides a `~LIQUID` sigil for validating and compiling templates at compile time:
-
-```elixir
-import Solid.Sigil
-
-# Validates syntax at compile time
-template = ~LIQUID"""
-Hello, {{ name }}!
-"""
-
-# Use the compiled template
-Solid.render!(template, %{"name" => "World"})
-```
-
-The sigil will raise helpful CompileError messages with line numbers and context when templates contain syntax errors.
-Experimental VSCode syntax highlighting is available with the [Liquid Sigil](https://marketplace.visualstudio.com/items?itemName=JakubSkalecki.liquid-sigil) extension.
-
 ## Installation
 
 The package can be installed with:
 
 ```elixir
 def deps do
-  [{:solid, "~> 0.14"}]
+  [{:solid, "~> 1.0.0-rc.0"}]
 end
 ```
 
 ## Custom tags
 
-To implement a new tag you need to create a new module that implements the `Tag` behaviour:
+To implement a new tag you need to create a new module that implements the `Tag` behaviour. It must implement a `parse/3` function that returns a struct that implements `Solid.Renderable`. Here is a simple example:
 
 ```elixir
-defmodule MyCustomTag do
-  import NimbleParsec
+defmodule CurrentYear do
+  @enforce_keys [:loc]
+  defstruct [:loc]
+
   @behaviour Solid.Tag
 
   @impl true
-  def spec(_parser) do
-    space = Solid.Parser.Literal.whitespace(min: 0)
-
-    ignore(string("{%"))
-    |> ignore(space)
-    |> ignore(string("my_tag"))
-    |> ignore(space)
-    |> ignore(string("%}"))
+  def parse("get_current_year", loc, context) do
+    with {:ok, [{:end, _}], context} <- Solid.Lexer.tokenize_tag_end(context) do
+      {:ok, %__MODULE__{loc: loc}, context}
+    end
   end
 
-  @impl true
-  def render(_tag, _context, _options) do
-    [text: "my first tag"]
+  defimpl Solid.Renderable do
+    def render(_tag, context, _options) do
+      {[to_string(Date.utc_today().year)], context}
+    end
   end
 end
 ```
 
-- `spec` defines how to parse your tag;
-- `render` defines how to render your tag.
-
-Now we need to add the tag to the parser
+Now to use it simply pass a `:tags` option to `Solid.parse/2` including your custom tag:
 
 ```elixir
-defmodule MyParser do
-  use Solid.Parser.Base, custom_tags: [MyCustomTag]
-end
+tags = Map.put(Solid.Tag.default_tags(), "get_current_year", CurrentYear)
+Solid.parse!("{{ get_current_year }}", tags: tags)
 ```
 
-And finally pass the custom parser as an option:
+One can also pass a subset of the default tags if a more restricted environment is necessary:
 
 ```elixir
-"{% my_tag %}"
-|> Solid.parse!(parser: MyParser)
-|> Solid.render()
+# No comment tags allowed
+tags = Map.delete(Solid.Tag.default_tags(), "comment")
+Solid.parse!("{% comment %} {% endcomment %}", tags: tags)
+```
+
+An error will be presented as `comment` is not part of the allowed tags:
+
+```elixir
+** (Solid.TemplateError) Unexpected tag 'comment'
+1: {% comment %} {% endcomment %}
+   ^
+Unexpected tag 'endcomment'
+1: {% comment %} {% endcomment %}
+                 ^
+    (solid 1.0.0-rc1) lib/solid.ex:51: Solid.parse!/2
+    iex:2: (file)
 ```
 
 ## Custom filters
@@ -104,34 +91,14 @@ end
 
 "{{ number | add_one }}"
 |> Solid.parse!()
-|> Solid.render(%{ "number" => 41}, custom_filters: MyCustomFilters)
+|> Solid.render!(%{ "number" => 41}, custom_filters: MyCustomFilters)
 |> IO.puts()
 # 42
 ```
 
-Extra options can be passed as last argument to custom filters if an extra argument is accepted:
-
-```elixir
-defmodule MyCustomFilters do
-  def asset_url(path, opts) do
-    opts[:host] <> path
-  end
-end
-
-opts = [custom_filters: MyCustomFilters, host: "http://example.com"]
-
-"{{ file_path | asset_url }}"
-|> Solid.parse!()
-|> Solid.render(%{ "file_path" => "/styles/app.css"}, opts)
-|> IO.puts()
-# http://example.com/styles/app.css
-```
-
 ## Strict rendering
 
-`Solid.render/3` doesn't raise or return errors unless `strict_variables: true` or `strict_filters: true` are passed as options.
-
-If there are any missing variables/filters `Solid.render/3` returns `{:error, errors, result}` where errors is the list of collected errors and `result` is the rendered template.
+If there are any missing variables/filters and `strict_variables: true` or `strict_filters: true` are passed as options `Solid.render/3` returns `{:error, errors, result}` where errors is the list of collected errors and `result` is the rendered template.
 
 `Solid.render!/3` raises if `strict_variables: true` is passed and there are missing variables.
 `Solid.render!/3` raises if `strict_filters: true` is passed and there are missing filters.
@@ -166,7 +133,7 @@ end
 
 ```
 
-And then pass it as an option to render `cache_module: CachexCache`.
+And then pass it as an option to render `cache_module: CachexCache`. Now while using `{% render 'etc' %}` this custom cache will be used
 
 ## Using structs in context
 
@@ -206,47 +173,43 @@ template |> Solid.parse!() |> Solid.render!(context) |> to_string()
 # => test@example.com: John Doe
 ```
 
-If the `Solid.Matcher` protocol is not enough one can provide their own module like this:
+If the `Solid.Matcher` protocol is not enough one can provide a module like this:
 
 ```elixir
 defmodule MyMatcher do
-  def match(data, keys), do: {:ok, 42}
+  def match(_data, _keys), do: {:ok, 42}
 end
 
 # ...
-Solid.render(template, %{"number" => 4}, matcher_module: MyMatcher)
+Solid.render!(template, %{"number" => 4}, matcher_module: MyMatcher)
 ```
+
+## Sigil Support
+
+Solid provides a `~LIQUID` sigil for validating and compiling templates at compile time:
+
+```elixir
+import Solid.Sigil
+
+# Validates syntax at compile time
+template = ~LIQUID"""
+Hello, {{ name }}!
+"""
+
+# Use the compiled template
+Solid.render!(template, %{"name" => "World"})
+```
+
+The sigil will raise helpful CompileError messages with line numbers and context when templates contain syntax errors.
+Experimental VSCode syntax highlighting is available with the [Liquid Sigil](https://marketplace.visualstudio.com/items?itemName=JakubSkalecki.liquid-sigil) extension.
 
 ## Contributing
 
-When adding new functionality or fixing bugs consider adding a new test case here inside `test/cases`. These cases are tested against the Ruby gem so we can try to stay as close as possible to the original implementation.
-
-## TODO
-
-- [x] Integration tests using Liquid gem to build fixtures; [#3](https://github.com/edgurgel/solid/pull/3)
-- [x] All the standard filters [#8](https://github.com/edgurgel/solid/issues/8)
-- [x] Support to custom filters [#11](https://github.com/edgurgel/solid/issues/11)
-- [x] Tags (if, case, unless, etc)
-  - [x] `for`
-    - [x] `else`
-    - [x] `break`
-    - [x] `continue`
-    - [x] `limit`
-    - [x] `offset`
-    - [x] Range (3..5)
-    - [x] `reversed`
-    - [x] `forloop` object
-  - [x] `raw` [#18](https://github.com/edgurgel/solid/issues/18)
-  - [x] `cycle` [#17](https://github.com/edgurgel/solid/issues/17)
-  - [x] `capture` [#19](https://github.com/edgurgel/solid/issues/19)
-  - [x] `increment` [#16](https://github.com/edgurgel/solid/issues/16)
-  - [x] `decrement` [#16](https://github.com/edgurgel/solid/issues/16)
-- [x] Boolean operators [#2](https://github.com/edgurgel/solid/pull/2)
-- [x] Whitespace control [#10](https://github.com/edgurgel/solid/issues/10)
+When adding new functionality or fixing bugs consider adding a new test case here inside `test/solid/integration/scenarios`. These scenarios are tested against the Ruby gem so we can try to stay as close as possible to the original implementation.
 
 ## Copyright and License
 
-Copyright (c) 2016-2022 Eduardo Gurgel Pinho
+Copyright (c) 2016-2025 Eduardo Gurgel Pinho
 
 This work is free. You can redistribute it and/or modify it under the
 terms of the MIT License. See the [LICENSE.md](./LICENSE.md) file for more details.

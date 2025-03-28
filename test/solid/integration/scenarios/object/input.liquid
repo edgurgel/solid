@@ -1,0 +1,48 @@
+{{ foo }}
+
+{{ bar }}
+
+{{ var[1] }}
+{{ var }}
+
+{{ multiarray[0][1] }}
+{{ multiarray[1][1] }}
+{{ multiarray[12] }}
+{{ multiarray[-1][1] }}{{ empty[0][1] }}
+
+{{ empty[1] }}
+{{ blank[1] }}
+{{ nil[1] }}
+{{ true[1] }}
+{{ false[1] }}
+
+{{ string[0][1] }}
+{{ string[1][1] }}
+{{ string[12] }}
+
+{{ complexarray }}
+
+{{ list[1].key }}
+
+{{ "Have <em>you</em> read <strong>Ulysses</strong>?" | strip_html }}
+
+{{ "john@liquid.com" | url_encode }}
+{{ "Tetsuro Takara" | url_encode }}
+
+{{ "%27Stop%21%27+said+Fred" | url_decode }}
+
+{{ "Have you read 'James & the Giant Peach'?" | escape }}
+{{ "Tetsuro Takara" | escape }}
+
+{{ "1 < 2 & 3" | escape_once }}
+{{ "1 &lt; 2 &amp; 3" | escape_once }}
+
+{{ hash.key }}
+
+{{ 'text' | unknown_function: 'too many args' }}
+
+{{ (1..'2') }}
+{{ (1..foo) }}
+{{ (1..number) }}
+
+{{ question? }}

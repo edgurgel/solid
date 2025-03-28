@@ -1,0 +1,126 @@
+contains
+{% if 1 contains '1' %}true{% else %}false{% endif %}
+{% if 1 contains 1 %}true{% else %}false{% endif %}
+{% if '123' contains 1 %}true{% else %}false{% endif %}
+
+comparison on different types
+{% if '2' > 1 %}true{% else %}false{% endif %}
+{% if 1 > '2' %}true{% else %}false{% endif %}
+{% if 1.0 > '2' %}true{% else %}false{% endif %}
+{% if '2' == 1.1 %}true{% else %}false{% endif %}
+{% if null > 2 %}true{% else %}false{% endif %}
+{% if nil > 2 %}true{% else %}false{% endif %}
+{% if 2 > nil %}true{% else %}false{% endif %}
+{% if '1' == 1 %}true{% else %}false{% endif %}
+{% if (1..3) == (1..3) %}true{% else %}false{% endif %}
+
+comparison on hashes
+{% if empty_hash > 2 %}true{% else %}false{% endif %}
+{% if empty_hash < 2 %}true{% else %}false{% endif %}
+{% if empty_hash == empty %}TRUE{% else %}FALSE{% endif %}
+{% if empty == empty_hash %}TRUE{% else %}FALSE{% endif %}
+{% if empty_hash > empty %}true{% else %}false{% endif %}
+{% if empty_hash < empty %}true{% else %}false{% endif %}
+{% if empty > empty_hash %}true{% else %}false{% endif %}
+{% if empty < empty_hash %}true{% else %}false{% endif %}
+
+{% if empty_hash != empty %}TRUE{% else %}FALSE{% endif %}
+{% if empty != empty_hash %}TRUE{% else %}FALSE{% endif %}
+{% if empty_hash <> empty %}TRUE{% else %}FALSE{% endif %}
+{% if empty <> empty_hash %}TRUE{% else %}FALSE{% endif %}
+
+{% if var == nil %} true {% else %} false {% endif %}
+{% if var != nil %} true {% else %} false {% endif %}
+
+{% if var == null %} true {% else %} false {% endif %}
+{% if var == null %} true {% else %} false {% endif %}
+{% if var2 != nil %} true {% else %} false {% endif %}
+{% if var2 != null %} true {% else %} false {% endif %}
+
+{% if 0 >= 0 %} true {% else %} false {% endif %}
+
+{% if 0 <= null %} true {% else %} false {% endif %}
+
+{% if 0 >= 0 %} true {% else %} false {% endif %}
+
+{% if 0 <= null %} true {% else %} false {% endif %}
+
+{% if null <= 0 %} true {% else %} false {% endif %}
+
+  {% if null >= 0 %} true {% else %} false {% endif %}
+  {% if null >= 1 %} true {% else %} false {% endif %}
+  {% if null >= 1.0 %} true {% else %} false {% endif %}
+
+  {% if
+  0 >= 0 %} true {% else
+    %} false {% endif
+%}
+
+{% if array contains 1 %} true {% else %} false {% endif %}
+{% if 1 contains array %} true {% else %} false {% endif %}
+
+{% if string-array[1] == "b" %}
+  letter b
+{% endif %}
+
+{% if 2 == 2 and 1 == 2 and 1 != 1 or 1 == 1 %}
+  This evaluates to false, since the tags are checked like this:
+
+  true and (false and (false or true))
+  true and (false and true)
+  true and false
+  false
+{% endif %}
+
+{% if pages["about-us"].title == "About Us" %}
+  True!
+{% else %}
+  False!
+{% endif %}
+
+{% if var == -1 %}
+equal
+{% else %}
+not equal
+{% endif %}
+
+{% if var3 %}
+true
+{% else %}
+false
+{% endif %}
+
+{% assign var3 = true %}
+
+{% if var3 %}
+true
+{% else %}
+false
+{% endif %}
+
+{% if site.pages.size > 4 %}
+  This is a big website: {{ site.size }} pages and {{ site.page_refs.size }} refs
+{% endif %}
+
+{% liquid
+if true
+  if true
+    echo 'deep true'
+  endif
+endif
+%}
+
+{% if array == empty %}empty{% else %}not empty{% endif %}
+{% if empty == array %}empty{% else %}not empty{% endif %}
+{% if array == blank %}blank{% else %}not blank{% endif %}
+{% if blank == array %}blank{% else %}not blank{% endif %}
+
+Empty bodies
+{% if true %}  {% elsif false %} {% else %} {% endif %}
+{% if false %}  {% elsif true %} {% else %} {% endif %}
+{% if true %} {% comment %} this is empty {% endcomment %} {% endif %}
+
+Extra blocks
+{% if false %}if{% else %}else{% elsif true %}elsif{% endif %}
+{% comment %}{% if false %}if{% else %}else1{% else %}else2{% endif %} {% endcomment %}
+
