@@ -84,9 +84,12 @@ divided_by
 {{ 'foo' | divided_by: 20 }}
 {{ 9.0 | divided_by: 2 }}
 
+first
+
 {{ my_array | first }}
 {{ string | first }}
 {{ does_not_exist | first }}
+{{ post | first | join: ","}}
 
 {{ my_array | last }}
 {{ string | last }}

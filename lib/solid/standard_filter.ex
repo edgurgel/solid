@@ -296,11 +296,19 @@ defmodule Solid.StandardFilter do
   1
   iex> Solid.StandardFilter.first([])
   nil
+  iex> Solid.StandardFilter.first(%{"a" => "b"})
+  ["a", "b"]
   """
-  @spec first(list) :: any
+  @spec first(term) :: any
   def first(input) when is_list(input), do: List.first(input)
   # Maps are not ordered making this result not consistent with Ruby's liquid ordered hash
-  def first(input) when is_map(input), do: Enum.take(input, 1)
+  def first(input) when is_map(input) do
+    input
+    |> Enum.take(1)
+    |> hd()
+    |> Tuple.to_list()
+  end
+
   def first(_), do: nil
 
   @doc """
