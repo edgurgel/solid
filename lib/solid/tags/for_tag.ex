@@ -199,7 +199,8 @@ defmodule Solid.Tags.ForTag do
       enumerable = enumerable || []
 
       case enumerable do
-        enumerable when is_list(enumerable) ->
+        enumerable
+        when is_list(enumerable) or (is_map(enumerable) and not is_struct(enumerable)) ->
           {:ok, enumerable, context}
 
         %Range{first: first, last: last} when first <= last ->
