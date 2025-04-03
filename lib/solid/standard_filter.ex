@@ -347,6 +347,16 @@ defmodule Solid.StandardFilter do
     List.flatten(input) ++ list
   end
 
+  def concat(input, list) when is_struct(input, Range) do
+    input = Enum.to_list(input)
+    concat(input, list)
+  end
+
+  def concat(input, list) when is_struct(list, Range) do
+    list = Enum.to_list(list)
+    concat(input, list)
+  end
+
   def concat(nil, list) when is_list(list), do: concat([], list)
   def concat(input, list) when is_list(list), do: concat([input], list)
 
@@ -365,6 +375,8 @@ defmodule Solid.StandardFilter do
   "a5b5c"
   iex> Solid.StandardFilter.join((0..3), "-")
   "0-1-2-3"
+  iex> Solid.StandardFilter.join((3..0//-1), "-")
+  "3-2-1-0"
   iex> Solid.StandardFilter.join(5, "-")
   5
   """
@@ -374,8 +386,9 @@ defmodule Solid.StandardFilter do
   def join(input, glue) when is_list(input), do: join(input, to_string(glue))
 
   def join(input, glue) when is_struct(input, Range) do
-    input = Enum.to_list(input)
-    join(input, glue)
+    input
+    |> Enum.to_list()
+    |> join(glue)
   end
 
   def join(input, _glue), do: input

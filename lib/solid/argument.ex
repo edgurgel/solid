@@ -212,7 +212,7 @@ defmodule Solid.Argument do
         _ -> 0
       end
 
-    {:ok, start..finish, context}
+    {:ok, start..finish//1, context}
   end
 
   defp apply_filters(input, nil, context, _opts), do: {input, context}

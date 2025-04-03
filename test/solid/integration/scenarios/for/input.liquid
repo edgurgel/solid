@@ -139,3 +139,7 @@ Range
 {% for i in (1..5) limit: '3' %} {{ i }} {% endfor %}
 Offset error
 {% for i in (1..4) offset: 'foo' %}{{ i }} {% endfor %}
+
+Hash
+
+{% for item in collection %}{{ item[0] }} {{ item[1] }} {% endfor %}
