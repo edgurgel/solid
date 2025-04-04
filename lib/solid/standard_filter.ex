@@ -301,6 +301,7 @@ defmodule Solid.StandardFilter do
   """
   @spec first(term) :: any
   def first(input) when is_list(input), do: List.first(input)
+  def first(start.._//_), do: start
   # Maps are not ordered making this result not consistent with Ruby's liquid ordered hash
   def first(input) when is_map(input) do
     input
