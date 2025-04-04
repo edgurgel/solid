@@ -36,6 +36,27 @@ defmodule Solid.ObjectTest do
              }
     end
 
+    test "bracket variable" do
+      template = "['a var'].foo }}"
+
+      assert {
+               :ok,
+               %Object{
+                 argument: %Solid.Variable{
+                   identifier: "a var",
+                   accesses: [
+                     %Solid.AccessLiteral{
+                       value: "foo"
+                     }
+                   ],
+                   original_name: "['a var'].foo"
+                 },
+                 filters: []
+               },
+               [end: %{line: 1, column: 17}]
+             } = parse(template)
+    end
+
     test "broken bracket access" do
       template = "var[] }}"
 

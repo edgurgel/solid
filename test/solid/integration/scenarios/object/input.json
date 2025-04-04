@@ -16,5 +16,8 @@
     "key" : "value",
     "numbers" : [1, [], 0.2]
   },
-  "question?" : "?"
+  "question?" : "?",
+  "a var" : {
+    "foo" : "bar"
+  }
 }

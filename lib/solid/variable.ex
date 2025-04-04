@@ -20,24 +20,46 @@ defmodule Solid.Variable do
   def parse(tokens) do
     case tokens do
       [{:identifier, meta, identifier} | rest] ->
-        with {:ok, rest, accesses, accesses_original_name} <- access(rest) do
-          if identifier in @literals and accesses == [] do
-            {:ok, %Literal{loc: struct!(Loc, meta), value: literal(identifier)}, rest}
-          else
-            original_name = "#{identifier}" <> Enum.join(accesses_original_name)
+        do_parse_identifier(identifier, meta, rest)
 
-            {:ok,
-             %__MODULE__{
-               loc: struct!(Loc, meta),
-               identifier: identifier,
-               accesses: accesses,
-               original_name: original_name
-             }, rest}
-          end
-        end
+      [{:open_square, _}, {:string, meta, identifier, quotes}, {:close_square, _} | rest] ->
+        do_parse_bracket_variable(identifier, quotes, meta, rest)
 
       _ ->
         {:error, "Variable expected", Solid.Parser.meta_head(tokens)}
+    end
+  end
+
+  defp do_parse_bracket_variable(identifier, quotes, meta, rest) do
+    with {:ok, rest, accesses, accesses_original_name} <- access(rest) do
+      quotes = IO.chardata_to_string([quotes])
+      original_name = "[#{quotes}#{identifier}#{quotes}]" <> Enum.join(accesses_original_name)
+
+      {:ok,
+       %__MODULE__{
+         loc: struct!(Loc, meta),
+         identifier: identifier,
+         accesses: accesses,
+         original_name: original_name
+       }, rest}
+    end
+  end
+
+  defp do_parse_identifier(identifier, meta, rest) do
+    with {:ok, rest, accesses, accesses_original_name} <- access(rest) do
+      if identifier in @literals and accesses == [] do
+        {:ok, %Literal{loc: struct!(Loc, meta), value: literal(identifier)}, rest}
+      else
+        original_name = "#{identifier}" <> Enum.join(accesses_original_name)
+
+        {:ok,
+         %__MODULE__{
+           loc: struct!(Loc, meta),
+           identifier: identifier,
+           accesses: accesses,
+           original_name: original_name
+         }, rest}
+      end
     end
   end
 
