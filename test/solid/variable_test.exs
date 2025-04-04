@@ -58,6 +58,21 @@ defmodule Solid.VariableTest do
              }
     end
 
+    test "bracket variable" do
+      template = "['a var'].foo }}"
+
+      assert {
+               :ok,
+               %Variable{
+                 loc: %Loc{line: 1, column: 4},
+                 identifier: "a var",
+                 accesses: [%Solid.AccessLiteral{value: "foo"}],
+                 original_name: "['a var'].foo"
+               },
+               [end: %{line: 1, column: 17}]
+             } = parse(template)
+    end
+
     test "variable with accesses" do
       template = ~s{var1.var2["string"][123][var3]}
 
