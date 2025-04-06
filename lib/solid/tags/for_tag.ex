@@ -97,9 +97,12 @@ defmodule Solid.Tags.ForTag do
 
   defimpl Solid.Renderable do
     def render(tag, context, options) do
+      for_name = "#{tag.variable.identifier}-#{tag.enumerable}"
+
       with {:ok, enumerable, context} <- enumerable(tag.enumerable, context, options),
-           {:ok, enumerable, context} <- apply_parameters(enumerable, tag, context, options) do
-        do_for(enumerable, tag, context, options)
+           {:ok, enumerable, context} <-
+             apply_parameters(enumerable, tag, for_name, context, options) do
+        do_for(enumerable, tag, for_name, context, options)
       else
         {:error, message, context} ->
           exception = %Solid.ArgumentError{loc: tag.loc, message: message}
@@ -108,9 +111,15 @@ defmodule Solid.Tags.ForTag do
       end
     end
 
-    defp do_for([], tag, context, _options), do: {tag.else_body, context}
+    defp do_for([], tag, _for_name, context, _options), do: {tag.else_body, context}
 
-    defp do_for(enumerable, %Solid.Tags.ForTag{variable: variable} = tag, context, options) do
+    defp do_for(
+           enumerable,
+           %Solid.Tags.ForTag{variable: variable} = tag,
+           for_name,
+           context,
+           options
+         ) do
       length = Enum.count(enumerable)
       enumerable_key = variable.identifier
       parent_forloop = context.iteration_vars["forloop"]
@@ -123,7 +132,7 @@ defmodule Solid.Tags.ForTag do
             acc_context =
               acc_context
               |> set_enumerable_value(enumerable_key, v)
-              |> maybe_put_forloop_map(enumerable_key, tag, index, length, parent_forloop)
+              |> maybe_put_forloop_map(for_name, enumerable_key, index, length, parent_forloop)
 
             try do
               {result, acc_context} = Solid.render(tag.body, acc_context, options)
@@ -169,16 +178,16 @@ defmodule Solid.Tags.ForTag do
       %{acc_context | iteration_vars: iteration_vars}
     end
 
-    defp maybe_put_forloop_map(acc_context, key, tag, index, length, parent_forloop)
+    defp maybe_put_forloop_map(acc_context, for_name, key, index, length, parent_forloop)
          when key != "forloop" do
-      forloop_name = "#{tag.variable.identifier}-#{tag.enumerable}"
-      map = build_forloop_map(index, length, parent_forloop, forloop_name)
+      map = build_forloop_map(index, length, parent_forloop, for_name)
       iteration_vars = Map.put(acc_context.iteration_vars, "forloop", map)
       %{acc_context | iteration_vars: iteration_vars}
     end
 
-    defp maybe_put_forloop_map(acc_context, _key, _tag, _index, _length, _parent_forloop),
-      do: acc_context
+    defp maybe_put_forloop_map(acc_context, _for_name, _key, _index, _length, _parent_forloop) do
+      acc_context
+    end
 
     defp build_forloop_map(index, length, parentloop, forloop_name) do
       %{
@@ -214,36 +223,49 @@ defmodule Solid.Tags.ForTag do
       end
     end
 
-    defp apply_parameters(enumerable, tag, context, options) do
-      with {:ok, enumerable, context} <- apply_offset(enumerable, tag, context, options),
-           {:ok, enumerable, context} <- apply_limit(enumerable, tag, context, options) do
+    defp apply_parameters(enumerable, tag, for_name, context, options) do
+      with {:ok, start, context} <- offset(tag, for_name, context, options),
+           {:ok, finish, context} <- limit(enumerable, tag, context, options) do
+        last_offset = start + finish
+        context = %{context | registers: Map.put(context.registers, for_name, last_offset + 1)}
+        enumerable = Enum.slice(enumerable, start..last_offset//1)
         {:ok, apply_reversed(enumerable, tag), context}
       end
     end
 
-    defp apply_offset(enumerable, tag, context, options) do
+    defp offset(tag, for_name, context, options) do
       if argument = tag.parameters[:offset] do
-        {:ok, offset, context} = Argument.get(argument, context, [], options)
+        if continue?(argument) do
+          {:ok, context.registers[for_name] || 0, context}
+        else
+          {:ok, offset, context} = Argument.get(argument, context, [], options)
 
-        case to_integer(offset) do
-          {:ok, offset} -> {:ok, Enum.slice(enumerable, offset..-1//1), context}
-          {:error, message} -> {:error, message, context}
+          case to_integer(offset) do
+            {:ok, offset} -> {:ok, offset, context}
+            {:error, message} -> {:error, message, context}
+          end
         end
       else
-        {:ok, enumerable, context}
+        {:ok, 0, context}
       end
     end
 
-    defp apply_limit(enumerable, tag, context, options) do
+    defp continue?(%Variable{identifier: "continue", accesses: []}) do
+      true
+    end
+
+    defp continue?(_), do: false
+
+    defp limit(enumerable, tag, context, options) do
       if argument = tag.parameters[:limit] do
         {:ok, limit, context} = Argument.get(argument, context, [], options)
 
         case to_integer(limit) do
-          {:ok, limit} -> {:ok, Enum.slice(enumerable, 0..(limit - 1)), context}
+          {:ok, limit} -> {:ok, limit - 1, context}
           {:error, message} -> {:error, message, context}
         end
       else
-        {:ok, enumerable, context}
+        {:ok, Enum.count(enumerable), context}
       end
     end
 
