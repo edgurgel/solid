@@ -1,3 +1,36 @@
+Offset - continue
+
+{% for item in evens limit: 3 %}${{ item }} {% endfor %}
+{% for item in evens offset: continue %}&{{ item }} {% endfor %}
+
+{% assign new = (1..6) %}
+{% for i in new limit: 2 %}{{ i }} {% endfor %}
+{% assign new = 'a,b,c,d,e,f' | split: ',' %}
+{% for i in new offset: continue %}{{ i }} {% endfor %}
+
+{% for i in evens limit: 666 %}first{{ i }} {% endfor %}
+{% for i in evens offset: continue %}second{{ item }} {% endfor %}
+
+{% for item in (1..6) limit: 3 %}${{ item }} {% endfor %}
+{% for item in (1..6) offset: continue %}&{{ item }} {% endfor %}
+{% for item in (1..6) offset: continue %}&{{ item }} {% endfor %}
+
+{% assign a_range = (1..6) %}
+{% for item in a_range limit: 3 %} {% if item == 2 %} {% break %} {% endif %} {{ item }} {% endfor %}
+{% for item in a_range offset: continue %} {{ item }} {% endfor %}
+
+{% assign range2 = (1..6) %}
+{% for item in range2 limit: 3 %} {{ item }} {% endfor %}
+{% for item in range2 reversed offset: continue %} {{ item }} {% endfor %}
+
+{% assign range3 = (1..6) %}
+{% for item in range3 reversed offset: continue %} {{ item }} {% endfor %}
+
+{% for x in array limit: 3 %}{{ x }} {% endfor %}
+{% for y in array limit: 1 offset: continue %}{{ y }} {% endfor %}
+{% for y in array offset: continue %}{{ y }} {% endfor %}
+
+
 Example: {% for value in var %}{% if value > 2 %}Got: {{ value }}{% endif %}{% endfor %}
 
 {% assign value = 12 %}
@@ -139,6 +172,7 @@ Range
 {% for i in (1..5) limit: '3' %} {{ i }} {% endfor %}
 Offset error
 {% for i in (1..4) offset: 'foo' %}{{ i }} {% endfor %}
+{% for i in evens offset: 3 %} {{ i }} {% endfor %}
 
 Hash
 

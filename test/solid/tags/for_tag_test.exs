@@ -222,6 +222,42 @@ defmodule Solid.Tags.ForTagTest do
                   else_body: []
                 }, %ParserContext{rest: "\n", line: 3, column: 13, mode: :normal, tags: nil}}
     end
+
+    test "for limit, offset and reversed" do
+      template = """
+      {% for i in array reversed limit: 3 offset: 1 %}
+        {{ i }}
+      {% endfor %}
+      """
+
+      assert {
+               :ok,
+               %ForTag{
+                 body: [
+                   %Solid.Text{},
+                   %Solid.Object{
+                     argument: %Solid.Variable{identifier: "i"}
+                   },
+                   %Solid.Text{}
+                 ],
+                 else_body: [],
+                 enumerable: %Solid.Variable{identifier: "array"},
+                 parameters: %{
+                   limit: %Solid.Literal{value: 3},
+                   offset: %Solid.Literal{value: 1}
+                 },
+                 reversed: true,
+                 variable: %Solid.Variable{identifier: "i"}
+               },
+               %Solid.ParserContext{
+                 column: 13,
+                 line: 3,
+                 mode: :normal,
+                 rest: "\n",
+                 tags: nil
+               }
+             } = parse(template)
+    end
   end
 
   describe "Renderable impl" do
@@ -241,6 +277,7 @@ defmodule Solid.Tags.ForTagTest do
       assert Renderable.render(tag, context, []) == {
                [["shoes"], ["shirts"]],
                %Solid.Context{
+                 registers: %{"product-collection" => 3},
                  vars: %{
                    "collection" => [
                      %{"title" => "shoes"},
@@ -271,7 +308,10 @@ defmodule Solid.Tags.ForTagTest do
                  [[["1", "-", "1"], ["1", "-", "2"], ["1", "-", "3"]]],
                  [[["2", "-", "1"], ["2", "-", "2"], ["2", "-", "3"]]]
                ],
-               %Solid.Context{vars: %{"outer" => [1..3, 1..3]}}
+               %Solid.Context{
+                 registers: %{"i-inner" => 4, "inner-outer" => 3},
+                 vars: %{"outer" => [1..3, 1..3]}
+               }
              }
     end
   end

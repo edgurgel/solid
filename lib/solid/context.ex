@@ -5,6 +5,7 @@ defmodule Solid.Context do
             counter_vars: %{},
             iteration_vars: %{},
             cycle_state: %{},
+            registers: %{},
             errors: [],
             matcher_module: Solid.Matcher
 
@@ -13,6 +14,7 @@ defmodule Solid.Context do
           counter_vars: map,
           iteration_vars: %{optional(String.t()) => term},
           cycle_state: map,
+          registers: map,
           errors: Solid.errors(),
           matcher_module: module
         }
