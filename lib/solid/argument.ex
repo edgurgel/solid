@@ -162,6 +162,8 @@ defmodule Solid.Argument do
     "#{inspect(value)}"
   end
 
+  defp stringify!(%Literal.Empty{}), do: ""
+
   defp stringify!(range) when is_struct(range, Range) do
     "#{range.first}..#{range.last}"
   end
