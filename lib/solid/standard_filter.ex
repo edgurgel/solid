@@ -697,11 +697,35 @@ defmodule Solid.StandardFilter do
   "quid"
   iex> Solid.StandardFilter.slice("Liquid", -3, 2)
   "ui"
+
+  iex> Solid.StandardFilter.slice([1, 2, 3], 1, 2)
+  [2, 3]
   """
-  @spec slice(String.t(), integer, non_neg_integer | nil) :: String.t()
+  @spec slice(term, term, term) :: String.t() | list
   def slice(input, offset, length \\ nil)
-  def slice(input, offset, nil), do: String.at(input, offset)
-  def slice(input, offset, length), do: String.slice(input, offset, length)
+
+  def slice(input, offset, length) do
+    offset = to_integer!(offset)
+    length = if length, do: to_integer!(length), else: 1
+
+    if is_list(input) do
+      Enum.slice(input, offset, length)
+    else
+      input
+      |> to_str()
+      |> String.slice(offset, length)
+    end
+  end
+
+  defp to_integer!(input) when is_integer(input), do: input
+
+  defp to_integer!(input) when is_binary(input) do
+    String.to_integer(input)
+  rescue
+    _ -> raise %Solid.ArgumentError{message: "invalid integer"}
+  end
+
+  defp to_integer!(_), do: raise(%Solid.ArgumentError{message: "invalid integer"})
 
   @doc """
   Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.

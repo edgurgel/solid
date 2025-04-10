@@ -212,10 +212,36 @@ split
 {{ nested_array | split: ", " | sort_natural | join: ", " }}
 {% comment %}{{ post | split: ", " | sort_natural | join: ", " }}{%endcomment %}
 
+slice
+
 {{ "Liquid" | slice: 0 }}
 {{ "Liquid" | slice: 2 }}
+{{ "Liquid" | slice: -2 }}
+{{ "Liquid" | slice: -2, 99 }}
+{{ "Liquid" | slice: 2.2 }}
 {{ "Liquid" | slice: 2, 5 }}
+{{ "Liquid" | slice: 2.1, 5.1 }}
 {{ "Liquid" | slice: -3, 2 }}
+
+{{ "Liquid" | slice: "2" }}
+{{ "Liquid" | slice: "-2" }}
+{{ "Liquid" | slice: "2.2" }}
+{{ "Liquid" | slice: "2", "5" }}
+{{ "Liquid" | slice: unknown }}
+{{ "Liquid" | slice: unknown, unknown }}
+{{ "Liquid" | slice: "foo", "bar" }}
+
+{{ my_array | slice: 1, 2 | join: "," }}
+{{ array | slice: 1, 2 | join: "," }}
+
+{{ unknown | slice: 1, 2 | join: "," }}
+{{ 1000 | slice: 1, 2 | join: "," }}
+{{ empty | slice: 1, 2 | join: "," }}
+{{ blank | slice: 1, 2 | join: "," }}
+{{ true | slice: 1, 2 | join: "," }}
+{{ false | slice: 1, 2 | join: "," }}
+
+truncate
 
 {{ "Ground control to Major Tom." | truncate: 20 }}
 {{ "Ground control to Major Tom." | truncate: 25, ", and so on" }}
