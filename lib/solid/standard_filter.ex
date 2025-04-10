@@ -640,25 +640,68 @@ defmodule Solid.StandardFilter do
   if a number is specified as an argument, to that number of decimal places.
 
   iex> Solid.StandardFilter.round(1.2)
-  1
+  "1"
   iex> Solid.StandardFilter.round(2.7)
-  3
+  "3"
   iex> Solid.StandardFilter.round(183.357, 2)
-  183.36
+  "183.36"
+  iex> Solid.StandardFilter.round(nil, 2)
+  0
+  iex> Solid.StandardFilter.round(5.666, 1.2)
+  "5.7"
   """
-  @spec round(term) :: integer
+  @spec round(term, term) :: number | String.t()
   def round(input, precision \\ nil)
 
-  def round(input, nil) do
+  def round(input, precision) when is_binary(input) do
+    precision = to_integer(precision)
+
     input
-    |> to_number()
-    |> Kernel.round()
+    |> Decimal.round(precision)
+    |> then(fn value ->
+      # Got an integer in the end and input was not a float
+
+      cond do
+        Decimal.integer?(value) and !String.contains?(input, ".") ->
+          Decimal.to_integer(value)
+
+        Decimal.integer?(value) and String.contains?(input, ".") and precision > 0 ->
+          "#{Decimal.to_integer(value)}" <> ".0"
+
+        true ->
+          value |> Decimal.normalize() |> to_string()
+      end
+    end)
   end
 
-  def round(input, precision) do
-    p = :math.pow(10, to_number(precision))
-    Kernel.round(to_number(input) * p) / p
+  def round(input, _precision) when is_integer(input) do
+    input
   end
+
+  def round(input, precision) when is_float(input) do
+    precision = to_integer(precision)
+
+    Decimal.from_float(input)
+    |> Decimal.round(precision)
+    |> Decimal.normalize()
+    |> to_string()
+  end
+
+  def round(_, _), do: 0
+
+  #
+  # def round(input, _precision) when is_integer(input), do: input
+  #
+  # def round(input, precision) when is_float(input) do
+  #   p = :math.pow(10, to_number(precision))
+  #   Kernel.round(to_number(input) * p) / p
+  # end
+  #
+  # def round(input, precision) do
+  #   input
+  #   |> to_number()
+  #   |> round(precision)
+  # end
 
   @doc """
   Removes all whitespace (tabs, spaces, and newlines) from the right side of a string.
@@ -726,6 +769,18 @@ defmodule Solid.StandardFilter do
   end
 
   defp to_integer!(_), do: raise(%Solid.ArgumentError{message: "invalid integer"})
+
+  defp to_integer(input) when is_integer(input), do: input
+  defp to_integer(input) when is_float(input), do: Kernel.round(input)
+
+  defp to_integer(input) when is_binary(input) do
+    case Integer.parse(input) do
+      {integer, _} -> integer
+      _ -> 0
+    end
+  end
+
+  defp to_integer(_), do: 0
 
   @doc """
   Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.
