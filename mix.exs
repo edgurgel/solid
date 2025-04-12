@@ -29,6 +29,7 @@ defmodule Solid.MixProject do
   defp deps do
     [
       {:decimal, "~> 2.0"},
+      {:date_time_parser, "~> 1.2"},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:jason, "~> 1.0", only: :test},

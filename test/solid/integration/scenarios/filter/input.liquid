@@ -135,10 +135,19 @@ truncate
 
 {{ fruits | split: ","| uniq | join: ", " }}
 
+date
+
 {{ "2000-01-01 00:00:00Z" | date: "%a, %b %d, %y" }}
 {{ 946684800 | date: "%Y" }}
 {{ "now" | date: "%Y-%m-%d %H:%M" }}
 {{ "invalid-date" | date: "%Y" }}
+{{ 'May 17, 2021' | date: '%b %d, %y' }}
+{{ '1152098955' | date: '%m/%d/%Y' }}
+{{ 'March 14, 2016' | date: nosuchthing }}
+{{ 'March 14, 2016' | date: '%s' }}
+{{ '-1152098955' | date: '%m/%d/%Y' }}
+
+modulo
 
 {{ 183.357 | modulo: 12 }}
 {{ 183.35 | modulo: 12 }}

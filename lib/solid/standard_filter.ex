@@ -162,13 +162,12 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.date("1970-01-01 00:00:01Z", "%s")
   "1"
   """
-  @spec date(DateTime.t() | NaiveDateTime.t() | integer() | String.t(), String.t()) :: String.t()
+  @spec date(term, term) :: String.t()
   def date(date, format) when is_map(date) and is_binary(format) do
     try do
       Calendar.strftime(date, format)
     rescue
-      KeyError -> ""
-      ArgumentError -> ""
+      _ -> ""
     end
   end
 
@@ -184,13 +183,17 @@ defmodule Solid.StandardFilter do
   end
 
   def date(date, format) when is_binary(date) do
-    case DateTime.from_iso8601(date) do
-      {:ok, datetime, _} -> date(datetime, format)
-      _ -> date
+    # Try out best to parse whatever comes
+    case DateTimeParser.parse_datetime(date, assume_time: true) do
+      {:ok, datetime} ->
+        date(NaiveDateTime.to_date(datetime), format)
+
+      _ ->
+        date
     end
   end
 
-  def date(_, _), do: ""
+  def date(date, _), do: date
 
   @doc """
   Allows you to specify a fallback in case a value doesn’t exist.
@@ -573,6 +576,12 @@ defmodule Solid.StandardFilter do
   end
 
   defp to_str(%Empty{}), do: ""
+
+  # defp to_str(%datetime_module{} = datetime)
+  #      when datetime_module in [DateTime, NaiveDateTime, Date, Time] do
+  #   to_string(datetime)
+  # end
+
   defp to_str(input) when is_map(input), do: inspect(input)
   defp to_str(input) when is_list(input), do: inspect(input)
   defp to_str(input), do: to_string(input)
