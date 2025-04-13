@@ -1,5 +1,6 @@
 require 'liquid'
 require 'json'
+require 'time'
 
 module SubstituteFilter
   def substitute(input, params = {})

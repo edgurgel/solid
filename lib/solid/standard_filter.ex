@@ -163,6 +163,8 @@ defmodule Solid.StandardFilter do
   "1"
   """
   @spec date(term, term) :: String.t()
+  def date(date, format) when format in [nil, ""] or is_struct(format, Empty), do: date
+
   def date(date, format) when is_map(date) and is_binary(format) do
     try do
       Calendar.strftime(date, format)
@@ -172,7 +174,7 @@ defmodule Solid.StandardFilter do
   end
 
   def date(date, format) when is_integer(date) do
-    case DateTime.from_unix(date) do
+    case DateTime.from_unix(date, :second) do
       {:ok, datetime} -> date(datetime, format)
       _ -> ""
     end
@@ -184,7 +186,14 @@ defmodule Solid.StandardFilter do
 
   def date(date, format) when is_binary(date) do
     # Try out best to parse whatever comes
-    case DateTimeParser.parse_datetime(date, assume_time: true) do
+    parsers = [
+      # Use our own epoch date parser
+      Solid.EpochDateTimeParser,
+      DateTimeParser.Parser.Serial,
+      DateTimeParser.Parser.Tokenizer
+    ]
+
+    case DateTimeParser.parse_datetime(date, assume_time: true, parsers: parsers) do
       {:ok, datetime} ->
         date(NaiveDateTime.to_date(datetime), format)
 

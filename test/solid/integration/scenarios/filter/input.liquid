@@ -142,10 +142,13 @@ date
 {{ "now" | date: "%Y-%m-%d %H:%M" }}
 {{ "invalid-date" | date: "%Y" }}
 {{ 'May 17, 2021' | date: '%b %d, %y' }}
-{{ '1152098955' | date: '%m/%d/%Y' }}
+{{ '1744521364' | date: '%d/%m/%Y' }}
+Negative integer is supported
+{{ -1744521364 | date: '%Y' }}
+Negative string is not supported because reasons
+{{ '-1744521364' | date: '%Y' }}
 {{ 'March 14, 2016' | date: nosuchthing }}
 {{ 'March 14, 2016' | date: '%s' }}
-{{ '-1152098955' | date: '%m/%d/%Y' }}
 
 modulo
 
