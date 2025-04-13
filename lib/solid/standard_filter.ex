@@ -181,7 +181,7 @@ defmodule Solid.StandardFilter do
   end
 
   def date(date, format) when date in ["now", "today"] do
-    date(NaiveDateTime.local_now(), format)
+    date(NaiveDateTime.utc_now(), format)
   end
 
   def date(date, format) when is_binary(date) do
@@ -195,7 +195,7 @@ defmodule Solid.StandardFilter do
 
     case DateTimeParser.parse_datetime(date, assume_time: true, parsers: parsers) do
       {:ok, datetime} ->
-        date(NaiveDateTime.to_date(datetime), format)
+        date(datetime, format)
 
       _ ->
         date
