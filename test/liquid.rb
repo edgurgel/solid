@@ -2,6 +2,8 @@ require 'liquid'
 require 'json'
 require 'time'
 
+ENV['TZ'] = 'UTC'
+
 module SubstituteFilter
   def substitute(input, params = {})
     input.gsub(/%\{(\w+)\}/) { |_match| params[Regexp.last_match(1)] }
