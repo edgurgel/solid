@@ -63,35 +63,25 @@ defmodule Solid.StandardFilter do
   Returns the absolute value of a number.
 
   iex> Solid.StandardFilter.abs(-17)
-  17
+  "17"
   iex> Solid.StandardFilter.abs(17)
-  17
+  "17"
   iex> Solid.StandardFilter.abs("-17.5")
-  17.5
+  "17.5"
   """
-  @spec abs(term) :: number
+  @spec abs(term) :: String.t()
   def abs(input) do
     input
-    |> to_number()
-    |> Kernel.abs()
-  end
-
-  defp to_number(input) when is_binary(input) do
-    if Regex.match?(~r/\A-?\d+\.\d+\z/, input) do
-      case Float.parse(input) do
-        {float, _} -> float
-        _ -> 0
+    |> to_decimal()
+    |> Decimal.abs()
+    |> then(fn result ->
+      if original_float?(input) do
+        decimal_to_float(result)
+      else
+        try_decimal_to_integer(result)
       end
-    else
-      case Integer.parse(input) do
-        {integer, _} -> integer
-        _ -> 0
-      end
-    end
+    end)
   end
-
-  defp to_number(input) when is_number(input), do: input
-  defp to_number(_input), do: 0
 
   @doc """
   Concatenates two strings and returns the concatenated value.
@@ -106,26 +96,28 @@ defmodule Solid.StandardFilter do
   Limits a number to a minimum value.
 
   iex> Solid.StandardFilter.at_least(5, 3)
-  5
+  "5"
   iex> Solid.StandardFilter.at_least(2, 4)
-  4
+  "4"
   """
-  @spec at_least(term, term) :: number
+  @spec at_least(term, term) :: String.t()
   def at_least(input, minimum) do
-    max(to_number(input), to_number(minimum))
+    Decimal.max(to_decimal(input), to_decimal(minimum))
+    |> to_string()
   end
 
   @doc """
   Limits a number to a maximum value.
 
   iex> Solid.StandardFilter.at_most(5, 3)
-  3
+  "3"
   iex> Solid.StandardFilter.at_most(2, 4)
-  2
+  "2"
   """
-  @spec at_most(term, term) :: number
+  @spec at_most(term, term) :: String.t()
   def at_most(input, maximum) do
-    min(to_number(input), to_number(maximum))
+    Decimal.min(to_decimal(input), to_decimal(maximum))
+    |> to_string()
   end
 
   @doc """
@@ -142,11 +134,12 @@ defmodule Solid.StandardFilter do
   @doc """
   Rounds the input up to the nearest whole number. Liquid tries to convert the input to a number before the filter is applied.
   """
-  @spec ceil(term) :: number
+  @spec ceil(term) :: String.t()
   def ceil(input) do
     input
-    |> to_number()
-    |> Kernel.ceil()
+    |> to_decimal()
+    |> Decimal.round(0, :ceiling)
+    |> to_string()
   end
 
   @doc """
@@ -187,7 +180,8 @@ defmodule Solid.StandardFilter do
   def date(date, format) when is_binary(date) do
     # Try out best to parse whatever comes
     parsers = [
-      # Use our own epoch date parser
+      # Use our own epoch date parser so that negative unix is not allowed
+      # Because that's how the ruby gem works
       Solid.EpochDateTimeParser,
       DateTimeParser.Parser.Serial,
       DateTimeParser.Parser.Tokenizer
@@ -244,28 +238,26 @@ defmodule Solid.StandardFilter do
 
   {{ 16 | divided_by: 4 }}
   iex> Solid.StandardFilter.divided_by(16, 4)
-  4
+  "4"
   iex> Solid.StandardFilter.divided_by(5, 3)
-  1
+  "1"
   iex> Solid.StandardFilter.divided_by(20, 7)
-  2
+  "2"
   """
-  @spec divided_by(term, term) :: number
+  @spec divided_by(term, term) :: String.t()
   def divided_by(input, operand) do
-    do_divided_by(to_number(input), to_number(operand))
-  end
+    input_number = to_decimal(input)
+    operand_number = to_decimal(operand)
 
-  defp do_divided_by(input, operand) when is_integer(input) and is_integer(operand) do
-    (input / operand) |> Float.floor() |> trunc
+    if original_float?(input) or original_float?(operand) do
+      Decimal.div(input_number, operand_number)
+      |> decimal_to_float()
+    else
+      Decimal.div_int(input_number, operand_number)
+      |> try_decimal_to_integer()
+    end
   rescue
-    ArithmeticError ->
-      raise %Solid.ArgumentError{message: "divided by 0"}
-  end
-
-  defp do_divided_by(input, operand) do
-    input / operand
-  rescue
-    ArithmeticError ->
+    Decimal.Error ->
       raise %Solid.ArgumentError{message: "divided by 0"}
   end
 
@@ -329,17 +321,18 @@ defmodule Solid.StandardFilter do
   Solid tries to convert the input to a number before the filter is applied.
 
   iex> Solid.StandardFilter.floor(1.2)
-  1
+  "1"
   iex> Solid.StandardFilter.floor(2.0)
-  2
+  "2"
   iex> Solid.StandardFilter.floor("3.5")
-  3
+  "3"
   """
-  @spec floor(term) :: integer
+  @spec floor(term) :: String.t()
   def floor(input) do
     input
-    |> to_number
-    |> Kernel.floor()
+    |> to_decimal
+    |> Decimal.round(0, :floor)
+    |> to_string()
   end
 
   @doc """
@@ -471,15 +464,24 @@ defmodule Solid.StandardFilter do
   Subtracts a number from another number.
 
   iex> Solid.StandardFilter.minus(4, 2)
-  2
+  "2"
   iex> Solid.StandardFilter.minus(16, 4)
-  12
+  "12"
   iex> Solid.StandardFilter.minus(183.357, 12)
-  171.357
+  "171.357"
   """
-  @spec minus(term, term) :: term
+  @spec minus(term, term) :: String.t()
   def minus(input, number) do
-    to_number(input) - to_number(number)
+    input
+    |> to_decimal()
+    |> Decimal.sub(to_decimal(number))
+    |> then(fn result ->
+      if original_float?(input) or original_float?(number) do
+        decimal_to_float(result)
+      else
+        try_decimal_to_integer(result)
+      end
+    end)
   end
 
   @doc """
@@ -514,21 +516,30 @@ defmodule Solid.StandardFilter do
   Adds a number to another number.
 
   iex> Solid.StandardFilter.plus(4, 2)
-  6
+  "6"
   iex> Solid.StandardFilter.plus(16, 4)
-  20
+  "20"
   iex> Solid.StandardFilter.plus("16", 4)
-  20
+  "20"
   iex> Solid.StandardFilter.plus(183.357, 12)
-  195.357
+  "195.357"
   iex> Solid.StandardFilter.plus("183.357", 12)
-  195.357
+  "195.357"
   iex> Solid.StandardFilter.plus("183.ABC357", 12)
-  195
+  "195.0"
   """
-  @spec plus(term, term) :: number
+  @spec plus(term, term) :: String.t()
   def plus(input, number) do
-    to_number(input) + to_number(number)
+    input
+    |> to_decimal()
+    |> Decimal.add(to_decimal(number))
+    |> then(fn result ->
+      if original_float?(input) or original_float?(number) do
+        decimal_to_float(result)
+      else
+        try_decimal_to_integer(result)
+      end
+    end)
   end
 
   @doc """
@@ -675,19 +686,13 @@ defmodule Solid.StandardFilter do
     precision = to_integer(precision)
 
     input
+    |> to_decimal()
     |> Decimal.round(precision)
-    |> then(fn value ->
-      # Got an integer in the end and input was not a float
-
-      cond do
-        Decimal.integer?(value) and !String.contains?(input, ".") ->
-          Decimal.to_integer(value)
-
-        Decimal.integer?(value) and String.contains?(input, ".") and precision > 0 ->
-          "#{Decimal.to_integer(value)}" <> ".0"
-
-        true ->
-          value |> Decimal.normalize() |> to_string()
+    |> then(fn result ->
+      if original_float?(input) and precision > 0 do
+        decimal_to_float(result)
+      else
+        try_decimal_to_integer(result)
       end
     end)
   end
@@ -706,20 +711,6 @@ defmodule Solid.StandardFilter do
   end
 
   def round(_, _), do: 0
-
-  #
-  # def round(input, _precision) when is_integer(input), do: input
-  #
-  # def round(input, precision) when is_float(input) do
-  #   p = :math.pow(10, to_number(precision))
-  #   Kernel.round(to_number(input) * p) / p
-  # end
-  #
-  # def round(input, precision) do
-  #   input
-  #   |> to_number()
-  #   |> round(precision)
-  # end
 
   @doc """
   Removes all whitespace (tabs, spaces, and newlines) from the right side of a string.
@@ -778,28 +769,6 @@ defmodule Solid.StandardFilter do
     end
   end
 
-  defp to_integer!(input) when is_integer(input), do: input
-
-  defp to_integer!(input) when is_binary(input) do
-    String.to_integer(input)
-  rescue
-    _ -> raise %Solid.ArgumentError{message: "invalid integer"}
-  end
-
-  defp to_integer!(_), do: raise(%Solid.ArgumentError{message: "invalid integer"})
-
-  defp to_integer(input) when is_integer(input), do: input
-  defp to_integer(input) when is_float(input), do: Kernel.round(input)
-
-  defp to_integer(input) when is_binary(input) do
-    case Integer.parse(input) do
-      {integer, _} -> integer
-      _ -> 0
-    end
-  end
-
-  defp to_integer(_), do: 0
-
   @doc """
   Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.
 
@@ -834,15 +803,24 @@ defmodule Solid.StandardFilter do
   Multiplies a number by another number.
 
   iex> Solid.StandardFilter.times(3, 2)
-  6
+  "6"
   iex> Solid.StandardFilter.times(24, 7)
-  168
+  "168"
   iex> Solid.StandardFilter.times(183.357, 12)
-  2200.284
+  "2200.284"
   """
-  @spec times(term, term) :: number
+  @spec times(term, term) :: String.t()
   def times(input, operand) do
-    to_number(input) * to_number(operand)
+    input
+    |> to_decimal()
+    |> Decimal.mult(to_decimal(operand))
+    |> then(fn result ->
+      if original_float?(input) or original_float?(operand) do
+        decimal_to_float(result)
+      else
+        try_decimal_to_integer(result)
+      end
+    end)
   end
 
   @doc """
@@ -1142,4 +1120,73 @@ defmodule Solid.StandardFilter do
     ArgumentError ->
       raise %Solid.ArgumentError{message: "invalid base64 provided to base64_url_safe_decode"}
   end
+
+  defp to_integer!(input) when is_integer(input), do: input
+
+  defp to_integer!(input) when is_binary(input) do
+    String.to_integer(input)
+  rescue
+    _ -> raise %Solid.ArgumentError{message: "invalid integer"}
+  end
+
+  defp to_integer!(_), do: raise(%Solid.ArgumentError{message: "invalid integer"})
+
+  defp to_integer(input) when is_integer(input), do: input
+  defp to_integer(input) when is_float(input), do: Kernel.round(input)
+
+  defp to_integer(input) when is_binary(input) do
+    case Integer.parse(input) do
+      {integer, _} -> integer
+      _ -> 0
+    end
+  end
+
+  defp to_integer(_), do: 0
+
+  @zero Decimal.new(0)
+
+  defp to_decimal(input) when is_binary(input) do
+    # It must accept "1ABC" being integer 1
+    # It must NOT accept "1.0ABC" being float 1.0
+    # That's just how Liquid ruby does
+
+    if Regex.match?(~r/\A-?\d+\.\d+\z/, input) do
+      case Decimal.parse(input) do
+        {decimal, ""} -> decimal
+        _ -> @zero
+      end
+    else
+      case Integer.parse(input) do
+        {integer, _} -> Decimal.new(integer)
+        _ -> @zero
+      end
+    end
+  end
+
+  defp to_decimal(input) when is_integer(input), do: Decimal.new(input)
+  defp to_decimal(input) when is_float(input), do: Decimal.from_float(input)
+  defp to_decimal(_input), do: @zero
+
+  defp decimal_to_float(value) do
+    if Decimal.integer?(value) do
+      "#{Decimal.to_integer(value)}" <> ".0"
+    else
+      value
+      |> Decimal.normalize()
+      |> Decimal.to_float()
+      |> to_string
+    end
+  end
+
+  defp try_decimal_to_integer(value) do
+    if Decimal.integer?(value) do
+      "#{Decimal.to_integer(value)}"
+    else
+      decimal_to_float(value)
+    end
+  end
+
+  defp original_float?(input) when is_float(input), do: true
+  defp original_float?(input) when is_binary(input), do: Regex.match?(~r/\A-?\d+\.\d+\z/, input)
+  defp original_float?(_), do: false
 end

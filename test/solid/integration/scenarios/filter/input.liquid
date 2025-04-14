@@ -1,3 +1,157 @@
+compact
+
+{{words | compact | join}}
+{{ '123' | compact | first }}
+
+{ "hashes" : [{ "a" : "A" }, { "a" : null }, { "a" : "C "}] }
+
+{{ var | xyzzy }}
+
+{{ array[1] | upcase }}
+
+abs
+
+{{ -17 | abs }}
+{{ 4 | abs }}
+{{ "-19.86" | abs }}
+{{ "-5" | abs }}
+{{ -3 | abs: 1 }}
+{{ var_empty_hash | abs }}
+
+append
+
+{{ "apples, oranges, and bananas" | append: "Some fruit: " }}
+{{ "apples, oranges, and bananas" | append: unknown }}
+{{ "apples, oranges, and bananas" | append: empty }}
+{{ "apples, oranges, and bananas" | append: array }}
+{% comment %}{{ "apples, oranges, and bananas" | append: post }} {% endcomment %}
+{{ empty | append: "text" }}
+{{ unknown | append: "Some text" }}
+{{ 1 | append: 5 }}
+{{ (1..5) | append: 5 }}
+{{ (1..5) | append: empty }}
+
+capitalize
+
+{{ "my great title" | capitalize }}
+{{ 1 | capitalize }}
+{{ (1..5) | capitalize }}
+{{ array | capitalize }}
+{{ empty | capitalize }}
+{{ unknown | capitalize }}
+
+upcase
+
+{{ "my great title" | upcase }}
+{{ 1 | upcase }}
+{{ (1..5) | upcase }}
+{{ array | upcase }}
+{{ empty | upcase }}
+{{ unknown | upcase }}
+
+downcase
+
+{{ "My Great title" | downcase }}
+{{ 1 | downcase }}
+{{ (1..5) | downcase }}
+{{ array | downcase }}
+{{ nested_array | downcase }}
+{{ empty | downcase }}
+{{ unknown | downcase }}
+
+ceil
+
+{{ 1.2 | ceil }}
+{{ 2.0 | ceil }}
+{{ 2 | ceil }}
+{{ 183.357 | ceil }}
+{{ "3.5" | ceil }}
+{{ 1 | ceil }}
+{{ "123" | ceil }}
+{{ "hello" | ceil }}
+{{ var_empty_hash | ceil }}
+{{ does_not_exist | ceil }}
+
+divided_by
+
+{{ 16 | divided_by: 4}}
+{{ 5 | divided_by: 3 }}
+{{ 20 | divided_by: 7 }}
+{{ 20 | divided_by: 7.0 }}
+{{ 20 | divided_by: '7.0' }}
+{{ '20' | divided_by: 7.0 }}
+{{ 20 | divided_by: 'foo' }}
+{{ 'foo' | divided_by: 20 }}
+{{ 9.0 | divided_by: 2 }}
+
+first
+
+{{ my_array | first }}
+{{ string | first }}
+{{ does_not_exist | first }}
+{{ post | first | join: ","}}
+{{ (1..5) | first }}
+
+{{ my_array | last }}
+{{ string | last }}
+{{ does_not_exist | last }}
+{{ (1..3) | last }}
+
+floor
+
+{{ 1.2 | floor }}
+{{ 2.0 | floor }}
+{{ 183.357 | floor }}
+{{ "3.5" | floor }}
+{{ 1 | floor }}
+{{ "123" | floor }}
+{{ "not a number" | floor }}
+
+lstrip
+
+{{ "          So much room for activities!          " | lstrip }}
+{{ "          So much room for activities!          " | rstrip }}
+{{ "          So much room for activities!          " | strip }}
+{{ 5 | lstrip }}
+{{ (1..5) | lstrip }}
+{{ array | lstrip }}
+{{ unknown | lstrip }}
+
+minus
+
+{{ 4 | minus: 2 }}
+{{ 16 | minus: 4 }}
+{{ 183.357 | minus: 12 }}
+{{ 13 | minus: "12" }}
+{{ 10 | minus: unknown }}
+{{ '10' | minus: 3 }}
+{{ '10ABC' | minus: 3 }}
+{{ '10ABC' | minus: '3ABC' }}
+{{ '10.0ABC' | minus: '3.0ABC' }}
+{{ 10.0 | minus: '3.0ABC' }}
+{{ '10.0ABC' | minus: 3.0 }}
+{{ "not a number" | minus: "2.0" }}
+{{ "2.0" | minus: "not a number" }}
+{{ '10' | minus: '2' }}
+
+plus
+
+{{ 1 | plus: 2 }}
+{{ '1' | plus: '2' }}
+{{ '1ABC' | plus: '2ABC' }}
+{{ 0.1 | plus: 0.2 }}
+{{ "0.1" | plus: "0.2" }}
+{{ "0.1ABC" | plus: "0.2" }}
+{{ "0.1" | plus: "0.2ABC" }}
+{{ "0.1ABC" | plus: "0.2ABc" }}
+{{ 1.1 | plus: 2 }}
+{{ 1 | plus: 2.1 }}
+{{ 0.1 | plus: 0.2 }}
+{{ 1.00 | plus: 2.00 }}
+{{ 1.0 | plus: 2.1 }}
+{{ 1.9 | plus: 2.1 }}
+{{ 2.8571428571428571212121 | plus: 2.857142857142857 }}
+
 round
 
 {{ 1.2 | round }}
@@ -10,6 +164,8 @@ round
 {{ '183.010' | round: 3 }}
 {{ '183' | round: 2 }}
 {{ '183' | round }}
+{{ '183ABC' | round }}
+{{ '183.123ABC' | round }}
 {{ "5.6" | round }}
 {{ 5.666 | round: 1.2 }}
 {{ 183.357 | round: '2' }}
@@ -24,6 +180,8 @@ times
 {{ 3 | times: 2 }}
 {{ 24 | times: 7 }}
 {{ 183.357 | times: 12 }}
+{{ 12 | times: 183.357 }}
+{{ 1.357 | times: 1.357 }}
 {{ '183.357' | times: 12 }}
 {{ 183.357 | times: '12' }}
 
@@ -186,13 +344,29 @@ default
 
 at_least
 
+{{ 3 | at_least: 1 }}
+{{ 3.0 | at_least: 1.0 }}
+{{ 3 | at_least: 1.0 }}
+{{ 3.0 | at_least: 1 }}
+{{ 1 | at_least: 3 }}
+{{ 1.0 | at_least: 3.0 }}
+{{ 1 | at_least: 3.0 }}
+{{ 1.0 | at_least: 3 }}
 {{ 3 | at_least: unknown }}
 {{ unknown | at_least: 3  }}
 
 at_most
 
-{{ unknown | at_most: 3 }}
+{{ 3 | at_most: 1 }}
+{{ 3.0 | at_most: 1.0 }}
+{{ 3 | at_most: 1.0 }}
+{{ 3.0 | at_most: 1 }}
+{{ 1 | at_most: 3 }}
+{{ 1.0 | at_most: 3.0 }}
+{{ 1 | at_most: 3.0 }}
+{{ 1.0 | at_most: 3 }}
 {{ 3 | at_most: unknown }}
+{{ unknown | at_most: 3  }}
 
 concat
 
