@@ -152,6 +152,22 @@ plus
 {{ 1.9 | plus: 2.1 }}
 {{ 2.8571428571428571212121 | plus: 2.857142857142857 }}
 
+sum
+
+{{ 1 | sum }}
+{{ 1.0 | sum }}
+{{ "text" | sum }}
+{{ my_array | sum }}
+{{ numbers | sum }}
+{{ my_numbers | sum }}
+{{ my_floats | sum }}
+{{ numbers | sum: 'key' }}
+{{ numbers | sum: '2' }}
+{{ numbers | sum:  unknown }}
+{{ uknown | sum }}
+{{ array | sum }}
+{{ words | sum }}
+
 round
 
 {{ 1.2 | round }}
@@ -251,6 +267,20 @@ split
 {{ nested_array | split: ", " | sort_natural | join: ", " }}
 {% comment %}{{ post | split: ", " | sort_natural | join: ", " }}{%endcomment %}
 
+size
+
+{{ words | size }}
+{{ 'abc' | size }}
+{{ "José" | size }}
+{{ 1.0 | size }}
+{{ posts |  size }}
+{{ unknown | size }}
+{{ empty | size }}
+{{ blank | size }}
+{{ true | size }}
+{{ false | size }}
+{{ (1..5) | size }}
+
 slice
 
 {{ "Liquid" | slice: 0 }}
@@ -282,6 +312,7 @@ slice
 
 truncate
 
+{{ "Ground control to Major Tom. Ground control to Major Tom." | truncate }}
 {{ "Ground control to Major Tom." | truncate: 20 }}
 {{ "Ground control to Major Tom." | truncate: 25, ", and so on" }}
 {{ "Ground control to Major Tom." | truncate: 20, "" }}
