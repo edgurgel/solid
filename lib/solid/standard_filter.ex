@@ -526,7 +526,7 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.plus("183.357", 12)
   "195.357"
   iex> Solid.StandardFilter.plus("183.ABC357", 12)
-  "195.0"
+  "195"
   """
   @spec plus(term, term) :: String.t()
   def plus(input, number) do
@@ -540,6 +540,50 @@ defmodule Solid.StandardFilter do
         try_decimal_to_integer(result)
       end
     end)
+  end
+
+  @doc """
+  Returns sum of all elements in an enumerable
+  Allowing for an optional property to be passed in
+
+  iex> Solid.StandardFilter.sum([])
+  "0"
+  iex> Solid.StandardFilter.sum([1, 2, 3])
+  "6"
+  iex> Solid.StandardFilter.sum(1..3)
+  "6"
+  iex> Solid.StandardFilter.sum([%{"a" => 1}, %{"a" => 10}])
+  "0"
+  iex> Solid.StandardFilter.sum([%{"a" => 1}, %{"a" => 10}], "a")
+  "11"
+  """
+  @spec sum(term, term) :: String.t()
+  def sum(input, property \\ nil) do
+    property = if property, do: to_str(property), else: nil
+
+    input
+    |> to_enum
+    |> Stream.map(fn value ->
+      cond do
+        property == nil ->
+          to_decimal(value)
+
+        true ->
+          to_decimal(value[property] || 0)
+      end
+    end)
+    |> Enum.reduce(Decimal.new(0), fn value, acc ->
+      Decimal.add(acc, value)
+    end)
+    |> to_string()
+  end
+
+  defp to_enum(input) do
+    cond do
+      is_list(input) -> List.flatten(input)
+      is_struct(input, Range) -> Enum.to_list(input)
+      true -> [input]
+    end
   end
 
   @doc """
@@ -729,9 +773,16 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.size(~w(ground control to Major Tom.))
   5
   """
-  @spec size(String.t() | list) :: non_neg_integer
-  def size(input) when is_list(input), do: Enum.count(input)
-  def size(input), do: String.length(input)
+  @spec size(term) :: non_neg_integer
+  def size(input) when is_binary(input), do: String.length(input)
+
+  def size(range) when is_struct(range, Range), do: Enum.count(range)
+
+  def size(input) when (not is_struct(input) and is_map(input)) or is_list(input) do
+    Enum.count(input)
+  end
+
+  def size(_), do: 0
 
   @doc """
   Returns a substring of 1 character beginning at the index specified by the argument passed in.
@@ -852,7 +903,7 @@ defmodule Solid.StandardFilter do
   "Ground control to Ma"
   """
   @spec truncate(String.t(), non_neg_integer, String.t()) :: String.t()
-  def truncate(input, length, ellipsis \\ "...") do
+  def truncate(input, length \\ 50, ellipsis \\ "...") do
     if String.length(input) > length do
       length = max(0, length - String.length(ellipsis))
       slice(input, 0, length) <> ellipsis
