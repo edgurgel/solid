@@ -49,7 +49,15 @@ defmodule Solid.Context do
         end
       end)
 
-    keys = [variable.identifier | Enum.reverse(keys)]
+    # This exists here for the case when there is no initial identifier like:
+    # {{ [foo] }}
+    # In this case we start directly on the context vars
+    keys =
+      if variable.identifier do
+        [variable.identifier | Enum.reverse(keys)]
+      else
+        Enum.reverse(keys)
+      end
 
     result = get_from_scope(context, scopes, keys)
 
