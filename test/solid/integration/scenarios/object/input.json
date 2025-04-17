@@ -1,6 +1,8 @@
 {
   "foo" : "bar",
+  "bar" : "baz",
   "var" : [1, 2, 3],
+  "numbers" : { "zero" : 0, "one" : 1, "two" : 2 },
   "multiarray" : [["a", "b", "c"], [1, 2, 3]],
   "string" : "string",
   "number" : 12,

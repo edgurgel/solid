@@ -64,12 +64,14 @@ defmodule Solid.VariableTest do
       assert {
                :ok,
                %Variable{
-                 loc: %Loc{line: 1, column: 4},
-                 identifier: "a var",
-                 accesses: [%Solid.AccessLiteral{value: "foo"}],
+                 accesses: [
+                   %Solid.AccessLiteral{value: "a var"},
+                   %Solid.AccessLiteral{value: "foo"}
+                 ],
+                 identifier: nil,
                  original_name: "['a var'].foo"
                },
-               [end: %{line: 1, column: 17}]
+               [end: %{column: 17, line: 1}]
              } = parse(template)
     end
 

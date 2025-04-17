@@ -41,19 +41,18 @@ defmodule Solid.ObjectTest do
 
       assert {
                :ok,
-               %Object{
+               %Solid.Object{
                  argument: %Solid.Variable{
-                   identifier: "a var",
                    accesses: [
-                     %Solid.AccessLiteral{
-                       value: "foo"
-                     }
+                     %Solid.AccessLiteral{value: "a var"},
+                     %Solid.AccessLiteral{value: "foo"}
                    ],
+                   identifier: nil,
                    original_name: "['a var'].foo"
                  },
                  filters: []
                },
-               [end: %{line: 1, column: 17}]
+               [end: %{column: 17, line: 1}]
              } = parse(template)
     end
 

@@ -7,7 +7,7 @@ defmodule Solid.Variable do
   defstruct [:loc, :identifier, :accesses, :original_name]
 
   @type accesses :: [AccessVariable | AccessLiteral]
-  @type t :: %__MODULE__{loc: Solid.Parser.Loc.t(), identifier: binary, accesses: accesses}
+  @type t :: %__MODULE__{loc: Solid.Parser.Loc.t(), identifier: binary | nil, accesses: accesses}
 
   defimpl String.Chars do
     def to_string(variable), do: variable.original_name
@@ -22,26 +22,24 @@ defmodule Solid.Variable do
       [{:identifier, meta, identifier} | rest] ->
         do_parse_identifier(identifier, meta, rest)
 
-      [{:open_square, _}, {:string, meta, identifier, quotes}, {:close_square, _} | rest] ->
-        do_parse_bracket_variable(identifier, quotes, meta, rest)
+      [{:open_square, meta} | _] ->
+        with {:ok, rest, accesses, accesses_original_name} <- access(tokens) do
+          original_name = Enum.join(accesses_original_name)
+
+          {:ok,
+           %__MODULE__{
+             loc: struct!(Loc, meta),
+             identifier: nil,
+             accesses: accesses,
+             original_name: original_name
+           }, rest}
+        else
+          {:error, _, meta} ->
+            {:error, "Argument expected", meta}
+        end
 
       _ ->
         {:error, "Variable expected", Solid.Parser.meta_head(tokens)}
-    end
-  end
-
-  defp do_parse_bracket_variable(identifier, quotes, meta, rest) do
-    with {:ok, rest, accesses, accesses_original_name} <- access(rest) do
-      quotes = IO.chardata_to_string([quotes])
-      original_name = "[#{quotes}#{identifier}#{quotes}]" <> Enum.join(accesses_original_name)
-
-      {:ok,
-       %__MODULE__{
-         loc: struct!(Loc, meta),
-         identifier: identifier,
-         accesses: accesses,
-         original_name: original_name
-       }, rest}
     end
   end
 
