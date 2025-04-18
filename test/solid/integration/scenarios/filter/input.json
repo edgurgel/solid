@@ -13,6 +13,7 @@
   "input": "hello %{first_name}, %{last_name}", "surname": "john",
   "my_string" : "abba abba cde cde",
   "posts" : [{ "title" : "Title 1" }, { "title" : "Title 2" }, [{"title" : "Title 3"}]],
+  "weird_posts" : [{ "title" : "Title 1" }, { "title" : "Title 2" }, 123, []],
   "post" : { "title" : "Title 1" },
   "var_nil": null,
   "var_false": false,

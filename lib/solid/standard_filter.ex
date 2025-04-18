@@ -450,7 +450,18 @@ defmodule Solid.StandardFilter do
   def map(input, property) when is_list(input) do
     input
     |> List.flatten()
-    |> Enum.map(& &1[property])
+    |> Enum.map(fn item ->
+      cond do
+        is_map(item) and not is_struct(item) ->
+          item[property]
+
+        is_integer(item) ->
+          raise %Solid.ArgumentError{message: "cannot select the property '#{property}'"}
+
+        true ->
+          nil
+      end
+    end)
   end
 
   def map(input, property) when is_map(input) and not is_struct(input), do: input[property]
