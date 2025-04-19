@@ -505,22 +505,22 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.modulo(183.357, 12)
   3.357
   """
-  @spec modulo(number, number) :: number
-  def modulo(dividend, divisor)
-      when is_integer(dividend) and is_integer(divisor),
-      do: Integer.mod(dividend, divisor)
-
-  # OTP 20+
+  @spec modulo(term, term) :: String.t()
   def modulo(dividend, divisor) do
-    dividend
-    |> :math.fmod(divisor)
-    |> Float.round(decimal_places(dividend))
-  end
+    dividend_decimal = to_decimal(dividend)
+    divisor_decimal = to_decimal(divisor)
 
-  defp decimal_places(float) do
-    string = float |> Float.to_string()
-    {start, _} = :binary.match(string, ".")
-    byte_size(string) - start - 1
+    if Decimal.equal?(Decimal.new(0), divisor_decimal) do
+      raise %Solid.ArgumentError{message: "divided by 0"}
+    end
+
+    result = Decimal.rem(dividend_decimal, divisor_decimal)
+
+    if original_float?(dividend) or original_float?(divisor) do
+      decimal_to_float(result)
+    else
+      try_decimal_to_integer(result)
+    end
   end
 
   @doc """

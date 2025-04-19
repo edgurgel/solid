@@ -337,6 +337,19 @@ modulo
 {{ 183.35 | modulo: 12 }}
 {{ 183.3 | modulo: 12 }}
 {{ 183 | modulo: 12 }}
+{{ 183 | modulo: 12.5 }}
+{{ 183.5 | modulo: 12.1 }}
+{{ "183.5" | modulo: "12.1" }}
+{{ "183" | modulo: "12" }}
+{{ "text" | modulo: "2.0" }}
+{{ unknown | modulo: unknown }}
+{{ unknown | modulo: 12 }}
+{{ 5 | modulo: unknown }}
+{{ 5 | modulo: 0 }}
+{{ 5 | modulo: 0.0 }}
+{{ 5 | modulo: -0.0 }}
+
+substitute
 
 {{ input | substitute: first_name: surname, last_name: 'doe' }}
 
