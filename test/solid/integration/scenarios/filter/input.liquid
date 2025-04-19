@@ -109,13 +109,30 @@ floor
 
 lstrip
 
-{{ "          So much room for activities!          " | lstrip }}
 {{ "          So much room for activities!          " | rstrip }}
-{{ "          So much room for activities!          " | strip }}
 {{ 5 | lstrip }}
 {{ (1..5) | lstrip }}
 {{ array | lstrip }}
 {{ unknown | lstrip }}
+{% #{{ posts | lstrip }} %}
+
+rstrip
+
+{{ "          So much room for activities!          " | rstrip }}
+{{ 5 | rstrip }}
+{{ (1..5) | rstrip }}
+{{ array | rstrip }}
+{{ unknown | rstrip }}
+{% # {{ posts | rstrip }} %}
+
+strip
+
+{{ "          So much room for activities!          " | strip }}
+{{ 5 | strip }}
+{{ (1..5) | strip }}
+{{ array | strip }}
+{{ unknown | strip }}
+{% # {{ posts | strip }} %}
 
 minus
 
@@ -225,6 +242,7 @@ replace
 {{ unknown | replace: "rain", "unknown" }}
 {{ (1..5) | replace: 1, "one" }}
 {{ 1 | replace: (1..5), "range" }}
+{% # {{ post | replace: 'T', 't' | join: '#' }} %}
 
 remove
 
@@ -459,3 +477,14 @@ newline_to_br
 {{ empty | newline_to_br }}
 {{ true | newline_to_br }}
 {{ false | newline_to_br }}
+
+reverse
+
+{{ nested_array | reverse | join: '#' }}
+{{ words | reverse | join: '#' }}
+{{ my_numbers | reverse | join: '#' }}
+{{ true | reverse | join: '#' }}
+{{ false | reverse | join: '#' }}
+{{ 1 | reverse | join: '#' }}
+{{ "text" | reverse | join: '#' }}
+{{ unknown | reverse | join: '#' }}
