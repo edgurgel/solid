@@ -842,7 +842,7 @@ defmodule Solid.StandardFilter do
   ~w(SallySnake giraffe octopus zebra)
   """
   @spec sort(list) :: list
-  def sort(input), do: Enum.sort(input)
+  def sort(input), do: Enum.sort(to_enum(input))
 
   @doc """
   Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.
