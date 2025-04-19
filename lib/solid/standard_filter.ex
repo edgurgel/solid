@@ -992,16 +992,16 @@ defmodule Solid.StandardFilter do
 
   Output
   iex> Solid.StandardFilter.newline_to_br("Test \\ntext\\r\\n with line breaks.")
-  "Test <br />\\ntext<br />\\r\\n with line breaks."
+  "Test <br />\\ntext<br />\\n with line breaks."
 
   iex> Solid.StandardFilter.newline_to_br([[["Test \\ntext\\r\\n with "] | "line breaks."]])
-  "Test <br />\\ntext<br />\\r\\n with line breaks."
+  "Test <br />\\ntext<br />\\n with line breaks."
   """
   @spec newline_to_br(iodata()) :: String.t()
   def newline_to_br(iodata) do
     binary = IO.iodata_to_binary(iodata)
     pattern = :binary.compile_pattern(["\r\n", "\n"])
-    String.replace(binary, pattern, fn x -> "<br />#{x}" end)
+    String.replace(binary, pattern, "<br />\n")
   end
 
   @doc """

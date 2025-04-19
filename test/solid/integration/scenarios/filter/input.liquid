@@ -441,3 +441,16 @@ map
 {{ 'not a list' | map: 'title' | join: ', ' }}
 {{ (0..5) | map: 'title' | join: ', ' }}
 {{ weird_posts | map: 'title' | join: '#' }}
+
+newline_to_br
+
+{{ "1
+2
+3" | newline_to_br }}
+
+{{ 1 | newline_to_br }}
+{{ "" | newline_to_br }}
+{{ blank | newline_to_br }}
+{{ empty | newline_to_br }}
+{{ true | newline_to_br }}
+{{ false | newline_to_br }}
