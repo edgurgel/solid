@@ -488,3 +488,14 @@ reverse
 {{ 1 | reverse | join: '#' }}
 {{ "text" | reverse | join: '#' }}
 {{ unknown | reverse | join: '#' }}
+
+sort
+
+{{ array | sort | join: '#' }}
+{{ array | reverse | sort | join: '#' }}
+{{ 1 | sort | join: '#' }}
+{{ 1.0 | sort | join: '#' }}
+{{ true | sort | join: '#' }}
+{{ false | sort | join: '#' }}
+{{ unknown | sort | join: '#' }}
+{% # {{ posts | sort | join: '#' }} %}
