@@ -499,11 +499,11 @@ defmodule Solid.StandardFilter do
   Subtracts a number from another number.
 
   iex> Solid.StandardFilter.modulo(3, 2)
-  1
+  "1"
   iex> Solid.StandardFilter.modulo(24, 7)
-  3
+  "3"
   iex> Solid.StandardFilter.modulo(183.357, 12)
-  3.357
+  "3.357"
   """
   @spec modulo(term, term) :: String.t()
   def modulo(dividend, divisor) do
@@ -645,7 +645,7 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.replace("Take my protein pills and put my helmet on", "my", "your")
   "Take your protein pills and put your helmet on"
   """
-  @spec replace(String.t(), String.t(), String.t()) :: String.t()
+  @spec replace(term, term, term) :: String.t()
   def replace(input, string, replacement \\ "") do
     String.replace(to_str(input), to_str(string), to_str(replacement))
   end
@@ -716,8 +716,12 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.reverse(["a", "b", "c"])
   ["c", "b", "a"]
   """
-  @spec reverse(list) :: list
-  def reverse(input), do: Enum.reverse(input)
+  @spec reverse(term) :: list
+  def reverse(input) do
+    input
+    |> to_enum()
+    |> Enum.reverse()
+  end
 
   @doc """
   Rounds an input number to the nearest integer or,
@@ -773,8 +777,8 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.rstrip("          So much room for activities!          ")
   "          So much room for activities!"
   """
-  @spec rstrip(String.t()) :: String.t()
-  def rstrip(input), do: String.trim_trailing(input)
+  @spec rstrip(term) :: String.t()
+  def rstrip(input), do: String.trim_trailing(to_str(input))
 
   @doc """
   Returns the number of characters in a string or the number of items in an array.
@@ -858,8 +862,8 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.strip("          So much room for activities!          ")
   "So much room for activities!"
   """
-  @spec strip(String.t()) :: String.t()
-  def strip(input), do: String.trim(input)
+  @spec strip(term) :: String.t()
+  def strip(input), do: String.trim(to_str(input))
 
   @doc """
   Multiplies a number by another number.
