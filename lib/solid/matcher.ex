@@ -13,15 +13,19 @@ end
 defimpl Solid.Matcher, for: List do
   def match(data, []), do: {:ok, data}
 
-  def match(data, ["size"]) do
-    {:ok, Enum.count(data)}
-  end
+  def match(data, ["first"]), do: {:ok, Enum.at(data, 0)}
+  def match(data, ["last"]), do: {:ok, Enum.at(data, -1)}
+  def match(data, ["size"]), do: {:ok, Enum.count(data)}
 
   def match(data, [key | keys]) when is_integer(key) do
     case Enum.fetch(data, key) do
       {:ok, value} -> @protocol.match(value, keys)
       _ -> {:error, :not_found}
     end
+  end
+
+  def match(_data, _) do
+    {:error, :not_found}
   end
 end
 
@@ -30,14 +34,22 @@ defimpl Solid.Matcher, for: Map do
     {:ok, data}
   end
 
-  def match(data, ["size"]) do
-    {:ok, Map.get(data, "size", Enum.count(data))}
-  end
+  # Maps are not ordered so these are here just for consistency with the Liquid implementation
+  # as we must return something
 
   def match(data, [key | []]) do
     case Map.fetch(data, key) do
-      {:ok, value} -> {:ok, value}
-      _ -> {:error, :not_found}
+      {:ok, value} ->
+        {:ok, value}
+
+      _ ->
+        # Check if the key is a special case
+        case key do
+          "first" -> {:ok, Enum.at(data, 0)}
+          "last" -> {:ok, Enum.at(data, -1)}
+          "size" -> {:ok, map_size(data)}
+          _ -> {:error, :not_found}
+        end
     end
   end
 

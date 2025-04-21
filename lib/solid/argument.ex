@@ -168,6 +168,10 @@ defmodule Solid.Argument do
     "#{range.first}..#{range.last}"
   end
 
+  defp stringify!(two_tuple) when is_tuple(two_tuple) and tuple_size(two_tuple) == 2 do
+    "#{elem(two_tuple, 0)}#{elem(two_tuple, 1)}"
+  end
+
   defp stringify!(value), do: to_string(value)
 
   @spec get(t, Context.t(), [Filter.t()], Keyword.t()) :: {:ok, term, Context.t()}
