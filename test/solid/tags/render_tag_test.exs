@@ -74,6 +74,21 @@ defmodule Solid.Tags.RenderTagTest do
                 }, %ParserContext{rest: "", line: 1, column: 42, mode: :normal}}
     end
 
+    test "arguments no initial comma" do
+      template = "{% render 'inner_object' key: value, title: 'text' %}"
+
+      assert {:ok,
+              %Solid.Tags.RenderTag{
+                template: "inner_object",
+                arguments: %{
+                  "key" => %Solid.Variable{identifier: "value"},
+                  "title" => %Solid.Literal{value: "text"}
+                }
+              },
+              %Solid.ParserContext{rest: "", line: 1, column: 54, mode: :normal, tags: nil}} =
+               parse(template)
+    end
+
     test "with arguments" do
       template = ~s<{% render "file1" with products[0] %}>
 
@@ -187,6 +202,13 @@ defmodule Solid.Tags.RenderTagTest do
                  },
                  %ParserContext{column: 48, line: 1, mode: :normal, rest: ""}
                }
+    end
+
+    test "wrong args" do
+      template = ~s<{% render "file1" in files %}>
+
+      assert parse(template) ==
+               {:error, "Expected arguments, 'with' or 'for'", %{column: 19, line: 1}}
     end
   end
 

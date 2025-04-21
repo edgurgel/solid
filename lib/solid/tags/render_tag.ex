@@ -27,11 +27,14 @@ defmodule Solid.Tags.RenderTag do
 
   defp parse_arguments(tokens, template) do
     case tokens do
-      [{:comma, _} | _] -> parse_list_of_arguments(tokens)
       [{:identifier, _, "with"} | rest] -> parse_with_or_for_arguments(rest, :with, template)
       [{:identifier, _, "for"} | rest] -> parse_with_or_for_arguments(rest, :for, template)
+      # Parse optional comma
+      [{:comma, _} | rest] -> parse_list_of_arguments(rest)
+      # No initial comma
+      [{:identifier, _, _} | _] -> parse_list_of_arguments(tokens)
       [{:end, _}] -> {:ok, %{}}
-      _ -> {:error, "Expected arguments, with or for ", Parser.meta_head(tokens)}
+      _ -> {:error, "Expected arguments, 'with' or 'for'", Parser.meta_head(tokens)}
     end
   end
 
@@ -52,16 +55,24 @@ defmodule Solid.Tags.RenderTag do
 
   defp parse_list_of_arguments(tokens, acc \\ %{}) do
     case tokens do
-      [{:comma, _}, {:identifier, _, key}, {:colon, _} | rest] ->
+      [{:identifier, _, key}, {:colon, _} | rest] ->
         with {:ok, value, rest} <- Argument.parse(rest) do
-          parse_list_of_arguments(rest, Map.put(acc, key, value))
+          acc = Map.put(acc, key, value)
+
+          case rest do
+            [{:comma, _} | rest] ->
+              parse_list_of_arguments(rest, acc)
+
+            [{:end, _}] ->
+              {:ok, acc}
+
+            _ ->
+              {:error, "Expected arguments, 'with' or 'for'", Solid.Parser.meta_head(rest)}
+          end
         end
 
-      [{:end, _}] ->
-        {:ok, acc}
-
       _ ->
-        {:error, "Expected arguments, with or for ", Solid.Parser.meta_head(tokens)}
+        {:error, "Expected arguments, 'with' or 'for'", Solid.Parser.meta_head(tokens)}
     end
   end
 
