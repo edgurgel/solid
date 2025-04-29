@@ -824,11 +824,13 @@ defmodule Solid.StandardFilter do
 
   def slice(input, offset, length) do
     offset = to_integer!(offset)
-    length = if length do
-      max(0, to_integer!(length))
-    else
-      1
-    end
+
+    length =
+      if length do
+        max(0, to_integer!(length))
+      else
+        1
+      end
 
     if is_list(input) do
       Enum.slice(input, offset, length)
