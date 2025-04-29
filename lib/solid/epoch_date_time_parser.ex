@@ -90,4 +90,3 @@ defmodule Solid.EpochDateTimeParser do
     {:error, "cannot convert #{inspect(result)} to context #{context}"}
   end
 end
-
