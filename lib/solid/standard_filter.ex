@@ -659,6 +659,13 @@ defmodule Solid.StandardFilter do
 
   defp to_str(input) when is_map(input), do: inspect(input)
   defp to_str(input) when is_list(input), do: inspect(input)
+
+  defp to_str(input) when is_float(input) do
+    input
+    |> Decimal.from_float()
+    |> Decimal.to_string(:xsd)
+  end
+
   defp to_str(input), do: to_string(input)
 
   @doc """
@@ -925,6 +932,10 @@ defmodule Solid.StandardFilter do
   """
   @spec truncate(String.t(), non_neg_integer, String.t()) :: String.t()
   def truncate(input, length \\ 50, ellipsis \\ "...") do
+    length = to_integer!(length)
+    input = to_str(input)
+    ellipsis = to_str(ellipsis)
+
     if String.length(input) > length do
       length = max(0, length - String.length(ellipsis))
       slice(input, 0, length) <> ellipsis
