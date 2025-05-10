@@ -356,6 +356,26 @@ defmodule Solid.LexerTest do
                 %ParserContext{rest: "", line: 1, column: 13, mode: :normal}}
     end
 
+    test "double quoted string with new line" do
+      context = ~s<{{"string\n"}}> |> build_context
+
+      assert Lexer.tokenize_object(context) ==
+               {
+                 :ok,
+                 [
+                   {:string, %{column: 3, line: 1}, "string\n", ?"},
+                   {:end, %{column: 11, line: 2}}
+                 ],
+                 %Solid.ParserContext{
+                   column: 13,
+                   line: 2,
+                   mode: :normal,
+                   rest: "",
+                   tags: nil
+                 }
+               }
+    end
+
     test "single quoted string" do
       context = "{{'string' }}" |> build_context
 

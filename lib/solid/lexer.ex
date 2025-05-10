@@ -485,6 +485,9 @@ defmodule Solid.Lexer do
       "" ->
         {:error, "String with #{[quotes]} not terminated"}
 
+      <<"\n", rest::binary>> ->
+        string_value(rest, quotes, line + 1, column, ["\n" | buffer])
+
       <<c, rest::binary>> when c != quotes ->
         string_value(rest, quotes, line, column + 1, [c | buffer])
 
