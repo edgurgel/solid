@@ -971,6 +971,10 @@ defmodule Solid.StandardFilter do
   def truncatewords(nil, _max_words, _ellipsis), do: ""
 
   def truncatewords(input, max_words, ellipsis) do
+    input = to_str(input)
+    max_words = to_integer!(max_words)
+    max_words = max(max_words, 1)
+    ellipsis = to_str(ellipsis)
     words = String.split(input, " ")
 
     if length(words) > max_words do
@@ -978,6 +982,8 @@ defmodule Solid.StandardFilter do
       |> Enum.intersperse(" ")
       |> to_string
       |> Kernel.<>(ellipsis)
+    else
+      input
     end
   end
 

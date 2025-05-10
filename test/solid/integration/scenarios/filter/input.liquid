@@ -335,22 +335,44 @@ truncate
 
 {{ "Ground control to Major Tom. Ground control to Major Tom." | truncate }}
 {{ "Ground control to Major Tom." | truncate: 20 }}
+{{ "Ground control to Major Tom." | truncate: 0 }}
 {{ "Ground control to Major Tom." | truncate: 25, ", and so on" }}
 {{ "Ground control to Major Tom." | truncate: 20, "" }}
 {{ "Ground control to Major Tom." | truncate: unknown }}
+{{ "Ground control to Major Tom." | truncate: 20, unknown }}
+{{ "Ground control to Major Tom." | truncate: 20, "text" }}
+{{ "Ground control to Major Tom." | truncate: 20, 100.0 }}
+{{ "Ground control to Major Tom." | truncate: "20", "..." }}
+{{ "Ground control to Major Tom." | truncate: "20", blank }}
+{{ "Ground control to Major Tom." | truncate: "20", array }}
 {{ 1000 | truncate: 20 }}
 {{ 1000.0 | truncate: 20 }}
 {{ blank | truncate: 20 }}
 {{ empty | truncate: 20 }}
 {{ my_array | truncate: 20 }}
 {{ array | truncate: 20 }}
+{{ true | truncate: 20 }}
+{{ false | truncate: 20 }}
 
 truncatewords
 
 {{ "Ground control to Major Tom." | truncatewords: 3 }}
+{{ "Ground control to Major Tom." | truncatewords: 0 }}
 {{ "Ground control to Major Tom." | truncatewords: 3, "--" }}
 {{ "Ground control to Major Tom." | truncatewords: 3, "" }}
+{{ "Ground control to Major Tom." | truncatewords: unknown}}
+{{ "Ground control to Major Tom." | truncatewords: 10 }}
+{{ "Ground control to Major Tom." | truncatewords: 10, blank }}
+{{ "Ground control to Major Tom." | truncatewords: 10, array }}
 {{ empty_string | truncatewords: 3, "" }}
+{{ 100 | truncatewords: 3, "-" }}
+{{ 1000.0 | truncatewords: 3, "-" }}
+{{ blank | truncatewords: 3, "-" }}
+{{ empty | truncatewords: 3, "-" }}
+{{ my_array | truncatewords: 3, "-" }}
+{{ true | truncatewords: 3, "-" }}
+{{ false | truncatewords: 3, "-" }}
+
 
 {{ fruits | split: ","| uniq | join: ", " }}
 
