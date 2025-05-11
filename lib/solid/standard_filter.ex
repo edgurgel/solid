@@ -973,7 +973,7 @@ defmodule Solid.StandardFilter do
 
     words =
       input
-      |> String.split([" ", "\n"], trim: true)
+      |> String.split([" ", "\n", "\t"], trim: true)
 
     if length(words) > max_words do
       Enum.take(words, max_words)
