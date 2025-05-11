@@ -1054,13 +1054,15 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.where(input, "available")
   [%{"id" => 1, "available" => true}, %{"id" => 3, "available" => true}]
   """
-  @spec where(list, String.t(), String.t()) :: list
+  @spec where(term, term, term) :: list
   def where(input, key, value) do
+    input = to_enum(input)
     for %{} = map <- input, map[key] == value, do: map
   end
 
-  @spec where(list, String.t()) :: list
+  @spec where(term, term) :: list
   def where(input, key) do
+    input = to_enum(input)
     for %{} = map <- input, Map.has_key?(map, key), do: map
   end
 
