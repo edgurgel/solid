@@ -364,6 +364,8 @@ truncatewords
 {{ "Ground control to Major Tom." | truncatewords: 10 }}
 {{ "Ground control to Major Tom." | truncatewords: 10, blank }}
 {{ "Ground control to Major Tom." | truncatewords: 10, array }}
+{{ "Ground control to
+Major Tom" | truncatewords: 3 }}
 {{ empty_string | truncatewords: 3, "" }}
 {{ 100 | truncatewords: 3, "-" }}
 {{ 1000.0 | truncatewords: 3, "-" }}
