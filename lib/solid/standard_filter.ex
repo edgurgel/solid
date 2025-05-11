@@ -394,18 +394,13 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.join(5, "-")
   5
   """
-  @spec join(list, String.t()) :: term
-  def join(input, glue \\ " ")
-  def join(input, glue) when is_list(input) and is_binary(glue), do: Enum.join(input, glue)
-  def join(input, glue) when is_list(input), do: join(input, to_string(glue))
-
-  def join(input, glue) when is_struct(input, Range) do
+  @spec join(term, term) :: term
+  def join(input, glue \\ " ") do
     input
-    |> Enum.to_list()
-    |> join(glue)
+    |> to_enum()
+    |> Enum.map(&to_str/1)
+    |> Enum.join(to_str(glue))
   end
-
-  def join(input, _glue), do: input
 
   @doc """
   Returns the last item of an array.
@@ -966,8 +961,8 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.truncatewords("Ground control to Major Tom.", 3, "")
   "Ground control to"
   """
-  @spec truncatewords(nil | String.t(), non_neg_integer, String.t()) :: String.t()
-  def truncatewords(input, max_words, ellipsis \\ "...")
+  @spec truncatewords(term, term, term) :: String.t()
+  def truncatewords(input, max_words \\ 15, ellipsis \\ "...")
   def truncatewords(nil, _max_words, _ellipsis), do: ""
 
   def truncatewords(input, max_words, ellipsis) do
@@ -978,7 +973,7 @@ defmodule Solid.StandardFilter do
 
     words =
       input
-      |> String.split([" ", "\n"])
+      |> String.split([" ", "\n"], trim: true)
 
     if length(words) > max_words do
       Enum.take(words, max_words)
@@ -998,7 +993,11 @@ defmodule Solid.StandardFilter do
   ~w(ants bugs bees)
   """
   @spec uniq(list) :: list
-  def uniq(input), do: Enum.uniq(input)
+  def uniq(input) do
+    input
+    |> to_enum()
+    |> Enum.uniq()
+  end
 
   @doc """
   Removes any newline characters (line breaks) from a string.
