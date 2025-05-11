@@ -975,7 +975,10 @@ defmodule Solid.StandardFilter do
     max_words = to_integer!(max_words)
     max_words = max(max_words, 1)
     ellipsis = to_str(ellipsis)
-    words = String.split(input, " ")
+
+    words =
+      input
+      |> String.split([" ", "\n"])
 
     if length(words) > max_words do
       Enum.take(words, max_words)
