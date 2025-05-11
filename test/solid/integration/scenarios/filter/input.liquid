@@ -356,6 +356,8 @@ truncate
 
 truncatewords
 
+{{ "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20" | truncatewords }}
+{{ "1   2     3 4     5" | truncatewords: 2 }}
 {{ "Ground control to Major Tom." | truncatewords: 3 }}
 {{ "Ground control to Major Tom." | truncatewords: 0 }}
 {{ "Ground control to Major Tom." | truncatewords: 3, "--" }}
@@ -375,7 +377,13 @@ Major Tom" | truncatewords: 3 }}
 {{ true | truncatewords: 3, "-" }}
 {{ false | truncatewords: 3, "-" }}
 
-
+uniq
+{{ unknown | uniq | join: '-' }}
+{{ true | uniq | join: '-' }}
+{{ false | uniq | join: '-' }}
+{{ my_array | uniq | join: '-' }}
+{{ array | uniq | join: '-' }}
+{{ (1..5) | uniq | join: '-' }}
 {{ fruits | split: ","| uniq | join: ", " }}
 
 date
@@ -491,6 +499,7 @@ join
 {{ (1..5) | join: '#' }}
 {{ (5..1) | join: '#' }}
 {{ (1..'text') | join: '#' }}
+{{ nested_array | join: '-' }}
 
 map
 
