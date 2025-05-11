@@ -510,6 +510,13 @@ map
 {{ (0..5) | map: 'title' | join: ', ' }}
 {{ weird_posts | map: 'title' | join: '#' }}
 
+where
+
+{{ unknown | where: 'title' }}
+{{ true | where: 'title' }}
+{{ false | where: 'title' }}
+{{ post | where: 'title' | map: 'title' }}
+
 newline_to_br
 
 {{ "1
