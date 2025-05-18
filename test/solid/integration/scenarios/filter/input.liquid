@@ -180,6 +180,15 @@ sum
 {{ numbers | sum }}
 {{ my_numbers | sum }}
 {{ my_floats | sum }}
+{{ my_numbers | sum: 'key' }}
+{{ my_floats | sum: 'key' }}
+{{ array | sum: 'key' }}
+{{ post | sum: 'key' }}
+{{ empty | sum: 'key' }}
+{{ true | sum: 'key' }}
+{{ false | sum: 'key' }}
+{{ nil | sum: 'key' }}
+{{ blank | sum: 'key' }}
 {{ numbers | sum: 'key' }}
 {{ numbers | sum: '2' }}
 {{ numbers | sum:  unknown }}
