@@ -512,10 +512,18 @@ map
 
 where
 
+{{ var | where: 'title' }}
+{{ float | where: 'title' }}
+{{ string | where: 'title' }}
 {{ unknown | where: 'title' }}
 {{ true | where: 'title' }}
 {{ false | where: 'title' }}
 {{ post | where: 'title' | map: 'title' }}
+{{ post | where: 'title', "Title1" | map: 'title' }}
+{{ post | where: 'title', "Title2" | map: 'title' }}
+{{ post | where: unknown, unknown | map: 'title' }}
+{{ post | where: "title", unknown | map: 'title' }}
+{{ posts | where: "title", unknown | map: 'title' }}
 
 newline_to_br
 
