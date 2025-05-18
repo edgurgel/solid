@@ -285,6 +285,9 @@ remove_first
 
 split
 
+{{ '' | split: "" | join: '#'}}
+{{ ' a bc ' | split: "" | join: '#'}}
+{{ ' a bc ' | split: " " | join: '#'}}
 {{ fruits | split: ", " | reverse | join: ", " }}
 {{ fruits | split: "," |  size }}
 {{ "Ground control to Major Tom." | size }}
