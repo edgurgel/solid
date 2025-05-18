@@ -575,7 +575,16 @@ defmodule Solid.StandardFilter do
           to_decimal(value)
 
         true ->
-          to_decimal(value[property] || 0)
+          cond do
+            is_struct(value, Empty) or is_binary(value) or is_boolean(value) or is_nil(value) ->
+              0
+
+            is_map(value) ->
+              to_decimal(value[property] || 0)
+
+            true ->
+              raise %Solid.ArgumentError{message: "cannot select the property '#{property}'"}
+          end
       end
     end)
     |> Enum.reduce(Decimal.new(0), fn value, acc ->
