@@ -434,7 +434,7 @@ defmodule Solid.StandardFilter do
   [""]
   """
   @spec split(term, term) :: list(String.t())
-  def split(input, pattern), do: to_str(input) |> String.split(to_str(pattern))
+  def split(input, pattern), do: to_str(input) |> String.split(to_str(pattern), trim: true)
 
   @doc """
   Map through a list of hashes accessing `property`
