@@ -392,7 +392,7 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.join((3..0//-1), "-")
   "3-2-1-0"
   iex> Solid.StandardFilter.join(5, "-")
-  5
+  "5"
   """
   @spec join(term, term) :: term
   def join(input, glue \\ " ") do
@@ -588,6 +588,7 @@ defmodule Solid.StandardFilter do
     cond do
       is_list(input) -> List.flatten(input)
       is_struct(input, Range) -> Enum.to_list(input)
+      is_tuple(input) -> Tuple.to_list(input)
       true -> [input]
     end
   end
@@ -1056,14 +1057,29 @@ defmodule Solid.StandardFilter do
   """
   @spec where(term, term, term) :: list
   def where(input, key, value) do
-    input = to_enum(input)
-    for %{} = map <- input, map[key] == value, do: map
+    if value == nil do
+      where(input, key)
+    else
+      input = to_enum(input)
+      for map <- input, Map.has_key?(map, key), map[key] == value, do: map
+    end
   end
 
   @spec where(term, term) :: list
   def where(input, key) do
-    input = to_enum(input)
-    for %{} = map <- input, Map.has_key?(map, key), do: map
+    input
+    |> to_enum
+    |> Enum.flat_map(fn item ->
+      if is_integer(item) do
+        raise %Solid.ArgumentError{message: "cannot select the property '#{key}'"}
+      end
+
+      if is_map(item) && Map.has_key?(item, key) do
+        [item]
+      else
+        []
+      end
+    end)
   end
 
   @doc """
