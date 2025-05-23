@@ -431,7 +431,7 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.split("a b c", " ")
   ~w(a b c)
   iex> Solid.StandardFilter.split("", " ")
-  [""]
+  []
   """
   @spec split(term, term) :: list(String.t())
   def split(input, pattern), do: to_str(input) |> String.split(to_str(pattern), trim: true)
