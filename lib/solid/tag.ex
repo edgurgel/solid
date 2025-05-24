@@ -27,7 +27,8 @@ defmodule Solid.Tag do
       "increment" => Tags.CounterTag,
       "raw" => Tags.RawTag,
       "render" => Tags.RenderTag,
-      "unless" => Tags.IfTag
+      "unless" => Tags.IfTag,
+      "tablerow" => Tags.TablerowTag
     }
   end
 

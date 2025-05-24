@@ -1,0 +1,114 @@
+{% tablerow i in (1..5) %}
+  {{ i }}
+{% endtablerow %}
+
+{% tablerow product in products %}
+  {{ product.title }}
+{% endtablerow %}
+
+# Both should be empty
+{{ product }} {{ tablerowloop.first }}
+
+{% tablerow product in products offset: 1 %}
+  {{ product.title }}
+{% endtablerow %}
+
+{% tablerow product in products offset: '1' %}
+  {{ product.title }}
+{% endtablerow %}
+
+{% tablerow product in products offset: unknown %}
+  {{ product.title }}
+{% endtablerow %}
+
+{% tablerow product in products limit: 1 %}
+  {{ product.title }}
+{% endtablerow %}
+
+{% tablerow product in products limit: '2' %}
+  {{ product.title }}
+{% endtablerow %}
+
+{% tablerow product in products cols: 2 %}
+  {{ product.title }}
+{% endtablerow %}
+
+{% tablerow product in products cols: unknown %}
+  {{ product.title }}
+{% endtablerow %}
+
+{% tablerow product in products cols: '2' %}
+  {{ product.title }}
+{% endtablerow %}
+
+{% tablerow product in products cols: 1 %}
+  {{ product.title }}
+{% endtablerow %}
+
+{% tablerow product in products offset: 1, limit: 5, cols: 2 %}
+  {{ product.title }}
+{% endtablerow %}
+
+tablerowloop
+{% tablerow product in products cols: 2 %}
+  {{ tablerowloop.col }}
+  {{ tablerowloop.col0 }}
+  {{ tablerowloop.col_first }}
+  {{ tablerowloop.col_last }}
+  {{ tablerowloop.row }}
+  {{ tablerowloop.first }}
+  {{ tablerowloop.last }}
+  {{ tablerowloop.length }}
+  {{ tablerowloop.index }}
+  {{ tablerowloop.index0 }}
+  {{ tablerowloop.rindex }}
+  {{ tablerowloop.rindex0 }}
+{% endtablerow %}
+
+{% tablerow product in products %}
+  before break
+  {% if tablerowloop.first %}
+    {% break %}
+  {% endif %}
+  after break
+{% endtablerow %}
+
+{% tablerow product in products cols: 2 %}
+  before break
+  {% if tablerowloop.first %}
+    {% break %}
+  {% endif %}
+  after break
+{% endtablerow %}
+
+{% tablerow product in products %}
+  before break
+  {% if tablerowloop.last %}
+    {% break %}
+  {% endif %}
+  after break
+{% endtablerow %}
+
+{% tablerow product in products cols: 2 %}
+  before break
+  {% if tablerowloop.last %}
+    {% break %}
+  {% endif %}
+  after break
+{% endtablerow %}
+
+{% tablerow product in products %}
+  before continue
+  {% if tablerowloop.first %}
+    {% continue %}
+  {% endif %}
+  after continue
+{% endtablerow %}
+
+{% tablerow product in products cols: 2 %}
+  before continue
+  {% if tablerowloop.first %}
+    {% continue %}
+  {% endif %}
+  after continue
+{% endtablerow %}
