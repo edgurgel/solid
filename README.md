@@ -22,7 +22,7 @@ The package can be installed with:
 
 ```elixir
 def deps do
-  [{:solid, "~> 1.0.0-rc.0"}]
+  [{:solid, "~> 1.0"}]
 end
 ```
 
