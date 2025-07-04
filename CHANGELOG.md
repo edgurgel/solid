@@ -1,4 +1,11 @@
-# 1.0.0
+# 1.0.1 (2025-07-04)
+
+## Bug fixes
+
+* Fix parsing error when tags were incomplete
+* Point to the opening tag/object line and column when they are not closed properly
+
+# 1.0.0 (2025-06-16)
 
 ## Enhancements
 

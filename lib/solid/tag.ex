@@ -9,6 +9,7 @@ defmodule Solid.Tag do
             ) ::
               {:ok, Renderable.t(), ParserContext.t()}
               | {:error, reason :: binary, Lexer.loc()}
+              | {:error, reason :: binary, rest :: binary, Lexer.loc()}
 
   def default_tags do
     %{
@@ -35,6 +36,7 @@ defmodule Solid.Tag do
   @spec parse(tag_name :: binary, Loc.t(), ParserContext.t()) ::
           {:ok, Renderable.t(), ParserContext.t()}
           | {:error, reason :: binary, Lexer.loc()}
+          | {:error, reason :: binary, rest :: binary, Lexer.loc()}
   def parse(tag_name, loc, context) do
     module = (context.tags || default_tags())[tag_name]
 

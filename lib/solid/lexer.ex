@@ -34,7 +34,7 @@ defmodule Solid.Lexer do
   @doc "Tokenize the input text inside an object"
   @spec tokenize_object(ParserContext.t()) ::
           {:ok, tokens, ParserContext.t()}
-          | {:error, reason :: term, rest :: binary, loc}
+          | {:error, reason :: binary, rest :: binary, loc}
   def tokenize_object(%ParserContext{rest: "{{" <> text, line: line, column: column} = context) do
     # The actual whitespace control is handled elsewhere
     {text, column} = drop(text, column + 2, "-")
@@ -50,7 +50,7 @@ defmodule Solid.Lexer do
           {:ok, tag_name :: binary, ParserContext.t()}
           | {:liquid_tag, ParserContext.t()}
           | {:end_liquid_tag, ParserContext.t()}
-          | {:error, reason :: term, rest :: binary, loc}
+          | {:error, reason :: binary, rest :: binary, loc}
           | {:error, :not_expected_tag}
   def tokenize_tag_start(context, opts \\ []) do
     allowed_tag_names = Keyword.get(opts, :allowed_tag_names, [])
@@ -112,7 +112,7 @@ defmodule Solid.Lexer do
 
   @doc "Tokenize the rest of the tag after the tag name"
   @spec tokenize_tag_end(ParserContext.t()) ::
-          {:ok, tokens, ParserContext.t()} | {:error, reason :: term, rest :: binary, loc}
+          {:ok, tokens, ParserContext.t()} | {:error, reason :: binary, rest :: binary, loc}
   def tokenize_tag_end(context) do
     if context.mode == :liquid_tag do
       with {:ok, tokens, text, line, column} <-
@@ -133,7 +133,7 @@ defmodule Solid.Lexer do
           {:ok, tag_name :: binary, tokens, ParserContext.t()}
           | {:liquid_tag, ParserContext.t()}
           | {:end_liquid_tag, ParserContext.t()}
-          | {:error, reason :: term, rest :: binary, loc}
+          | {:error, reason :: binary, rest :: binary, loc}
           | {:error, :not_expected_tag}
   def tokenize_tag(context, opts \\ []) do
     with {:ok, tag_name, context} <- tokenize_tag_start(context, opts),

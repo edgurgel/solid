@@ -45,7 +45,7 @@ defmodule SolidTest do
                %Solid.TemplateError{
                  errors: [
                    %Solid.ParserError{
-                     meta: %{line: 1, column: 14},
+                     meta: %{line: 1, column: 1},
                      reason: "Tag or Object not properly terminated",
                      text: "{{ form.title"
                    }
