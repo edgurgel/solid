@@ -12,7 +12,7 @@ defmodule Solid.Tags.IfTag do
   @type t :: %__MODULE__{
           loc: Loc.t(),
           tag_name: :if | :unless,
-          elsifs: {ConditionExpression.condition(), [Parser.entry()]},
+          elsifs: [{ConditionExpression.condition(), [Parser.entry()]}],
           body: [Parser.entry()],
           else_body: [Parser.entry()],
           condition: ConditionExpression.condition()
