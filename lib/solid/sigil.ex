@@ -13,6 +13,18 @@ defmodule Solid.Sigil do
       ...> \"\"\"
       iex> Solid.render(template, %{"name" => "World"})
       {:ok, "Hello, World!"}
+
+  An optional module attribute @liquid_tags can set which tags will be used while parsing.
+
+      defmodule MyModule do
+        import Solid.Sigil
+
+        @liquid_tags Solid.Tag.default_tags() |> Map.put("current_line", CustomTags.CurrentLine)
+
+        def template do
+          ~LIQUID"{% current_line %}"
+        end
+      end
   """
 
   # Custom sigil for validating and compiling Liquid templates using Solid

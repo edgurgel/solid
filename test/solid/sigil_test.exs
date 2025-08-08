@@ -62,7 +62,6 @@ defmodule Solid.SigilTest do
       code = """
       defmodule MyModule do
         import Solid.Sigil
-        require Solid.Tag
 
         @liquid_tags Solid.Tag.default_tags() |> Map.put("current_line", CustomTags.CurrentLine)
 
