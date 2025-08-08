@@ -20,9 +20,16 @@ defmodule Solid.Sigil do
     line = __CALLER__.line
     file = __CALLER__.file
 
+    tags =
+      if __CALLER__.module do
+        Module.get_attribute(__CALLER__.module, :liquid_tags)
+      end
+
+    opts = if tags, do: [tags: tags], else: []
+
     try do
       # Validate the template during compile time
-      parsed_template = Solid.parse!(string)
+      parsed_template = Solid.parse!(string, opts)
 
       # Return the parsed template
       Macro.escape(parsed_template)
