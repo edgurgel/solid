@@ -867,10 +867,19 @@ defmodule Solid.StandardFilter do
 
   iex> Solid.StandardFilter.sort_natural(~w(zebra octopus giraffe SallySnake))
   ~w(giraffe octopus SallySnake zebra)
+
+  iex> Solid.StandardFilter.sort_natural(123)
+  "123"
   """
-  @spec sort_natural(list) :: list
+  @spec sort_natural(any) :: any
+  def sort_natural(input) when is_list(input) or is_struct(input, Range) do
+    input
+    |> to_enum()
+    |> Enum.sort(&(String.downcase(to_string(&1)) <= String.downcase(to_string(&2))))
+  end
+
   def sort_natural(input) do
-    Enum.sort(input, &(String.downcase(&1) <= String.downcase(&2)))
+    to_string(input)
   end
 
   @doc """
