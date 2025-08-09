@@ -576,3 +576,10 @@ sort
 {{ false | sort | join: '#' }}
 {{ unknown | sort | join: '#' }}
 {% # {{ posts | sort | join: '#' }} %}
+
+sort_natural
+
+{{ 123 | sort_natural }}
+{{ (0..15) | sort_natural | join: ", " }}
+{{ 123 | sort_natural | join: ", " }}
+{{ fruits | sort_natural | join: ", " }}

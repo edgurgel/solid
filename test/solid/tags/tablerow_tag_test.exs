@@ -2,7 +2,7 @@ defmodule Solid.Tags.TablerowTagTest do
   use ExUnit.Case, async: true
 
   alias Solid.Tags.TablerowTag
-  alias Solid.{Lexer, ParserContext, Renderable}
+  alias Solid.{Lexer, ParserContext}
   alias Solid.Parser.Loc
 
   defp parse(template) do
