@@ -689,19 +689,28 @@ defmodule Solid.StandardFilter do
 
   iex> Solid.StandardFilter.replace_last("Take my protein pills and put my helmet on", "my", "your")
   "Take my protein pills and put your helmet on"
+  iex> Solid.StandardFilter.replace_last("Take my protein", nil, "#")
+  "Take my protein#"
   """
   @spec replace_last(String.t(), String.t(), String.t()) :: String.t()
   def replace_last(input, string, replacement \\ "") do
-    input = to_string(input)
+    input = to_str(input)
+    replacement = to_str(replacement)
 
-    case last_index(input, string) do
-      nil ->
-        input
+    if is_nil(string) do
+      input <> replacement
+    else
+      string = to_str(string)
 
-      index ->
-        {prefix, suffix} = String.split_at(input, index)
+      case last_index(input, string) do
+        nil ->
+          input
 
-        prefix <> replace_first(suffix, string, replacement)
+        index ->
+          {prefix, suffix} = String.split_at(input, index)
+
+          prefix <> replace_first(suffix, string, replacement)
+      end
     end
   end
 
