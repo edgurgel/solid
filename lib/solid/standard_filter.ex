@@ -712,13 +712,29 @@ defmodule Solid.StandardFilter do
     string = to_str(string)
     replacement = to_str(replacement)
 
-    if string == "" do
-      input
+    case last_index(input, string) do
+      nil ->
+        input
+
+      index ->
+        prefix = :binary.part(input, 0, index)
+        suffix = :binary.part(input, index + byte_size(string), byte_size(input) - (index + byte_size(string)))
+        prefix <> replacement <> suffix
+    end
+  end
+
+  defp last_index(input, string) do
+    input_len = byte_size(input)
+    string_len = byte_size(string)
+
+    if string_len == 0 do
+      nil
     else
-      input
-      |> String.reverse()
-      |> String.replace(String.reverse(string), String.reverse(replacement), global: false)
-      |> String.reverse()
+      (0..(input_len - string_len))
+      |> Enum.reverse()
+      |> Enum.find(fn i ->
+        :binary.part(input, i, string_len) == string
+      end)
     end
   end
 
