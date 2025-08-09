@@ -681,7 +681,11 @@ defmodule Solid.StandardFilter do
   """
   @spec replace_first(String.t(), String.t(), String.t()) :: String.t()
   def replace_first(input, string, replacement \\ "") do
-    input |> to_string |> String.replace(string, replacement, global: false)
+    if is_nil(string) do
+      to_str(input)
+    else
+      input |> to_str() |> String.replace(to_str(string), to_str(replacement), global: false)
+    end
   end
 
   @doc """
