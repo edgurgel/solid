@@ -689,37 +689,37 @@ defmodule Solid.StandardFilter do
 
   iex> Solid.StandardFilter.replace_last("Take my protein pills and put my helmet on", "my", "your")
   "Take my protein pills and put your helmet on"
+  iex> Solid.StandardFilter.replace_last("hello", "l", "p")
+  "helpo"
+  iex> Solid.StandardFilter.replace_last("hello", "ll", "")
+  "heo"
+  iex> Solid.StandardFilter.replace_last("abab", "b", "c")
+  "abac"
+  iex> Solid.StandardFilter.replace_last("abab", "a", "c")
+  "abcb"
+  iex> Solid.StandardFilter.replace_last("aaaaa", "a", "b")
+  "aaaab"
+  iex> Solid.StandardFilter.replace_last("aaaaa", "aa", "b")
+  "aaab"
+  iex> Solid.StandardFilter.replace_last("foo", "bar", "baz")
+  "foo"
+  iex> Solid.StandardFilter.replace_last("foo", "f", "b")
+  "boo"
   """
   @spec replace_last(String.t(), String.t(), String.t()) :: String.t()
-  def replace_last(input, string, replacement \\ "") do
-    input = to_string(input)
+  def replace_last(input, string, replacement) do
+    input = to_str(input)
+    string = to_str(string)
+    replacement = to_str(replacement)
 
-    case last_index(input, string) do
-      nil ->
-        input
-
-      index ->
-        {prefix, suffix} = String.split_at(input, index)
-
-        prefix <> replace_first(suffix, string, replacement)
+    if string == "" do
+      input
+    else
+      input
+      |> String.reverse()
+      |> String.replace(String.reverse(string), String.reverse(replacement), global: false)
+      |> String.reverse()
     end
-  end
-
-  defp last_index(input, string) do
-    do_last_index(input, string, 0, nil)
-  end
-
-  defp do_last_index("", _string, _index, last), do: last
-
-  defp do_last_index(input, string, index, last) do
-    new_last =
-      if String.starts_with?(input, string) do
-        index
-      else
-        last
-      end
-
-    do_last_index(String.slice(input, 1..-1//1), string, index + 1, new_last)
   end
 
   @doc """
