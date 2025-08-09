@@ -283,6 +283,10 @@ remove_first
 {{ my_string | replace: "my", "your" }}
 {{ my_string | replace_first: "my", "your" }}
 
+replace_first
+
+{{ "Take my protein" | replace_first: nosuchthing, "#" }}
+
 split
 
 {{ '' | split: "" | join: '#'}}
