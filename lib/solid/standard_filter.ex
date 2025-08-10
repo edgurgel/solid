@@ -705,16 +705,22 @@ defmodule Solid.StandardFilter do
   "foo"
   iex> Solid.StandardFilter.replace_last("foo", "f", "b")
   "boo"
+  iex> Solid.StandardFilter.replace_last("Take my protein", nil, "#")
+  "Take my protein#"
   """
   @spec replace_last(String.t(), String.t(), String.t()) :: String.t()
   def replace_last(input, string, replacement) do
     input = to_str(input)
-    string = to_str(string)
+    string_arg = to_str(string)
     replacement = to_str(replacement)
 
-    case last_index(input, string) do
+    case last_index(input, string_arg) do
       nil ->
-        input
+        if string_arg == "" do
+          input <> replacement
+        else
+          input
+        end
 
       index ->
         prefix = :binary.part(input, 0, index)
@@ -722,8 +728,8 @@ defmodule Solid.StandardFilter do
         suffix =
           :binary.part(
             input,
-            index + byte_size(string),
-            byte_size(input) - (index + byte_size(string))
+            index + byte_size(string_arg),
+            byte_size(input) - (index + byte_size(string_arg))
           )
 
         prefix <> replacement <> suffix
