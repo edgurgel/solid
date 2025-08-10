@@ -1137,9 +1137,11 @@ defmodule Solid.StandardFilter do
   Output
   iex> Solid.StandardFilter.strip_html("Have <em>you</em> read <strong>Ulysses</strong>?")
   "Have you read Ulysses?"
+  iex> Solid.StandardFilter.strip_html("<!-- foo bar \\n test -->test")
+  "test"
   """
-  @html_blocks ~r{(<script.*?</script>)|(<!--.*?-->)|(<style.*?</style>)}m
-  @html_tags ~r|<.*?>|m
+  @html_blocks ~r{(<script.*?</script>)|(<!--.*?-->)|(<style.*?</style>)}s
+  @html_tags ~r|<.*?>|s
   @spec strip_html(iodata()) :: String.t()
   def strip_html(iodata) do
     iodata
