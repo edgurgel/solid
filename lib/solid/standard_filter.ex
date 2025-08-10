@@ -718,7 +718,14 @@ defmodule Solid.StandardFilter do
 
       index ->
         prefix = :binary.part(input, 0, index)
-        suffix = :binary.part(input, index + byte_size(string), byte_size(input) - (index + byte_size(string)))
+
+        suffix =
+          :binary.part(
+            input,
+            index + byte_size(string),
+            byte_size(input) - (index + byte_size(string))
+          )
+
         prefix <> replacement <> suffix
     end
   end
@@ -730,7 +737,7 @@ defmodule Solid.StandardFilter do
     if string_len == 0 do
       nil
     else
-      (0..(input_len - string_len))
+      0..(input_len - string_len)
       |> Enum.reverse()
       |> Enum.find(fn i ->
         :binary.part(input, i, string_len) == string
