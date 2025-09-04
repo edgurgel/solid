@@ -329,5 +329,20 @@ defmodule SolidTest do
                "user.properties.name"
              )
     end
+
+    test "undefined filter error message with line number" do
+      template = "{{ var1 | not_a_filter }}"
+
+      assert_raise Solid.RenderError,
+                   "1 error(s) found while rendering\n1: Undefined filter not_a_filter",
+                   fn ->
+                     template
+                     |> Solid.parse!()
+                     |> Solid.render!(%{"var1" => "value"},
+                       strict_filters: true,
+                       file_system: {TestFileSystem, nil}
+                     )
+                   end
+    end
   end
 end
