@@ -268,5 +268,41 @@ defmodule SolidTest do
                }
              ]
     end
+
+    test "undefined variable error message with multiple variables" do
+      template = "{{ var1 }}\n{{ event.name }}\n{{ user.properties.name }}"
+
+      {:error, [first_error, second_error, third_error], _partial_result} =
+        template
+        |> Solid.parse!()
+        |> Solid.render(%{}, strict_variables: true, file_system: {TestFileSystem, nil})
+
+      assert String.contains?(Solid.UndefinedVariableError.message(first_error), "var1")
+
+      assert String.contains?(
+               Solid.UndefinedVariableError.message(second_error),
+               "event.name"
+             )
+
+      assert String.contains?(
+               Solid.UndefinedVariableError.message(third_error),
+               "user.properties.name"
+             )
+    end
+
+    test "undefined filter error message with line number" do
+      template = "{{ var1 | not_a_filter }}"
+
+      assert_raise Solid.RenderError,
+                   "1 error(s) found while rendering\n1: Undefined filter not_a_filter",
+                   fn ->
+                     template
+                     |> Solid.parse!()
+                     |> Solid.render!(%{"var1" => "value"},
+                       strict_filters: true,
+                       file_system: {TestFileSystem, nil}
+                     )
+                   end
+    end
   end
 end

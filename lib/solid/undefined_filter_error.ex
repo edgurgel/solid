@@ -3,5 +3,9 @@ defmodule Solid.UndefinedFilterError do
   defexception [:filter, :loc]
 
   @impl true
-  def message(exception), do: "Undefined filter #{exception.filter}"
+  def message(exception) do
+    line = exception.loc.line
+    reason = "Undefined filter #{exception.filter}"
+    "#{line}: #{reason}"
+  end
 end
