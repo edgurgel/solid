@@ -268,5 +268,45 @@ defmodule SolidTest do
                }
              ]
     end
+
+    test "return errors when both strict_variables and strict_filters are on" do
+      template = "a{{ var1 | non_existing_filter }} {{ var2 | capitalize }}b"
+
+      {:error, error, partial_result} =
+        template
+        |> Solid.parse!()
+        |> Solid.render(%{}, strict_filters: true)
+
+      assert IO.iodata_to_binary(partial_result) == "a b"
+
+      assert error == [
+               %Solid.UndefinedFilterError{
+                 loc: %Solid.Parser.Loc{column: 12, line: 1},
+                 filter: "non_existing_filter"
+               }
+             ]
+
+      {:error, error, partial_result} =
+        template
+        |> Solid.parse!()
+        |> Solid.render(%{}, strict_variables: true, strict_filters: true)
+
+      assert IO.iodata_to_binary(partial_result) == "a b"
+
+      assert error == [
+               %Solid.UndefinedVariableError{
+                 variable: ["var1"],
+                 loc: %Solid.Parser.Loc{line: 1, column: 5}
+               },
+               %Solid.UndefinedFilterError{
+                 loc: %Solid.Parser.Loc{column: 12, line: 1},
+                 filter: "non_existing_filter"
+               },
+               %Solid.UndefinedVariableError{
+                 variable: ["var2"],
+                 loc: %Solid.Parser.Loc{line: 1, column: 38}
+               }
+             ]
+    end
   end
 end

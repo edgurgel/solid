@@ -209,15 +209,10 @@ defmodule Solid do
   end
 
   defp strict_errors?(errors, options) do
-    cond do
-      options[:strict_variables] == true ->
-        Enum.any?(errors, &match?(%Solid.UndefinedVariableError{}, &1))
+    variable_errors? = Enum.any?(errors, &match?(%Solid.UndefinedVariableError{}, &1))
+    filter_errors? = Enum.any?(errors, &match?(%Solid.UndefinedFilterError{}, &1))
 
-      options[:strict_filters] == true ->
-        Enum.any?(errors, &match?(%Solid.UndefinedFilterError{}, &1))
-
-      true ->
-        false
-    end
+    (options[:strict_variables] == true && variable_errors?) ||
+      (options[:strict_filters] == true && filter_errors?)
   end
 end
