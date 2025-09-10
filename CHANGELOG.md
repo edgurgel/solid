@@ -1,3 +1,14 @@
+# [Unreleased]
+
+## Enhancements
+
+* Align the `Solid.UndefinedFilterError` message with `Solid.UndefinedVariableError` - include line number
+
+## Bug fixes
+
+* Return `{:error, errors}` tuple when both strict_filters and strict_variables are enforced while rendering a template
+* Use correct variable name in the `Solid.UndefinedVariableError` message
+
 # 1.0.1 (2025-07-04)
 
 ## Bug fixes
