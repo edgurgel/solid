@@ -213,10 +213,12 @@ defmodule SolidTest do
       assert error == [
                %Solid.UndefinedVariableError{
                  variable: ["var1"],
+                 original_name: "var1",
                  loc: %Solid.Parser.Loc{line: 1, column: 5}
                },
                %Solid.UndefinedVariableError{
                  variable: ["var2"],
+                 original_name: "var2",
                  loc: %Solid.Parser.Loc{line: 1, column: 16}
                }
              ]
@@ -254,16 +256,19 @@ defmodule SolidTest do
       assert error == [
                %Solid.UndefinedVariableError{
                  variable: ["var1"],
+                 original_name: "var1",
                  loc: %Solid.Parser.Loc{line: 1, column: 5}
                },
                %Solid.UndefinedVariableError{
                  variable: ["var2"],
+                 original_name: "var2",
                  loc: %Solid.Parser.Loc{line: 1, column: 16}
                },
                # FIXME this should somehow point out which file?
                # Check how liquid does this
                %Solid.UndefinedVariableError{
                  variable: ["var3"],
+                 original_name: "var3",
                  loc: %Solid.Parser.Loc{line: 1, column: 4}
                }
              ]
@@ -296,6 +301,7 @@ defmodule SolidTest do
       assert error == [
                %Solid.UndefinedVariableError{
                  variable: ["var1"],
+                 original_name: "var1",
                  loc: %Solid.Parser.Loc{line: 1, column: 5}
                },
                %Solid.UndefinedFilterError{
@@ -304,13 +310,15 @@ defmodule SolidTest do
                },
                %Solid.UndefinedVariableError{
                  variable: ["var2"],
+                 original_name: "var2",
                  loc: %Solid.Parser.Loc{line: 1, column: 38}
                }
              ]
     end
 
     test "undefined variable error message with multiple variables" do
-      template = "{{ var1 }}\n{{ event.name }}\n{{ user.properties.name }}"
+      template =
+        "{{ var1 }}\n{{ event.name }}\n{{ user.properties['name'] }}\n"
 
       {:error, [first_error, second_error, third_error], _partial_result} =
         template
@@ -326,7 +334,7 @@ defmodule SolidTest do
 
       assert String.contains?(
                Solid.UndefinedVariableError.message(third_error),
-               "user.properties.name"
+               "user.properties['name']"
              )
     end
 

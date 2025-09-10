@@ -296,7 +296,10 @@ defmodule Solid.ArgumentTest do
       arg = %Variable{original_name: "key[1]", loc: @loc, identifier: "key", accesses: accesses}
       context = %Solid.Context{vars: %{"key" => "a string"}}
       assert {:ok, nil, context} = Argument.get(arg, context, [], strict_variables: true)
-      assert context.errors == [%UndefinedVariableError{variable: ["key", 1], loc: @loc}]
+
+      assert context.errors == [
+               %UndefinedVariableError{variable: ["key", 1], original_name: "key[1]", loc: @loc}
+             ]
     end
 
     test "array access and nested" do
@@ -376,7 +379,9 @@ defmodule Solid.ArgumentTest do
       assert {:ok, 456, context} =
                Argument.get(arg, context, filters, strict_variables: true)
 
-      assert context.errors == [%UndefinedVariableError{variable: ["key"], loc: @loc}]
+      assert context.errors == [
+               %UndefinedVariableError{variable: ["key"], original_name: "key", loc: @loc}
+             ]
     end
 
     test "missing filter strict_filters" do
@@ -445,7 +450,7 @@ defmodule Solid.ArgumentTest do
 
       assert context.errors == [
                %Solid.UndefinedFilterError{filter: "unknown", loc: @loc},
-               %UndefinedVariableError{variable: ["key"], loc: @loc}
+               %UndefinedVariableError{variable: ["key"], original_name: "key", loc: @loc}
              ]
     end
 
@@ -523,7 +528,9 @@ defmodule Solid.ArgumentTest do
                  strict_variables: true
                )
 
-      assert context.errors == [%UndefinedVariableError{variable: ["name"], loc: @loc}]
+      assert context.errors == [
+               %UndefinedVariableError{variable: ["name"], original_name: "name", loc: @loc}
+             ]
     end
   end
 end
