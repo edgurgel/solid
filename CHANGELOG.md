@@ -1,4 +1,4 @@
-# [Unreleased]
+# 1.1.1 (2025-09-20)
 
 ## Enhancements
 
@@ -8,6 +8,11 @@
 
 * Return `{:error, errors}` tuple when both strict_filters and strict_variables are enforced while rendering a template
 * Use correct variable name in the `Solid.UndefinedVariableError` message
+* Fix `strip_html` filter to handle multiline comments
+* Fix nil argument for `replace_last` filter
+* Fix `replace_last` filter bug with duplicate substrings
+* Fix non-list inputs in `sort_natural` filter
+* Fix `replace_first` filter for nil argument
 
 # 1.0.1 (2025-07-04)
 
