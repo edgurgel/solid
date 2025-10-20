@@ -45,4 +45,31 @@ defmodule Solid.StandardFilterTest do
                }
     end
   end
+
+  test "it applies a function as custom filter" do
+    user_locale = "en"
+
+    custom_filters = fn
+      "format_number", [num] ->
+        {:ok, "#{user_locale}: #{num}"}
+
+      "format_number", [num, locale] ->
+        {:ok, "#{locale}: #{num}"}
+
+      _, _ ->
+        :error
+    end
+
+    assert "en: 41" ==
+             "{{ number | format_number }}"
+             |> Solid.parse!()
+             |> Solid.render!(%{"number" => 41}, custom_filters: custom_filters)
+             |> to_string()
+
+    assert "fr: 41" ==
+             "{{ number | format_number: 'fr' }}"
+             |> Solid.parse!()
+             |> Solid.render!(%{"number" => 41}, custom_filters: custom_filters)
+             |> to_string()
+  end
 end

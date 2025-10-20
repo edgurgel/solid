@@ -96,6 +96,31 @@ end
 # 42
 ```
 
+Alternatively, you can pass a function to the `custom_filters` option. This allows
+your filters to access predefined state. An example use-case could be to allow the
+filters to render strings in the user's default locale (or to override it by
+argument).
+
+``` elixir
+user_locale = "en"
+
+"{{ number | format_number }}"
+|> Solid.parse!()
+|> Solid.render!(%{ "number" => 41}, custom_filters: fn
+  "format_number", [num] ->
+    {:ok, Cldr.Number.to_string(num, locale: user_locale)}
+
+  "format_number", [num, locale] ->
+    {:ok, Cldr.Number.to_string(num, locale: locale)}
+
+  _, _ ->
+    :error
+end)
+|> IO.puts()
+```
+
+The callback must return either `{:ok, value}` or `:error`.
+
 ## Strict rendering
 
 If there are any missing variables/filters and `strict_variables: true` or `strict_filters: true` are passed as options `Solid.render/3` returns `{:error, errors, result}` where errors is the list of collected errors and `result` is the rendered template.
