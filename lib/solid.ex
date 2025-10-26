@@ -129,7 +129,7 @@ defmodule Solid do
 
   - `file_system`: a tuple of {FileSystemModule, options}. If this option is not specified, `Solid` uses `Solid.BlankFileSystem` which returns an error when the `render` tag is used. `Solid.LocalFileSystem` can be used or a custom module may be implemented. See `Solid.FileSystem` for more details.
 
-  - `custom_filters`: a module name where additional filters are defined. The base filters (those from `Solid.StandardFilter`) still can be used, however, custom filters always take precedence.
+  - `custom_filters`: a module name where additional filters are defined. The base filters (those from `Solid.StandardFilter`) still can be used, however, custom filters always take precedence. May also be a function that receives the filter name and the arguments and must return `{:ok, term} | :error`.
 
   - `strict_variables`: if `true`, it collects an error when a variable is referenced in the template, but not given in the map
 

@@ -10,12 +10,12 @@ defmodule Solid.StandardFilter do
   @spec apply(String.t(), list(), Solid.Parser.Loc.t(), keyword()) ::
           {:ok, any()} | {:error, Exception.t(), any()} | {:error, Exception.t()}
   def apply(filter, args, loc, opts) do
-    custom_module =
+    custom_module_or_callback =
       opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
 
     strict_filters = Keyword.get(opts, :strict_filters, false)
 
-    with :error <- apply_filter(custom_module, filter, args, loc),
+    with :error <- apply_filter(custom_module_or_callback, filter, args, loc),
          :error <- apply_filter(__MODULE__, filter, args, loc) do
       if strict_filters do
         {:error, %Solid.UndefinedFilterError{loc: loc, filter: filter}, List.first(args)}
@@ -43,9 +43,13 @@ defmodule Solid.StandardFilter do
     end
   end
 
-  defp apply_filter(mod, func, args, loc) do
-    func = String.to_existing_atom(func)
-    {:ok, Kernel.apply(mod, func, args)}
+  defp apply_filter(mod_or_callback, func, args, loc) do
+    if is_function(mod_or_callback, 2) do
+      mod_or_callback.(func, args)
+    else
+      func = String.to_existing_atom(func)
+      {:ok, Kernel.apply(mod_or_callback, func, args)}
+    end
   rescue
     # Unknown function name atom or unknown function -> fallback
     ArgumentError ->
@@ -56,7 +60,7 @@ defmodule Solid.StandardFilter do
       {:error, %{e | loc: loc}}
 
     UndefinedFunctionError ->
-      find_correct_function(mod, String.to_existing_atom(func), Enum.count(args), loc)
+      find_correct_function(mod_or_callback, String.to_existing_atom(func), Enum.count(args), loc)
   end
 
   @doc """
