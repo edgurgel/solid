@@ -25,7 +25,7 @@ defmodule Solid.StandardFilter do
     end
   end
 
-  defp find_correct_function(module, fn_name, arity, loc) do
+  defp find_correct_function(module, fn_name, arity, loc) when is_atom(module) do
     module.__info__(:functions)
     |> Enum.find(&(elem(&1, 0) == fn_name))
     |> case do
@@ -42,6 +42,8 @@ defmodule Solid.StandardFilter do
         :error
     end
   end
+
+  defp find_correct_function(_callback, _fn_name, _arity, _loc), do: :error
 
   defp apply_filter(mod_or_callback, func, args, loc) do
     if is_function(mod_or_callback, 2) do
