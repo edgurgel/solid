@@ -72,4 +72,15 @@ defmodule Solid.StandardFilterTest do
              |> Solid.render!(%{"number" => 41}, custom_filters: custom_filters)
              |> to_string()
   end
+
+  test "custom filter throw undefined error" do
+    assert ["41"] ==
+             "{{ number | format_number }}"
+             |> Solid.parse!()
+             |> Solid.render!(%{"number" => 41},
+               custom_filters: fn _func, _args ->
+                 apply(Map, :does_not_exist, [])
+               end
+             )
+  end
 end
