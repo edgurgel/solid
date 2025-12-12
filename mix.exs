@@ -2,7 +2,7 @@ defmodule Solid.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/edgurgel/solid"
-  @version "1.1.1"
+  @version "1.2.0"
 
   def project do
     [

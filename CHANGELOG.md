@@ -1,3 +1,9 @@
+# 1.2.0 (2025-12-12)
+
+## Enhancements
+
+* Accept function as custom_filters
+
 # 1.1.1 (2025-09-20)
 
 ## Enhancements
