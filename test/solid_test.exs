@@ -197,6 +197,26 @@ defmodule SolidTest do
              |> Solid.render!(%{})
              |> IO.iodata_to_binary() == "yofoo"
     end
+
+    test "protcol not implemented for structs" do
+      template = "{{ var1 }}"
+
+      assert_raise(Protocol.UndefinedError, fn ->
+        template
+        |> Solid.parse!()
+        |> Solid.render!(%{__struct__: MyStruct, var1: "yo"})
+      end)
+    end
+
+    test "protcol not implemented for floats" do
+      template = "{{ var1 }}"
+
+      assert_raise(Protocol.UndefinedError, fn ->
+        template
+        |> Solid.parse!()
+        |> Solid.render!(3.14)
+      end)
+    end
   end
 
   describe "strict_variables" do
