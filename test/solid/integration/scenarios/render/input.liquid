@@ -20,3 +20,5 @@ test nested render tag
 render with
 {% assign my_name = "Hello" %}
 {% render "inner_argument" with my_name as name %}
+
+{% for i in (1..3) %}{% render 'item' for items %}{% endfor %}

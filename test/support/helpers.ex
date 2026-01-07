@@ -7,7 +7,6 @@ defmodule Solid.Helpers do
         |> case do
           {:error, errors, result} -> {:error, errors, to_string(result)}
           {:ok, result, _errors} -> to_string(result)
-          result -> to_string(result)
         end
 
       {:error, error} ->
