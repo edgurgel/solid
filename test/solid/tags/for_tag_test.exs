@@ -31,6 +31,7 @@ defmodule Solid.Tags.ForTagTest do
                     accesses: [
                       %Solid.AccessLiteral{
                         loc: %Loc{column: 30, line: 1},
+                        access_type: :dot,
                         value: "products"
                       }
                     ]
@@ -54,6 +55,7 @@ defmodule Solid.Tags.ForTagTest do
                         accesses: [
                           %Solid.AccessLiteral{
                             loc: %Loc{column: 14, line: 2},
+                            access_type: :dot,
                             value: "title"
                           }
                         ]
@@ -148,6 +150,7 @@ defmodule Solid.Tags.ForTagTest do
                     accesses: [
                       %Solid.AccessLiteral{
                         loc: %Loc{column: 30, line: 1},
+                        access_type: :dot,
                         value: "products"
                       }
                     ]
@@ -171,6 +174,7 @@ defmodule Solid.Tags.ForTagTest do
                         accesses: [
                           %Solid.AccessLiteral{
                             loc: %Loc{column: 14, line: 2},
+                            access_type: :dot,
                             value: "title"
                           }
                         ]
@@ -206,6 +210,7 @@ defmodule Solid.Tags.ForTagTest do
                     accesses: [
                       %Solid.AccessLiteral{
                         loc: %Loc{column: 30, line: 1},
+                        access_type: :dot,
                         value: "products"
                       }
                     ]

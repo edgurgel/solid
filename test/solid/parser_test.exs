@@ -632,6 +632,7 @@ defmodule Solid.ParserTest do
                       accesses: [
                         %Solid.AccessLiteral{
                           loc: %Parser.Loc{column: 14, line: 1},
+                          access_type: :brackets,
                           value: "first"
                         },
                         %Solid.AccessVariable{
@@ -645,10 +646,12 @@ defmodule Solid.ParserTest do
                         },
                         %Solid.AccessLiteral{
                           loc: %Parser.Loc{column: 31, line: 1},
+                          access_type: :dot,
                           value: "third"
                         },
                         %Solid.AccessLiteral{
                           loc: %Parser.Loc{column: 37, line: 1},
+                          access_type: :brackets,
                           value: 4
                         },
                         %Solid.AccessVariable{
@@ -660,6 +663,7 @@ defmodule Solid.ParserTest do
                             accesses: [
                               %Solid.AccessLiteral{
                                 loc: %Parser.Loc{column: 46, line: 1},
+                                access_type: :brackets,
                                 value: "nested"
                               }
                             ]

@@ -23,12 +23,13 @@ defmodule Solid.VariableTest do
               loc: %Loc{column: 8, line: 1},
               identifier: "var2",
               accesses: [
-                %Solid.AccessLiteral{loc: %Loc{column: 13, line: 1}, value: "var3"}
+                %Solid.AccessLiteral{loc: %Loc{column: 13, line: 1}, access_type: :brackets, value: "var3"}
               ]
             }
           },
           %Solid.AccessLiteral{
             loc: %Loc{column: 19, line: 1},
+            access_type: :brackets,
             value: "var4"
           }
         ],
@@ -65,8 +66,8 @@ defmodule Solid.VariableTest do
                :ok,
                %Variable{
                  accesses: [
-                   %Solid.AccessLiteral{value: "a var"},
-                   %Solid.AccessLiteral{value: "foo"}
+                   %Solid.AccessLiteral{access_type: :brackets, value: "a var"},
+                   %Solid.AccessLiteral{access_type: :dot, value: "foo"}
                  ],
                  identifier: nil,
                  original_name: "['a var'].foo"
@@ -85,14 +86,17 @@ defmodule Solid.VariableTest do
                  accesses: [
                    %Solid.AccessLiteral{
                      loc: %Loc{column: 8, line: 1},
+                     access_type: :dot,
                      value: "var2"
                    },
                    %Solid.AccessLiteral{
                      loc: %Loc{column: 13, line: 1},
+                     access_type: :brackets,
                      value: "string"
                    },
                    %Solid.AccessLiteral{
                      loc: %Loc{column: 23, line: 1},
+                     access_type: :brackets,
                      value: 123
                    },
                    %Solid.AccessVariable{
@@ -127,12 +131,13 @@ defmodule Solid.VariableTest do
                        loc: %Loc{column: 8, line: 1},
                        identifier: "var2",
                        accesses: [
-                         %Solid.AccessLiteral{loc: %Loc{column: 13, line: 1}, value: "var3"}
+                         %Solid.AccessLiteral{loc: %Loc{column: 13, line: 1}, access_type: :dot, value: "var3"}
                        ]
                      }
                    },
                    %Solid.AccessLiteral{
                      loc: %Loc{column: 19, line: 1},
+                     access_type: :dot,
                      value: "var4"
                    }
                  ],

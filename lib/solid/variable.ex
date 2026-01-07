@@ -75,11 +75,11 @@ defmodule Solid.Variable do
   defp access(tokens, accesses \\ [], original_name \\ []) do
     case tokens do
       [{:open_square, _}, {:integer, meta, number}, {:close_square, _} | rest] ->
-        access = %AccessLiteral{loc: struct!(Loc, meta), value: number}
+        access = %AccessLiteral{loc: struct!(Loc, meta), access_type: :brackets, value: number}
         access(rest, [access | accesses], ["[#{number}]" | original_name])
 
       [{:open_square, _}, {:string, meta, string, quotes}, {:close_square, _} | rest] ->
-        access = %AccessLiteral{loc: struct!(Loc, meta), value: string}
+        access = %AccessLiteral{loc: struct!(Loc, meta), access_type: :brackets, value: string}
         quotes = IO.chardata_to_string([quotes])
         access(rest, [access | accesses], ["[#{quotes}#{string}#{quotes}]" | original_name])
 
@@ -96,7 +96,7 @@ defmodule Solid.Variable do
         end
 
       [{:dot, _}, {:identifier, meta, identifier} | rest] ->
-        access = %AccessLiteral{loc: struct!(Loc, meta), value: identifier}
+        access = %AccessLiteral{loc: struct!(Loc, meta), access_type: :dot, value: identifier}
         access(rest, [access | accesses], [".#{identifier}" | original_name])
 
       [{:open_square, meta} | _rest] ->

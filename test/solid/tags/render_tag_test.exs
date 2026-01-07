@@ -106,6 +106,7 @@ defmodule Solid.Tags.RenderTagTest do
                         accesses: [
                           %Solid.AccessLiteral{
                             loc: %Loc{column: 33, line: 1},
+                            access_type: :brackets,
                             value: 0
                           }
                         ]
@@ -130,6 +131,7 @@ defmodule Solid.Tags.RenderTagTest do
                         accesses: [
                           %Solid.AccessLiteral{
                             loc: %Loc{column: 33, line: 1},
+                            access_type: :brackets,
                             value: 0
                           }
                         ]
@@ -153,6 +155,7 @@ defmodule Solid.Tags.RenderTagTest do
                          accesses: [
                            %Solid.AccessLiteral{
                              loc: %Loc{column: 32, line: 1},
+                             access_type: :brackets,
                              value: 0
                            }
                          ],
@@ -188,6 +191,7 @@ defmodule Solid.Tags.RenderTagTest do
                          accesses: [
                            %Solid.AccessLiteral{
                              loc: %Loc{column: 32, line: 1},
+                             access_type: :brackets,
                              value: 0
                            }
                          ],

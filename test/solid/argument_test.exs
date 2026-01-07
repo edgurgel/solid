@@ -57,8 +57,8 @@ defmodule Solid.ArgumentTest do
                  loc: %Loc{line: 1, column: 3},
                  identifier: "empty",
                  accesses: [
-                   %AccessLiteral{loc: %Loc{line: 1, column: 9}, value: 0},
-                   %AccessLiteral{loc: %Loc{line: 1, column: 12}, value: 1}
+                   %AccessLiteral{loc: %Loc{line: 1, column: 9}, access_type: :brackets, value: 0},
+                   %AccessLiteral{loc: %Loc{line: 1, column: 12}, access_type: :brackets, value: 1}
                  ]
                },
                [end: %{line: 1, column: 14}]
@@ -119,8 +119,8 @@ defmodule Solid.ArgumentTest do
                    original_name: "a.b['c']",
                    loc: %Loc{column: 4, line: 1},
                    accesses: [
-                     %AccessLiteral{loc: %Loc{line: 1, column: 6}, value: "b"},
-                     %AccessLiteral{loc: %Loc{line: 1, column: 8}, value: "c"}
+                     %AccessLiteral{loc: %Loc{line: 1, column: 6}, access_type: :dot, value: "b"},
+                     %AccessLiteral{loc: %Loc{line: 1, column: 8}, access_type: :brackets, value: "c"}
                    ],
                    identifier: "a"
                  }
@@ -257,7 +257,7 @@ defmodule Solid.ArgumentTest do
     end
 
     test "nested vars" do
-      accesses = [%AccessLiteral{loc: @loc, value: "key2"}]
+      accesses = [%AccessLiteral{loc: @loc, access_type: :dot, value: "key2"}]
 
       arg = %Variable{
         original_name: "key1.key2",
@@ -271,7 +271,10 @@ defmodule Solid.ArgumentTest do
     end
 
     test "array access" do
-      accesses = [%AccessLiteral{loc: @loc, value: 1}, %AccessLiteral{loc: @loc, value: 1}]
+      accesses = [
+        %AccessLiteral{loc: @loc, access_type: :brackets, value: 1},
+        %AccessLiteral{loc: @loc, access_type: :brackets, value: 1}
+      ]
 
       arg = %Variable{
         original_name: "key[1][1]",
@@ -285,14 +288,14 @@ defmodule Solid.ArgumentTest do
     end
 
     test "array access not found" do
-      accesses = [%AccessLiteral{loc: @loc, value: 1}]
+      accesses = [%AccessLiteral{loc: @loc, access_type: :brackets, value: 1}]
       arg = %Variable{original_name: "key[1]", loc: @loc, identifier: "key", accesses: accesses}
       context = %Solid.Context{vars: %{"key" => "a string"}}
       assert {:ok, nil, ^context} = Argument.get(arg, context, [])
     end
 
     test "array access not found with strict_variables" do
-      accesses = [%AccessLiteral{loc: @loc, value: 1}]
+      accesses = [%AccessLiteral{loc: @loc, access_type: :brackets, value: 1}]
       arg = %Variable{original_name: "key[1]", loc: @loc, identifier: "key", accesses: accesses}
       context = %Solid.Context{vars: %{"key" => "a string"}}
       assert {:ok, nil, context} = Argument.get(arg, context, [], strict_variables: true)
@@ -301,8 +304,8 @@ defmodule Solid.ArgumentTest do
 
     test "array access and nested" do
       accesses = [
-        %AccessLiteral{loc: @loc, value: 1},
-        %AccessLiteral{loc: @loc, value: "foo"}
+        %AccessLiteral{loc: @loc, access_type: :brackets, value: 1},
+        %AccessLiteral{loc: @loc, access_type: :brackets, value: "foo"}
       ]
 
       arg = %Variable{
