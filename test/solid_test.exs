@@ -46,7 +46,7 @@ defmodule SolidTest do
                %Solid.TemplateError{
                  errors: [
                    %Solid.ParserError{
-                     meta: %{line: 1, column: 14},
+                     meta: %{line: 1, column: 1},
                      reason: "Tag or Object not properly terminated",
                      text: "{{ form.title"
                    }
@@ -214,10 +214,12 @@ defmodule SolidTest do
       assert error == [
                %Solid.UndefinedVariableError{
                  variable: ["var1"],
+                 original_name: "var1",
                  loc: %Solid.Parser.Loc{line: 1, column: 5}
                },
                %Solid.UndefinedVariableError{
                  variable: ["var2"],
+                 original_name: "var2",
                  loc: %Solid.Parser.Loc{line: 1, column: 16}
                }
              ]
@@ -255,19 +257,101 @@ defmodule SolidTest do
       assert error == [
                %Solid.UndefinedVariableError{
                  variable: ["var1"],
+                 original_name: "var1",
                  loc: %Solid.Parser.Loc{line: 1, column: 5}
                },
                %Solid.UndefinedVariableError{
                  variable: ["var2"],
+                 original_name: "var2",
                  loc: %Solid.Parser.Loc{line: 1, column: 16}
                },
                # FIXME this should somehow point out which file?
                # Check how liquid does this
                %Solid.UndefinedVariableError{
                  variable: ["var3"],
+                 original_name: "var3",
                  loc: %Solid.Parser.Loc{line: 1, column: 4}
                }
              ]
+    end
+
+    test "return errors when both strict_variables and strict_filters are on" do
+      template = "a{{ var1 | non_existing_filter }} {{ var2 | capitalize }}b"
+
+      {:error, error, partial_result} =
+        template
+        |> Solid.parse!()
+        |> Solid.render(%{}, strict_filters: true)
+
+      assert IO.iodata_to_binary(partial_result) == "a b"
+
+      assert error == [
+               %Solid.UndefinedFilterError{
+                 loc: %Solid.Parser.Loc{column: 12, line: 1},
+                 filter: "non_existing_filter"
+               }
+             ]
+
+      {:error, error, partial_result} =
+        template
+        |> Solid.parse!()
+        |> Solid.render(%{}, strict_variables: true, strict_filters: true)
+
+      assert IO.iodata_to_binary(partial_result) == "a b"
+
+      assert error == [
+               %Solid.UndefinedVariableError{
+                 variable: ["var1"],
+                 original_name: "var1",
+                 loc: %Solid.Parser.Loc{line: 1, column: 5}
+               },
+               %Solid.UndefinedFilterError{
+                 loc: %Solid.Parser.Loc{column: 12, line: 1},
+                 filter: "non_existing_filter"
+               },
+               %Solid.UndefinedVariableError{
+                 variable: ["var2"],
+                 original_name: "var2",
+                 loc: %Solid.Parser.Loc{line: 1, column: 38}
+               }
+             ]
+    end
+
+    test "undefined variable error message with multiple variables" do
+      template =
+        "{{ var1 }}\n{{ event.name }}\n{{ user.properties['name'] }}\n"
+
+      {:error, [first_error, second_error, third_error], _partial_result} =
+        template
+        |> Solid.parse!()
+        |> Solid.render(%{}, strict_variables: true, file_system: {TestFileSystem, nil})
+
+      assert String.contains?(Solid.UndefinedVariableError.message(first_error), "var1")
+
+      assert String.contains?(
+               Solid.UndefinedVariableError.message(second_error),
+               "event.name"
+             )
+
+      assert String.contains?(
+               Solid.UndefinedVariableError.message(third_error),
+               "user.properties['name']"
+             )
+    end
+
+    test "undefined filter error message with line number" do
+      template = "{{ var1 | not_a_filter }}"
+
+      assert_raise Solid.RenderError,
+                   "1 error(s) found while rendering\n1: Undefined filter not_a_filter",
+                   fn ->
+                     template
+                     |> Solid.parse!()
+                     |> Solid.render!(%{"var1" => "value"},
+                       strict_filters: true,
+                       file_system: {TestFileSystem, nil}
+                     )
+                   end
     end
   end
 end

@@ -57,5 +57,22 @@ defmodule Solid.SigilTest do
         Code.eval_string(code)
       end
     end
+
+    test "compiles templates with custom tags defined in @liquid_tags" do
+      code = """
+      defmodule MyModule do
+        import Solid.Sigil
+
+        @liquid_tags Solid.Tag.default_tags() |> Map.put("current_line", CustomTags.CurrentLine)
+
+        def template do
+          ~LIQUID"{% current_line %}"
+        end
+      end
+      """
+
+      assert {{:module, my_module, _, _}, _} = Code.eval_string(code)
+      assert IO.iodata_to_binary(Solid.render!(my_module.template(), %{})) == "1"
+    end
   end
 end

@@ -1557,5 +1557,46 @@ defmodule Solid.ParserTest do
                   {"Unexpected tag 'endunless'", %{line: 3, column: 1}}
                 ]}
     end
+
+    test "broken tag" do
+      template = "{% if - %}"
+
+      assert parse(template) == {:error, [{"Unexpected character '-'", %{column: 7, line: 1}}]}
+    end
+
+    test "incomplete object" do
+      template = "{{ abc"
+
+      assert parse(template) ==
+               {:error,
+                [
+                  {
+                    "Tag or Object not properly terminated",
+                    %{column: 1, line: 1}
+                  }
+                ]}
+    end
+
+    test "incomplete tag" do
+      template = "{% if a == 3"
+
+      assert parse(template) ==
+               {:error,
+                [
+                  {
+                    "Tag or Object not properly terminated",
+                    %{column: 1, line: 1}
+                  }
+                ]}
+    end
+
+    test "incomplete liquid tag" do
+      template = """
+      {% liquid
+      if true
+      """
+
+      assert {:error, _} = parse(template)
+    end
   end
 end

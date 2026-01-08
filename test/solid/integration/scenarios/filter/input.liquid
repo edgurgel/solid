@@ -283,6 +283,10 @@ remove_first
 {{ my_string | replace: "my", "your" }}
 {{ my_string | replace_first: "my", "your" }}
 
+replace_first
+
+{{ "Take my protein" | replace_first: nosuchthing, "#" }}
+
 split
 
 {{ '' | split: "" | join: '#'}}
@@ -453,6 +457,10 @@ base64
 
 {{ my_string | remove_last: "cde" }}
 {{ my_string | replace_last: "cde", "fgh" }}
+{{ "hello" | replace_last: "ll" }}
+{{ "hello" | replace_last: "l", "p" }}
+{{ "abab" | replace_last: "a", "c" }}
+{{ "Take my protein" | replace_last: nosuchthing, "#" }}
 
 default
 
@@ -572,3 +580,14 @@ sort
 {{ false | sort | join: '#' }}
 {{ unknown | sort | join: '#' }}
 {% # {{ posts | sort | join: '#' }} %}
+
+sort_natural
+
+{{ 123 | sort_natural }}
+{{ (0..15) | sort_natural | join: ", " }}
+{{ 123 | sort_natural | join: ", " }}
+{{ fruits | sort_natural | join: ", " }}
+
+strip_html
+
+{{ "<!-- foo bar \\n test -->test" | strip_html }}

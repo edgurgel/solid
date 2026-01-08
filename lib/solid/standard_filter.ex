@@ -10,12 +10,12 @@ defmodule Solid.StandardFilter do
   @spec apply(String.t(), list(), Solid.Parser.Loc.t(), keyword()) ::
           {:ok, any()} | {:error, Exception.t(), any()} | {:error, Exception.t()}
   def apply(filter, args, loc, opts) do
-    custom_module =
+    custom_module_or_callback =
       opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
 
     strict_filters = Keyword.get(opts, :strict_filters, false)
 
-    with :error <- apply_filter(custom_module, filter, args, loc),
+    with :error <- apply_filter(custom_module_or_callback, filter, args, loc),
          :error <- apply_filter(__MODULE__, filter, args, loc) do
       if strict_filters do
         {:error, %Solid.UndefinedFilterError{loc: loc, filter: filter}, List.first(args)}
@@ -25,7 +25,7 @@ defmodule Solid.StandardFilter do
     end
   end
 
-  defp find_correct_function(module, fn_name, arity, loc) do
+  defp find_correct_function(module, fn_name, arity, loc) when is_atom(module) do
     module.__info__(:functions)
     |> Enum.find(&(elem(&1, 0) == fn_name))
     |> case do
@@ -43,9 +43,15 @@ defmodule Solid.StandardFilter do
     end
   end
 
-  defp apply_filter(mod, func, args, loc) do
-    func = String.to_existing_atom(func)
-    {:ok, Kernel.apply(mod, func, args)}
+  defp find_correct_function(_callback, _fn_name, _arity, _loc), do: :error
+
+  defp apply_filter(mod_or_callback, func, args, loc) do
+    if is_function(mod_or_callback, 2) do
+      mod_or_callback.(func, args)
+    else
+      func = String.to_existing_atom(func)
+      {:ok, Kernel.apply(mod_or_callback, func, args)}
+    end
   rescue
     # Unknown function name atom or unknown function -> fallback
     ArgumentError ->
@@ -56,7 +62,7 @@ defmodule Solid.StandardFilter do
       {:error, %{e | loc: loc}}
 
     UndefinedFunctionError ->
-      find_correct_function(mod, String.to_existing_atom(func), Enum.count(args), loc)
+      find_correct_function(mod_or_callback, String.to_existing_atom(func), Enum.count(args), loc)
   end
 
   @doc """
@@ -681,7 +687,7 @@ defmodule Solid.StandardFilter do
   """
   @spec replace_first(String.t(), String.t(), String.t()) :: String.t()
   def replace_first(input, string, replacement \\ "") do
-    input |> to_string |> String.replace(string, replacement, global: false)
+    input |> to_str() |> String.replace(to_str(string), to_str(replacement), global: false)
   end
 
   @doc """
@@ -689,37 +695,66 @@ defmodule Solid.StandardFilter do
 
   iex> Solid.StandardFilter.replace_last("Take my protein pills and put my helmet on", "my", "your")
   "Take my protein pills and put your helmet on"
+  iex> Solid.StandardFilter.replace_last("hello", "l", "p")
+  "helpo"
+  iex> Solid.StandardFilter.replace_last("hello", "ll", "")
+  "heo"
+  iex> Solid.StandardFilter.replace_last("abab", "b", "c")
+  "abac"
+  iex> Solid.StandardFilter.replace_last("abab", "a", "c")
+  "abcb"
+  iex> Solid.StandardFilter.replace_last("aaaaa", "a", "b")
+  "aaaab"
+  iex> Solid.StandardFilter.replace_last("aaaaa", "aa", "b")
+  "aaab"
+  iex> Solid.StandardFilter.replace_last("foo", "bar", "baz")
+  "foo"
+  iex> Solid.StandardFilter.replace_last("foo", "f", "b")
+  "boo"
+  iex> Solid.StandardFilter.replace_last("Take my protein", nil, "#")
+  "Take my protein#"
   """
   @spec replace_last(String.t(), String.t(), String.t()) :: String.t()
-  def replace_last(input, string, replacement \\ "") do
-    input = to_string(input)
+  def replace_last(input, string, replacement) do
+    input = to_str(input)
+    string_arg = to_str(string)
+    replacement = to_str(replacement)
 
-    case last_index(input, string) do
+    case last_index(input, string_arg) do
       nil ->
-        input
+        if string_arg == "" do
+          input <> replacement
+        else
+          input
+        end
 
       index ->
-        {prefix, suffix} = String.split_at(input, index)
+        prefix = :binary.part(input, 0, index)
 
-        prefix <> replace_first(suffix, string, replacement)
+        suffix =
+          :binary.part(
+            input,
+            index + byte_size(string_arg),
+            byte_size(input) - (index + byte_size(string_arg))
+          )
+
+        prefix <> replacement <> suffix
     end
   end
 
   defp last_index(input, string) do
-    do_last_index(input, string, 0, nil)
-  end
+    input_len = byte_size(input)
+    string_len = byte_size(string)
 
-  defp do_last_index("", _string, _index, last), do: last
-
-  defp do_last_index(input, string, index, last) do
-    new_last =
-      if String.starts_with?(input, string) do
-        index
-      else
-        last
-      end
-
-    do_last_index(String.slice(input, 1..-1//1), string, index + 1, new_last)
+    if string_len == 0 do
+      nil
+    else
+      0..(input_len - string_len)
+      |> Enum.reverse()
+      |> Enum.find(fn i ->
+        :binary.part(input, i, string_len) == string
+      end)
+    end
   end
 
   @doc """
@@ -867,10 +902,19 @@ defmodule Solid.StandardFilter do
 
   iex> Solid.StandardFilter.sort_natural(~w(zebra octopus giraffe SallySnake))
   ~w(giraffe octopus SallySnake zebra)
+
+  iex> Solid.StandardFilter.sort_natural(123)
+  "123"
   """
-  @spec sort_natural(list) :: list
+  @spec sort_natural(any) :: any
+  def sort_natural(input) when is_list(input) or is_struct(input, Range) do
+    input
+    |> to_enum()
+    |> Enum.sort(&(String.downcase(to_string(&1)) <= String.downcase(to_string(&2))))
+  end
+
   def sort_natural(input) do
-    Enum.sort(input, &(String.downcase(&1) <= String.downcase(&2)))
+    to_string(input)
   end
 
   @doc """
@@ -1099,9 +1143,11 @@ defmodule Solid.StandardFilter do
   Output
   iex> Solid.StandardFilter.strip_html("Have <em>you</em> read <strong>Ulysses</strong>?")
   "Have you read Ulysses?"
+  iex> Solid.StandardFilter.strip_html("<!-- foo bar \\n test -->test")
+  "test"
   """
-  @html_blocks ~r{(<script.*?</script>)|(<!--.*?-->)|(<style.*?</style>)}m
-  @html_tags ~r|<.*?>|m
+  @html_blocks ~r{(<script.*?</script>)|(<!--.*?-->)|(<style.*?</style>)}s
+  @html_tags ~r|<.*?>|s
   @spec strip_html(iodata()) :: String.t()
   def strip_html(iodata) do
     iodata

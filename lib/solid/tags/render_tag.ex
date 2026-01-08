@@ -155,7 +155,7 @@ defmodule Solid.Tags.RenderTag do
           value
           |> Enum.with_index(0)
           |> Enum.map(fn {v, index} ->
-            forloop = build_forloop_map(index, length, outter_context.iteration_vars["forloop"])
+            forloop = build_forloop_map(index, length)
             %Context{vars: %{destination => v}, iteration_vars: %{"forloop" => forloop}}
           end)
 
@@ -177,7 +177,7 @@ defmodule Solid.Tags.RenderTag do
       {[inner_context], outter_context}
     end
 
-    defp build_forloop_map(index, length, parentloop) do
+    defp build_forloop_map(index, length) do
       %{
         "index" => index + 1,
         "index0" => index,
@@ -185,8 +185,7 @@ defmodule Solid.Tags.RenderTag do
         "rindex0" => length - index - 1,
         "first" => index == 0,
         "last" => length == index + 1,
-        "length" => length,
-        "parentloop" => parentloop
+        "length" => length
       }
     end
 

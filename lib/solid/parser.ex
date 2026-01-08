@@ -23,6 +23,13 @@ defmodule Solid.Parser do
     parse(%ParserContext{rest: text, line: 1, column: 1, mode: :normal, tags: tags}, [], [])
   end
 
+  defp parse(%ParserContext{rest: ""}, acc, errors) do
+    case {acc, errors} do
+      {acc, []} -> {:ok, Enum.reverse(acc)}
+      {_, errors} -> {:error, Enum.reverse(errors)}
+    end
+  end
+
   defp parse(context, acc, errors) do
     case parse_liquid_entry(context) do
       {:ok, result, context} ->
@@ -232,6 +239,10 @@ defmodule Solid.Parser do
             {:error, reason, loc, context}
         end
 
+      {:error, "Tag or Object not properly terminated" = reason, rest, loc} ->
+        {:error, reason, %{line: context.line, column: context.column},
+         %{context | rest: rest, line: loc[:line], column: loc[:column]}}
+
       {:error, reason, rest, loc} ->
         {:error, reason, loc, %{context | rest: rest, line: loc[:line], column: loc[:column]}}
     end
@@ -248,6 +259,13 @@ defmodule Solid.Parser do
 
           {:error, reason, loc} ->
             {:error, reason, loc, context}
+
+          {:error, "Tag or Object not properly terminated" = reason, rest, loc} ->
+            {:error, reason, %{line: line, column: column},
+             %{context | rest: rest, line: loc[:line], column: loc[:column]}}
+
+          {:error, reason, rest, loc} ->
+            {:error, reason, loc, %{context | rest: rest, line: loc[:line], column: loc[:column]}}
         end
 
       {:liquid_tag, context} ->

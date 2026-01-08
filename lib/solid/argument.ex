@@ -187,7 +187,11 @@ defmodule Solid.Argument do
       {:error, {:not_found, key}, context} ->
         context =
           if strict_variables do
-            Context.put_errors(context, %UndefinedVariableError{variable: key, loc: arg.loc})
+            Context.put_errors(context, %UndefinedVariableError{
+              variable: key,
+              original_name: arg.original_name,
+              loc: arg.loc
+            })
           else
             context
           end

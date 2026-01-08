@@ -2,5 +2,6 @@
   "outer_product": {
     "name": "my_product"
   },
-  "my_var": "42"
+  "my_var": "42",
+  "items" : [{"title" : "one"}, {"title" : "two"}]
 }
