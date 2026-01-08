@@ -27,6 +27,7 @@ defmodule SolidTest do
                         accesses: [
                           %Solid.AccessLiteral{
                             loc: %Solid.Parser.Loc{column: 9, line: 1},
+                            access_type: :dot,
                             value: "title"
                           }
                         ]
