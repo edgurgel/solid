@@ -57,8 +57,16 @@ defmodule Solid.ArgumentTest do
                  loc: %Loc{line: 1, column: 3},
                  identifier: "empty",
                  accesses: [
-                   %AccessLiteral{loc: %Loc{line: 1, column: 9}, access_type: :brackets, value: 0},
-                   %AccessLiteral{loc: %Loc{line: 1, column: 12}, access_type: :brackets, value: 1}
+                   %AccessLiteral{
+                     loc: %Loc{line: 1, column: 9},
+                     access_type: :brackets,
+                     value: 0
+                   },
+                   %AccessLiteral{
+                     loc: %Loc{line: 1, column: 12},
+                     access_type: :brackets,
+                     value: 1
+                   }
                  ]
                },
                [end: %{line: 1, column: 14}]
@@ -120,7 +128,11 @@ defmodule Solid.ArgumentTest do
                    loc: %Loc{column: 4, line: 1},
                    accesses: [
                      %AccessLiteral{loc: %Loc{line: 1, column: 6}, access_type: :dot, value: "b"},
-                     %AccessLiteral{loc: %Loc{line: 1, column: 8}, access_type: :brackets, value: "c"}
+                     %AccessLiteral{
+                       loc: %Loc{line: 1, column: 8},
+                       access_type: :brackets,
+                       value: "c"
+                     }
                    ],
                    identifier: "a"
                  }

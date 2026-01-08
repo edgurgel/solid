@@ -23,7 +23,11 @@ defmodule Solid.VariableTest do
               loc: %Loc{column: 8, line: 1},
               identifier: "var2",
               accesses: [
-                %Solid.AccessLiteral{loc: %Loc{column: 13, line: 1}, access_type: :brackets, value: "var3"}
+                %Solid.AccessLiteral{
+                  loc: %Loc{column: 13, line: 1},
+                  access_type: :brackets,
+                  value: "var3"
+                }
               ]
             }
           },
@@ -131,7 +135,11 @@ defmodule Solid.VariableTest do
                        loc: %Loc{column: 8, line: 1},
                        identifier: "var2",
                        accesses: [
-                         %Solid.AccessLiteral{loc: %Loc{column: 13, line: 1}, access_type: :dot, value: "var3"}
+                         %Solid.AccessLiteral{
+                           loc: %Loc{column: 13, line: 1},
+                           access_type: :dot,
+                           value: "var3"
+                         }
                        ]
                      }
                    },
