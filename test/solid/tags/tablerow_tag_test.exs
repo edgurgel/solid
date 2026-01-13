@@ -41,6 +41,7 @@ defmodule Solid.Tags.TablerowTagTest do
                        accesses: [
                          %Solid.AccessLiteral{
                            loc: %Loc{line: 2, column: 14},
+                           access_type: :dot,
                            value: "title"
                          }
                        ],

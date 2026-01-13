@@ -36,14 +36,14 @@ defmodule Solid.ContextTest do
     end
 
     test "nested access" do
-      accesses = [%AccessLiteral{loc: @loc, value: "y"}]
+      accesses = [%AccessLiteral{loc: @loc, access_type: :dot, value: "y"}]
       var = %Variable{original_name: "x.y", loc: @loc, identifier: "x", accesses: accesses}
       context = %Context{vars: %{"x" => %{"y" => 1}}}
       assert Context.get_in(context, var, [:vars]) == {:ok, 1, context}
     end
 
     test "nested access literal not found" do
-      accesses = [%AccessLiteral{loc: @loc, value: "y"}]
+      accesses = [%AccessLiteral{loc: @loc, access_type: :dot, value: "y"}]
       var = %Variable{original_name: "x.y", loc: @loc, identifier: "x", accesses: accesses}
 
       context = %Context{vars: %{"x" => "y"}}
@@ -65,7 +65,7 @@ defmodule Solid.ContextTest do
     end
 
     test "nested access nil" do
-      accesses = [%AccessLiteral{loc: @loc, value: "y"}]
+      accesses = [%AccessLiteral{loc: @loc, access_type: :brackets, value: "y"}]
       var = %Variable{original_name: "x[\"y\"]", loc: @loc, identifier: "x", accesses: accesses}
       context = %Context{vars: %{"x" => 1}}
       assert Context.get_in(context, var, [:vars]) == {:error, {:not_found, ["x", "y"]}, context}
@@ -84,28 +84,28 @@ defmodule Solid.ContextTest do
     end
 
     test "list access" do
-      accesses = [%AccessLiteral{loc: @loc, value: 1}]
+      accesses = [%AccessLiteral{loc: @loc, access_type: :brackets, value: 1}]
       var = %Variable{original_name: "x[1]", loc: @loc, identifier: "x", accesses: accesses}
       context = %Context{vars: %{"x" => ["a", "b", "c"]}}
       assert Context.get_in(context, var, [:vars]) == {:ok, "b", context}
     end
 
     test "list size" do
-      accesses = [%AccessLiteral{loc: @loc, value: "size"}]
+      accesses = [%AccessLiteral{loc: @loc, access_type: :dot, value: "size"}]
       var = %Variable{original_name: "x.size", loc: @loc, identifier: "x", accesses: accesses}
       context = %Context{vars: %{"x" => ["a", "b", "c"]}}
       assert Context.get_in(context, var, [:vars]) == {:ok, 3, context}
     end
 
     test "map size" do
-      accesses = [%AccessLiteral{loc: @loc, value: "size"}]
+      accesses = [%AccessLiteral{loc: @loc, access_type: :dot, value: "size"}]
       var = %Variable{original_name: "x.size", loc: @loc, identifier: "x", accesses: accesses}
       context = %Context{vars: %{"x" => %{"a" => 1, "b" => 2}}}
       assert Context.get_in(context, var, [:vars]) == {:ok, 2, context}
     end
 
     test "map size key" do
-      accesses = [%AccessLiteral{loc: @loc, value: "size"}]
+      accesses = [%AccessLiteral{loc: @loc, access_type: :dot, value: "size"}]
       var = %Variable{original_name: "x.size", loc: @loc, identifier: "x", accesses: accesses}
       context = %Context{vars: %{"x" => %{"a" => 1, "b" => 2, "size" => 42}}}
       assert Context.get_in(context, var, [:vars]) == {:ok, 42, context}
