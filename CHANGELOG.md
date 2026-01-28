@@ -1,3 +1,9 @@
+# 1.2.1 (2026-01-28)
+
+## Bug fixes
+
+* Fix incorrect content reversal in case tags. (#191)
+
 # 1.2.0 (2025-12-12)
 
 ## Enhancements
