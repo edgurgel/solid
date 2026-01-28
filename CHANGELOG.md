@@ -1,5 +1,8 @@
 # 1.2.1 (2026-01-28)
 
+## Enhancements
+
+* Differentiate between brackets and dot accesses in AccessLiteral. (#189)
 ## Bug fixes
 
 * Fix incorrect content reversal in case tags. (#191)
