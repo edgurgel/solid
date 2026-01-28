@@ -37,3 +37,6 @@
 {% case condition %}{% when 1 or 2 or 3 or 3 %} its 1 or 2 or 3 {% when 4 %} its 4 {% endcase %}
 
 {%- case condition -%}{%- when 1 or 2 or 3 or 3 -%}{%- when 4 -%}{%- endcase %}
+
+Content order is maintained
+{%- case condition -%}{%- when 3 -%}<span>{{condition}}</span>{%- endcase %}
