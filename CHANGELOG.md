@@ -1,3 +1,9 @@
+# 1.2.2 (2026-02-07)
+
+## Bug fixes
+
+* Fix decimal handling - floats and integers are now only converted to string at rendering time. (#193)
+
 # 1.2.1 (2026-01-28)
 
 ## Enhancements
