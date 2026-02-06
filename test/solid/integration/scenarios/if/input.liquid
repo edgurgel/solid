@@ -124,3 +124,4 @@ Extra blocks
 {% if false %}if{% else %}else{% elsif true %}elsif{% endif %}
 {% comment %}{% if false %}if{% else %}else1{% else %}else2{% endif %} {% endcomment %}
 
+{% assign x = 1 | minus: 0.15 %}{% if x <= 0.95 %}yes{% else %}no{% endif %}
