@@ -69,13 +69,13 @@ defmodule Solid.StandardFilter do
   Returns the absolute value of a number.
 
   iex> Solid.StandardFilter.abs(-17)
-  "17"
+  17
   iex> Solid.StandardFilter.abs(17)
-  "17"
+  17
   iex> Solid.StandardFilter.abs("-17.5")
-  "17.5"
+  17.5
   """
-  @spec abs(term) :: String.t()
+  @spec abs(term) :: number
   def abs(input) do
     input
     |> to_decimal()
@@ -102,28 +102,58 @@ defmodule Solid.StandardFilter do
   Limits a number to a minimum value.
 
   iex> Solid.StandardFilter.at_least(5, 3)
-  "5"
+  5
   iex> Solid.StandardFilter.at_least(2, 4)
-  "4"
+  4
   """
-  @spec at_least(term, term) :: String.t()
+  @spec at_least(term, term) :: number
   def at_least(input, minimum) do
-    Decimal.max(to_decimal(input), to_decimal(minimum))
-    |> to_string()
+    decimal_input = to_decimal(input)
+    decimal_minimum = to_decimal(minimum)
+
+    if Decimal.compare(decimal_input, decimal_minimum) in [:eq, :lt] do
+      if original_float?(minimum) do
+        decimal_to_float(decimal_minimum)
+      else
+        try_decimal_to_integer(decimal_minimum)
+      end
+    else
+      if original_float?(input) do
+        decimal_to_float(decimal_input)
+      else
+        try_decimal_to_integer(decimal_input)
+      end
+    end
   end
 
   @doc """
   Limits a number to a maximum value.
 
   iex> Solid.StandardFilter.at_most(5, 3)
-  "3"
+  3
   iex> Solid.StandardFilter.at_most(2, 4)
-  "2"
+  2
+  iex> Solid.StandardFilter.at_most(1.0, 3)
+  1.0
   """
-  @spec at_most(term, term) :: String.t()
+  @spec at_most(term, term) :: number
   def at_most(input, maximum) do
-    Decimal.min(to_decimal(input), to_decimal(maximum))
-    |> to_string()
+    decimal_input = to_decimal(input)
+    decimal_maximum = to_decimal(maximum)
+
+    if Decimal.compare(decimal_input, decimal_maximum) in [:eq, :gt] do
+      if original_float?(maximum) do
+        decimal_to_float(decimal_maximum)
+      else
+        try_decimal_to_integer(decimal_maximum)
+      end
+    else
+      if original_float?(input) do
+        decimal_to_float(decimal_input)
+      else
+        try_decimal_to_integer(decimal_input)
+      end
+    end
   end
 
   @doc """
@@ -139,13 +169,20 @@ defmodule Solid.StandardFilter do
 
   @doc """
   Rounds the input up to the nearest whole number. Liquid tries to convert the input to a number before the filter is applied.
+
+  iex> Solid.StandardFilter.ceil(16.1)
+  17
+  iex> Solid.StandardFilter.ceil(5)
+  5
+  iex> Solid.StandardFilter.ceil(20.9999)
+  21
   """
-  @spec ceil(term) :: String.t()
+  @spec ceil(term) :: integer
   def ceil(input) do
     input
     |> to_decimal()
     |> Decimal.round(0, :ceiling)
-    |> to_string()
+    |> Decimal.to_integer()
   end
 
   @doc """
@@ -244,13 +281,13 @@ defmodule Solid.StandardFilter do
 
   {{ 16 | divided_by: 4 }}
   iex> Solid.StandardFilter.divided_by(16, 4)
-  "4"
+  4
   iex> Solid.StandardFilter.divided_by(5, 3)
-  "1"
+  1
   iex> Solid.StandardFilter.divided_by(20, 7)
-  "2"
+  2
   """
-  @spec divided_by(term, term) :: String.t()
+  @spec divided_by(term, term) :: number
   def divided_by(input, operand) do
     input_number = to_decimal(input)
     operand_number = to_decimal(operand)
@@ -327,18 +364,18 @@ defmodule Solid.StandardFilter do
   Solid tries to convert the input to a number before the filter is applied.
 
   iex> Solid.StandardFilter.floor(1.2)
-  "1"
+  1
   iex> Solid.StandardFilter.floor(2.0)
-  "2"
+  2
   iex> Solid.StandardFilter.floor("3.5")
-  "3"
+  3
   """
-  @spec floor(term) :: String.t()
+  @spec floor(term) :: integer
   def floor(input) do
     input
     |> to_decimal
     |> Decimal.round(0, :floor)
-    |> to_string()
+    |> Decimal.to_integer()
   end
 
   @doc """
@@ -476,13 +513,13 @@ defmodule Solid.StandardFilter do
   Subtracts a number from another number.
 
   iex> Solid.StandardFilter.minus(4, 2)
-  "2"
+  2
   iex> Solid.StandardFilter.minus(16, 4)
-  "12"
+  12
   iex> Solid.StandardFilter.minus(183.357, 12)
-  "171.357"
+  171.357
   """
-  @spec minus(term, term) :: String.t()
+  @spec minus(term, term) :: number
   def minus(input, number) do
     input
     |> to_decimal()
@@ -500,13 +537,13 @@ defmodule Solid.StandardFilter do
   Subtracts a number from another number.
 
   iex> Solid.StandardFilter.modulo(3, 2)
-  "1"
+  1
   iex> Solid.StandardFilter.modulo(24, 7)
-  "3"
+  3
   iex> Solid.StandardFilter.modulo(183.357, 12)
-  "3.357"
+  3.357
   """
-  @spec modulo(term, term) :: String.t()
+  @spec modulo(term, term) :: number
   def modulo(dividend, divisor) do
     dividend_decimal = to_decimal(dividend)
     divisor_decimal = to_decimal(divisor)
@@ -528,19 +565,19 @@ defmodule Solid.StandardFilter do
   Adds a number to another number.
 
   iex> Solid.StandardFilter.plus(4, 2)
-  "6"
+  6
   iex> Solid.StandardFilter.plus(16, 4)
-  "20"
+  20
   iex> Solid.StandardFilter.plus("16", 4)
-  "20"
+  20
   iex> Solid.StandardFilter.plus(183.357, 12)
-  "195.357"
+  195.357
   iex> Solid.StandardFilter.plus("183.357", 12)
-  "195.357"
+  195.357
   iex> Solid.StandardFilter.plus("183.ABC357", 12)
-  "195"
+  195
   """
-  @spec plus(term, term) :: String.t()
+  @spec plus(term, term) :: number
   def plus(input, number) do
     input
     |> to_decimal()
@@ -558,45 +595,61 @@ defmodule Solid.StandardFilter do
   Returns sum of all elements in an enumerable
   Allowing for an optional property to be passed in
 
+  iex> Solid.StandardFilter.sum([1])
+  1
+  iex> Solid.StandardFilter.sum([1.0])
+  1.0
+  iex> Solid.StandardFilter.sum([0.1, 0.2])
+  0.3
   iex> Solid.StandardFilter.sum([])
-  "0"
+  0
   iex> Solid.StandardFilter.sum([1, 2, 3])
-  "6"
+  6
   iex> Solid.StandardFilter.sum(1..3)
-  "6"
+  6
   iex> Solid.StandardFilter.sum([%{"a" => 1}, %{"a" => 10}])
-  "0"
+  0
   iex> Solid.StandardFilter.sum([%{"a" => 1}, %{"a" => 10}], "a")
-  "11"
+  11
   """
-  @spec sum(term, term) :: String.t()
+  @spec sum(term, term) :: number
   def sum(input, property \\ nil) do
     property = if property, do: to_str(property), else: nil
 
-    input
-    |> to_enum
-    |> Stream.map(fn value ->
-      cond do
-        property == nil ->
-          to_decimal(value)
-
-        true ->
+    # Track if any value is a float
+    {sum_decimal, has_float?} =
+      input
+      |> to_enum
+      |> Enum.reduce({Decimal.new(0), false}, fn value, {acc, has_float} ->
+        actual_value =
           cond do
-            is_struct(value, Empty) or is_binary(value) or is_boolean(value) or is_nil(value) ->
-              0
-
-            is_map(value) ->
-              to_decimal(value[property] || 0)
+            property == nil ->
+              value
 
             true ->
-              raise %Solid.ArgumentError{message: "cannot select the property '#{property}'"}
+              cond do
+                is_struct(value, Empty) or is_binary(value) or is_boolean(value) or is_nil(value) ->
+                  0
+
+                is_map(value) ->
+                  value[property] || 0
+
+                true ->
+                  raise %Solid.ArgumentError{message: "cannot select the property '#{property}'"}
+              end
           end
-      end
-    end)
-    |> Enum.reduce(Decimal.new(0), fn value, acc ->
-      Decimal.add(acc, value)
-    end)
-    |> to_string()
+
+        # Check if this value is a float
+        is_float = original_float?(actual_value)
+
+        {Decimal.add(acc, to_decimal(actual_value)), has_float or is_float}
+      end)
+
+    if has_float? do
+      decimal_to_float(sum_decimal)
+    else
+      try_decimal_to_integer(sum_decimal)
+    end
   end
 
   defp to_enum(input) do
@@ -775,17 +828,17 @@ defmodule Solid.StandardFilter do
   if a number is specified as an argument, to that number of decimal places.
 
   iex> Solid.StandardFilter.round(1.2)
-  "1"
+  1
   iex> Solid.StandardFilter.round(2.7)
-  "3"
+  3
   iex> Solid.StandardFilter.round(183.357, 2)
-  "183.36"
+  183.36
   iex> Solid.StandardFilter.round(nil, 2)
   0
   iex> Solid.StandardFilter.round(5.666, 1.2)
-  "5.7"
+  5.7
   """
-  @spec round(term, term) :: number | String.t()
+  @spec round(term, term) :: number
   def round(input, precision \\ nil)
 
   def round(input, precision) when is_binary(input) do
@@ -803,17 +856,22 @@ defmodule Solid.StandardFilter do
     end)
   end
 
-  def round(input, _precision) when is_integer(input) do
-    input
-  end
+  def round(input, _precision) when is_integer(input), do: input
 
   def round(input, precision) when is_float(input) do
     precision = to_integer(precision)
 
-    Decimal.from_float(input)
-    |> Decimal.round(precision)
-    |> Decimal.normalize()
-    |> to_string()
+    if precision == 0 do
+      Decimal.from_float(input)
+      |> Decimal.round(precision)
+      |> Decimal.to_integer()
+    else
+      Decimal.from_float(input)
+      |> Decimal.round(precision)
+      |> Decimal.normalize()
+      |> Decimal.to_float()
+      |> Kernel.+(0.0)
+    end
   end
 
   def round(_, _), do: 0
@@ -931,13 +989,13 @@ defmodule Solid.StandardFilter do
   Multiplies a number by another number.
 
   iex> Solid.StandardFilter.times(3, 2)
-  "6"
+  6
   iex> Solid.StandardFilter.times(24, 7)
-  "168"
+  168
   iex> Solid.StandardFilter.times(183.357, 12)
-  "2200.284"
+  2200.284
   """
-  @spec times(term, term) :: String.t()
+  @spec times(term, term) :: number
   def times(input, operand) do
     input
     |> to_decimal()
@@ -1333,18 +1391,17 @@ defmodule Solid.StandardFilter do
 
   defp decimal_to_float(value) do
     if Decimal.integer?(value) do
-      "#{Decimal.to_integer(value)}" <> ".0"
+      Decimal.to_integer(value) + 0.0
     else
       value
       |> Decimal.normalize()
       |> Decimal.to_float()
-      |> to_string
     end
   end
 
   defp try_decimal_to_integer(value) do
     if Decimal.integer?(value) do
-      "#{Decimal.to_integer(value)}"
+      Decimal.to_integer(value)
     else
       decimal_to_float(value)
     end
