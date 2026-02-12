@@ -46,4 +46,32 @@ defmodule Solid.Tag do
       {:error, "Unexpected tag '#{tag_name}'", %{line: loc.line, column: loc.column}}
     end
   end
+
+  @doc """
+  Adds a new tag to the tags map.
+
+  It handles both atom and string keys.
+  """
+  @spec put(map, atom | String.t(), module) :: map
+  def put(tags, key, value) when is_atom(key) do
+    Map.put(tags, Atom.to_string(key), value)
+  end
+
+  def put(tags, key, value) when is_binary(key) do
+    Map.put(tags, key, value)
+  end
+
+  @doc """
+  Removes a tag from the tags map.
+
+  It handles both atom and string keys.
+  """
+  @spec remove(map, atom | String.t()) :: map
+  def remove(tags, key) when is_atom(key) do
+    Map.delete(tags, Atom.to_string(key))
+  end
+
+  def remove(tags, key) when is_binary(key) do
+    Map.delete(tags, key)
+  end
 end
