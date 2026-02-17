@@ -412,5 +412,32 @@ defmodule Solid.Tags.IfTagTest do
 
       assert {[%Solid.Text{text: " elsif3 "}], ^context} = Renderable.render(tag, context, [])
     end
+
+    test "if with filter in unary condition" do
+      template = ~s<{% if items | size %} has items {% endif %}>
+      context = %Solid.Context{vars: %{"items" => [1, 2, 3]}}
+
+      {:ok, tag, _rest} = parse(template)
+
+      assert {[%Solid.Text{text: " has items "}], _} = Renderable.render(tag, context, [])
+    end
+
+    test "if with filter in binary condition" do
+      template = ~s<{% if name | upcase == "JOHN" %} match {% endif %}>
+      context = %Solid.Context{vars: %{"name" => "john"}}
+
+      {:ok, tag, _rest} = parse(template)
+
+      assert {[%Solid.Text{text: " match "}], _} = Renderable.render(tag, context, [])
+    end
+
+    test "unless with filter in condition" do
+      template = ~s({% unless items | size > 0 %} empty {% endunless %})
+      context = %Solid.Context{vars: %{"items" => []}}
+
+      {:ok, tag, _rest} = parse(template)
+
+      assert {[%Solid.Text{text: " empty "}], _} = Renderable.render(tag, context, [])
+    end
   end
 end
