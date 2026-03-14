@@ -1,0 +1,74 @@
+<div id="collection-page">
+  <h1>{{ collection.title }}</h1>
+  <p>{{ collection.description | truncatewords: 30 }}</p>
+
+  {% if collection.products.size == 0 %}
+    <p class="empty">No products found.</p>
+  {% else %}
+
+  <ul class="product-grid">
+    {% for product in collection.products %}
+    <li class="product-card {% cycle 'odd', 'even' %}">
+      <a href="{{ product.url }}">
+        <img src="{{ product.featured_image | product_img_url: 'medium' }}" alt="{{ product.title | escape }}" />
+      </a>
+      <h3><a href="{{ product.url }}">{{ product.title | escape }}</a></h3>
+      <p class="description">{{ product.description | strip_html | truncatewords: 20 }}</p>
+
+      <div class="price">
+        {% if product.compare_at_price > product.price %}
+          <span class="was">{{ product.compare_at_price | money }}</span>
+          <span class="now">{{ product.price | money }}</span>
+        {% else %}
+          <span>{{ product.price | money }}</span>
+        {% endif %}
+
+        {% if product.price_varies %}
+          <small>from {{ product.price_min | money }}</small>
+        {% endif %}
+      </div>
+
+      {% if product.available %}
+        {% if product.variants.size > 1 %}
+          <select name="id">
+            {% for variant in product.variants %}
+              {% if variant.available %}
+                <option value="{{ variant.id }}">
+                  {{ variant.title }} - {{ variant.price | money }}
+                  {% if variant.compare_at_price > variant.price %}
+                    (was {{ variant.compare_at_price | money }})
+                  {% endif %}
+                </option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        {% endif %}
+        <button>Add to Cart</button>
+      {% else %}
+        <button disabled>Sold Out</button>
+      {% endif %}
+
+      {% if product.tags.size > 0 %}
+        <div class="tags">
+          {% for tag in product.tags %}
+            <a href="/collections/{{ collection.handle }}/{{ tag | downcase | replace: ' ', '-' }}">{{ tag }}</a>
+            {% unless forloop.last %}, {% endunless %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+
+  <div class="pagination">
+    {% if collection.current_page > 1 %}
+      <a href="?page={{ collection.current_page | minus: 1 }}">Previous</a>
+    {% endif %}
+    <span>Page {{ collection.current_page }} of {{ collection.total_pages }}</span>
+    {% if collection.current_page < collection.total_pages %}
+      <a href="?page={{ collection.current_page | plus: 1 }}">Next</a>
+    {% endif %}
+  </div>
+
+  {% endif %}
+</div>

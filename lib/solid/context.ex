@@ -129,14 +129,7 @@ defmodule Solid.Context do
   end
 
   defp get_from_scope(context, scopes, variable) when is_list(scopes) do
-    scopes
-    |> Enum.reverse()
-    |> Enum.map(&get_from_scope(context, &1, variable))
-    |> Enum.reduce({:error, {:not_found, variable}}, fn
-      {:ok, nil}, acc = {:ok, _} -> acc
-      value = {:ok, _}, _acc -> value
-      _value, acc -> acc
-    end)
+    get_from_scopes(context, scopes, variable, {:error, {:not_found, variable}})
   end
 
   defp get_from_scope(context, :vars, variable) do
@@ -149,5 +142,32 @@ defmodule Solid.Context do
 
   defp get_from_scope(context, :iteration_vars, variable) do
     context.matcher_module.match(context.iteration_vars, variable)
+  end
+
+  # Short-circuit scope lookup: try scopes in priority order (highest first).
+  # Return immediately on a non-nil hit. {:ok, nil} is kept as fallback
+  # but doesn't shadow a non-nil value found in a lower-priority scope.
+  defp get_from_scopes(_context, [], _variable, acc), do: acc
+
+  defp get_from_scopes(context, [scope | rest], variable, acc) do
+    case get_from_scope(context, scope, variable) do
+      {:ok, nil} ->
+        # nil found - keep it as fallback if we have nothing better, keep searching
+        new_acc =
+          case acc do
+            {:ok, _} -> acc
+            _ -> {:ok, nil}
+          end
+
+        get_from_scopes(context, rest, variable, new_acc)
+
+      {:ok, _} = found ->
+        # Non-nil value found in highest-priority scope - done
+        found
+
+      {:error, _} ->
+        # Not found in this scope, keep searching
+        get_from_scopes(context, rest, variable, acc)
+    end
   end
 end

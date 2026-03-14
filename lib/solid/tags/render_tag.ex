@@ -85,7 +85,7 @@ defmodule Solid.Tags.RenderTag do
 
   defimpl Solid.Renderable do
     def render(tag, context, options) do
-      cache_module = Keyword.get(options, :cache_module, Solid.Caching.NoCache)
+      cache_module = options[:cache_module] || Solid.Caching.NoCache
 
       {file_system, instance} = options[:file_system] || {Solid.BlankFileSystem, nil}
 

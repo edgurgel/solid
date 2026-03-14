@@ -13,7 +13,7 @@ defmodule Solid.StandardFilter do
     custom_module_or_callback =
       opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
 
-    strict_filters = Keyword.get(opts, :strict_filters, false)
+    strict_filters = opts[:strict_filters] || false
 
     with :error <- apply_filter(custom_module_or_callback, filter, args, loc),
          :error <- apply_filter(__MODULE__, filter, args, loc) do
@@ -43,26 +43,44 @@ defmodule Solid.StandardFilter do
     end
   end
 
-  defp find_correct_function(_callback, _fn_name, _arity, _loc), do: :error
 
   defp apply_filter(mod_or_callback, func, args, loc) do
     if is_function(mod_or_callback, 2) do
       mod_or_callback.(func, args)
     else
-      func = String.to_existing_atom(func)
-      {:ok, Kernel.apply(mod_or_callback, func, args)}
+      case safe_to_existing_atom(func) do
+        {:ok, func_atom} ->
+          arity = length(args)
+          Code.ensure_loaded(mod_or_callback)
+
+          if function_exported?(mod_or_callback, func_atom, arity) do
+            {:ok, Kernel.apply(mod_or_callback, func_atom, args)}
+          else
+            find_correct_function(mod_or_callback, func_atom, arity, loc)
+          end
+
+        :error ->
+          :error
+      end
     end
   rescue
-    # Unknown function name atom or unknown function -> fallback
-    ArgumentError ->
-      :error
-
     e in Solid.ArgumentError ->
-      # augment error with loc
+      # Raised from inside the filter itself (e.g. divided_by 0)
       {:error, %{e | loc: loc}}
 
+    ArgumentError ->
+      # Raised from inside a filter receiving unexpected argument types
+      :error
+
     UndefinedFunctionError ->
-      find_correct_function(mod_or_callback, String.to_existing_atom(func), Enum.count(args), loc)
+      # Can be raised from inside a function-based custom_filters callback
+      :error
+  end
+
+  defp safe_to_existing_atom(string) when is_binary(string) do
+    {:ok, String.to_existing_atom(string)}
+  rescue
+    ArgumentError -> :error
   end
 
   @doc """

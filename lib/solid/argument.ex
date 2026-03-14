@@ -64,7 +64,7 @@ defmodule Solid.Argument do
               {:ok, positional_arguments, named_arguments, rest} ->
                 filter =
                   %Filter{
-                    loc: struct!(Loc, meta),
+                    loc: %Loc{line: meta.line, column: meta.column},
                     function: filter,
                     positional_arguments: positional_arguments,
                     named_arguments: named_arguments
@@ -79,7 +79,7 @@ defmodule Solid.Argument do
           _ ->
             filter =
               %Filter{
-                loc: struct!(Loc, meta),
+                loc: %Loc{line: meta.line, column: meta.column},
                 function: filter,
                 positional_arguments: [],
                 named_arguments: %{}
@@ -191,8 +191,8 @@ defmodule Solid.Argument do
 
   @spec get(t, Context.t(), [Filter.t()], Keyword.t()) :: {:ok, term, Context.t()}
   def get(arg, context, filters, opts \\ []) do
-    scopes = Keyword.get(opts, :scopes, [:iteration_vars, :vars, :counter_vars])
-    strict_variables = Keyword.get(opts, :strict_variables, false)
+    scopes = opts[:scopes] || [:iteration_vars, :vars, :counter_vars]
+    strict_variables = opts[:strict_variables] || false
 
     case do_get(arg, context, scopes, opts) do
       {:ok, value, context} ->

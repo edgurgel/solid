@@ -53,7 +53,7 @@ defmodule Solid.Lexer do
           | {:error, reason :: binary, rest :: binary, loc}
           | {:error, :not_expected_tag}
   def tokenize_tag_start(context, opts \\ []) do
-    allowed_tag_names = Keyword.get(opts, :allowed_tag_names, [])
+    allowed_tag_names = opts[:allowed_tag_names] || []
 
     if context.mode == :liquid_tag do
       do_tokenize_liquid_tag_entry_start(context, allowed_tag_names)

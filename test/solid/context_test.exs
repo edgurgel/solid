@@ -110,6 +110,134 @@ defmodule Solid.ContextTest do
       context = %Context{vars: %{"x" => %{"a" => 1, "b" => 2, "size" => 42}}}
       assert Context.get_in(context, var, [:vars]) == {:ok, 42, context}
     end
+
+    # --- Multi-scope priority tests (production uses all 3 scopes) ---
+
+    test "default 3 scopes: iteration_vars wins over vars and counter_vars" do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+
+      context = %Context{
+        iteration_vars: %{"x" => "from_iteration"},
+        vars: %{"x" => "from_vars"},
+        counter_vars: %{"x" => "from_counter"}
+      }
+
+      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+               {:ok, "from_iteration", context}
+    end
+
+    test "default 3 scopes: vars wins over counter_vars when iteration_vars absent" do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+
+      context = %Context{
+        iteration_vars: %{},
+        vars: %{"x" => "from_vars"},
+        counter_vars: %{"x" => "from_counter"}
+      }
+
+      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+               {:ok, "from_vars", context}
+    end
+
+    test "default 3 scopes: counter_vars used as fallback" do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+
+      context = %Context{
+        iteration_vars: %{},
+        vars: %{},
+        counter_vars: %{"x" => "from_counter"}
+      }
+
+      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+               {:ok, "from_counter", context}
+    end
+
+    test "default 3 scopes: not found in any scope" do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+
+      context = %Context{
+        iteration_vars: %{},
+        vars: %{},
+        counter_vars: %{}
+      }
+
+      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+               {:error, {:not_found, ["x"]}, context}
+    end
+
+    test "default 3 scopes: nil in iteration_vars does NOT shadow value in vars" do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+
+      context = %Context{
+        iteration_vars: %{"x" => nil},
+        vars: %{"x" => "real_value"},
+        counter_vars: %{}
+      }
+
+      # The current behavior: {:ok, nil} does not override a prior {:ok, non_nil}
+      # due to the reduce logic in get_from_scope
+      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+               {:ok, "real_value", context}
+    end
+
+    test "default 3 scopes: nil in vars does NOT shadow value in counter_vars" do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+
+      context = %Context{
+        iteration_vars: %{},
+        vars: %{"x" => nil},
+        counter_vars: %{"x" => "real_value"}
+      }
+
+      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+               {:ok, "real_value", context}
+    end
+
+    test "default 3 scopes: false in iteration_vars DOES shadow value in vars" do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+
+      context = %Context{
+        iteration_vars: %{"x" => false},
+        vars: %{"x" => "should_lose"},
+        counter_vars: %{}
+      }
+
+      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+               {:ok, false, context}
+    end
+
+    test "default 3 scopes: nil in iteration_vars when only nil exists anywhere" do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+
+      context = %Context{
+        iteration_vars: %{"x" => nil},
+        vars: %{},
+        counter_vars: %{}
+      }
+
+      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+               {:ok, nil, context}
+    end
+
+    test "iteration_vars overrides vars for nested access" do
+      accesses = [%AccessLiteral{loc: @loc, access_type: :dot, value: "name"}]
+
+      var = %Variable{
+        original_name: "item.name",
+        loc: @loc,
+        identifier: "item",
+        accesses: accesses
+      }
+
+      context = %Context{
+        iteration_vars: %{"item" => %{"name" => "from_loop"}},
+        vars: %{"item" => %{"name" => "from_assign"}},
+        counter_vars: %{}
+      }
+
+      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+               {:ok, "from_loop", context}
+    end
   end
 
   defmodule CustomMatcher do

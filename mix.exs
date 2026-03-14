@@ -21,7 +21,7 @@ defmodule Solid.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger] ++ extra_applications(Mix.env())
     ]
   end
 
@@ -33,7 +33,8 @@ defmodule Solid.MixProject do
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:jason, "~> 1.0", only: :test},
-      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
+      # {:mix_test_watch, "~> 1.0", only: [:test], runtime: false},
+      {:benchee, "~> 1.0", only: :dev, runtime: false}
     ]
   end
 
@@ -59,6 +60,9 @@ defmodule Solid.MixProject do
       formatters: ["html"]
     ]
   end
+
+  defp extra_applications(:dev), do: [:tools]
+  defp extra_applications(_), do: []
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]

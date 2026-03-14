@@ -1,0 +1,107 @@
+<html>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <div style="background: #f8f8f8; padding: 20px;">
+    <h1 style="color: #333;">Order Confirmation</h1>
+    <p>Hi {{ customer.first_name | capitalize }},</p>
+    <p>Thank you for your order from {{ shop.name | escape }}!</p>
+  </div>
+
+  <div style="padding: 20px;">
+    <h2>Order {{ order.name }}</h2>
+    <p>Placed on {{ order.created_at | date: "%B %d, %Y at %I:%M %p" }}</p>
+
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr style="background: #eee;">
+        <th style="text-align: left; padding: 8px;">Item</th>
+        <th style="text-align: right; padding: 8px;">Qty</th>
+        <th style="text-align: right; padding: 8px;">Price</th>
+      </tr>
+      {% for line_item in order.line_items %}
+      <tr style="border-bottom: 1px solid #ddd;">
+        <td style="padding: 8px;">
+          {{ line_item.title | escape }}
+          {% if line_item.variant_title != "" %}
+            <br><small style="color: #666;">{{ line_item.variant_title }}</small>
+          {% endif %}
+          {% if line_item.sku != "" %}
+            <br><small style="color: #999;">SKU: {{ line_item.sku }}</small>
+          {% endif %}
+        </td>
+        <td style="text-align: right; padding: 8px;">{{ line_item.quantity }}</td>
+        <td style="text-align: right; padding: 8px;">{{ line_item.price | money }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <table style="width: 100%; margin-top: 20px;">
+      <tr>
+        <td>Subtotal</td>
+        <td style="text-align: right;">{{ order.subtotal_price | money }}</td>
+      </tr>
+      {% for discount in order.discounts %}
+      <tr style="color: #c00;">
+        <td>Discount ({{ discount.code }})</td>
+        <td style="text-align: right;">-{{ discount.amount | money }}</td>
+      </tr>
+      {% endfor %}
+      {% if order.shipping_price > 0 %}
+      <tr>
+        <td>Shipping ({{ order.shipping_method.title }})</td>
+        <td style="text-align: right;">{{ order.shipping_price | money }}</td>
+      </tr>
+      {% endif %}
+      {% if order.tax_price > 0 %}
+      <tr>
+        <td>Tax</td>
+        <td style="text-align: right;">{{ order.tax_price | money }}</td>
+      </tr>
+      {% endif %}
+      <tr style="font-weight: bold; font-size: 1.2em;">
+        <td>Total</td>
+        <td style="text-align: right;">{{ order.total_price | money_with_currency }}</td>
+      </tr>
+    </table>
+
+    {% if order.shipping_address %}
+    <div style="margin-top: 20px;">
+      <h3>Shipping Address</h3>
+      <p>
+        {{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}<br>
+        {% if order.shipping_address.company != "" %}
+          {{ order.shipping_address.company }}<br>
+        {% endif %}
+        {{ order.shipping_address.address1 }}<br>
+        {% if order.shipping_address.address2 != "" %}
+          {{ order.shipping_address.address2 }}<br>
+        {% endif %}
+        {{ order.shipping_address.city }}, {{ order.shipping_address.province_code }} {{ order.shipping_address.zip }}<br>
+        {{ order.shipping_address.country }}
+      </p>
+    </div>
+    {% endif %}
+
+    {% if order.billing_address %}
+    <div style="margin-top: 20px;">
+      <h3>Billing Address</h3>
+      <p>
+        {{ order.billing_address.first_name }} {{ order.billing_address.last_name }}<br>
+        {% if order.billing_address.company != "" %}
+          {{ order.billing_address.company }}<br>
+        {% endif %}
+        {{ order.billing_address.address1 }}<br>
+        {% if order.billing_address.address2 != "" %}
+          {{ order.billing_address.address2 }}<br>
+        {% endif %}
+        {{ order.billing_address.city }}, {{ order.billing_address.province_code }} {{ order.billing_address.zip }}<br>
+        {{ order.billing_address.country }}
+      </p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="background: #f8f8f8; padding: 20px; text-align: center; color: #666;">
+    <p>Questions? Reply to this email or contact us at {{ shop.email }}</p>
+    <p>&copy; {{ "now" | date: "%Y" }} {{ shop.name | escape }}</p>
+  </div>
+</body>
+</html>

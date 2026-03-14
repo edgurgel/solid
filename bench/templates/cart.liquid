@@ -1,0 +1,81 @@
+{% if cart.item_count == 0 %}
+  <div class="empty-cart">
+    <h2>Your cart is empty</h2>
+    <a href="/collections/all">Continue Shopping</a>
+  </div>
+{% else %}
+<form action="/cart" method="post" id="cartform">
+  <table class="cart-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in cart.items %}
+      <tr class="{% cycle 'odd', 'even' %}">
+        <td class="product-info">
+          <a href="{{ item.product.url }}">
+            <img src="{{ item.product.featured_image | product_img_url: 'thumb' }}" alt="{{ item.title | escape }}" />
+          </a>
+          <div>
+            <h3><a href="{{ item.product.url }}">{{ item.title | escape }}</a></h3>
+            {% if item.variant.title != "Default Title" %}
+              <small>{{ item.variant.title }}</small>
+            {% endif %}
+            {% if item.vendor %}
+              <small>by {{ item.vendor }}</small>
+            {% endif %}
+            {% for property in item.properties %}
+              {% if property.last != "" %}
+                <small>{{ property.first }}: {{ property.last }}</small>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </td>
+        <td class="price">
+          {% if item.original_price != item.price %}
+            <span class="was">{{ item.original_price | money }}</span>
+          {% endif %}
+          <span>{{ item.price | money }}</span>
+        </td>
+        <td class="quantity">
+          <input type="number" name="updates[{{ item.variant.id }}]" value="{{ item.quantity }}" min="0" />
+          <a href="/cart/change?line={{ forloop.index }}&quantity=0">Remove</a>
+        </td>
+        <td class="line-total">
+          {{ item.line_price | money }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3">Subtotal</td>
+        <td>{{ cart.total_price | money_with_currency }}</td>
+      </tr>
+      {% if cart.total_discounts > 0 %}
+      <tr class="discount">
+        <td colspan="3">Discount</td>
+        <td>-{{ cart.total_discounts | money }}</td>
+      </tr>
+      {% endif %}
+    </tfoot>
+  </table>
+
+  {% if cart.note %}
+    <div class="cart-note">
+      <label for="note">Order Notes:</label>
+      <textarea name="note" id="note">{{ cart.note | escape }}</textarea>
+    </div>
+  {% endif %}
+
+  <div class="cart-actions">
+    <input type="submit" name="update" value="Update Cart" />
+    <input type="submit" name="checkout" value="Checkout" />
+  </div>
+</form>
+{% endif %}

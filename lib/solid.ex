@@ -148,7 +148,8 @@ defmodule Solid do
   def render(template_or_text, values, options \\ [])
 
   def render(%Template{parsed_template: parse_tree}, context = %Context{}, options) do
-    matcher_module = Keyword.get(options, :matcher_module, Solid.Matcher)
+    options = ensure_map_options(options)
+    matcher_module = Map.get(options, :matcher_module, Solid.Matcher)
     context = %{context | matcher_module: matcher_module}
 
     {result, context} = render(parse_tree, context, options)
@@ -160,7 +161,8 @@ defmodule Solid do
   end
 
   def render(%Template{} = template, hash, options) do
-    matcher_module = Keyword.get(options, :matcher_module, Solid.Matcher)
+    options = ensure_map_options(options)
+    matcher_module = Map.get(options, :matcher_module, Solid.Matcher)
     context = %Context{counter_vars: hash, matcher_module: matcher_module}
 
     render(template, context, options)
@@ -215,4 +217,10 @@ defmodule Solid do
     (options[:strict_variables] == true && variable_errors?) ||
       (options[:strict_filters] == true && filter_errors?)
   end
+
+  # Convert keyword list options to a map once at the entry point.
+  # Map lookups are O(1) vs O(n) for keyword lists, and options are
+  # read on every variable lookup and filter application during render.
+  defp ensure_map_options(options) when is_map(options), do: options
+  defp ensure_map_options(options) when is_list(options), do: Map.new(options)
 end

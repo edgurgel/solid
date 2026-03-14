@@ -1,0 +1,163 @@
+<html>
+<head><title>{{ site.title | upcase }}</title></head>
+<body>
+
+{% assign greeting = "Welcome to " | append: site.title | append: "!" %}
+<h1>{{ greeting }}</h1>
+
+{% capture page_meta %}
+  Generated on {{ "now" | date: "%Y-%m-%d" }} | Total products: {{ products | size }}
+{% endcapture %}
+<div class="meta">{{ page_meta | strip }}</div>
+
+{% if user.logged_in %}
+  <div class="user-panel">
+    <p>Hello, {{ user.name | capitalize | prepend: "Mr. " }}!</p>
+    <p>Email: {{ user.email | split: "@" | last | prepend: "Domain: " }}</p>
+    <p>Member since: {{ user.joined | date: "%B %d, %Y" }}</p>
+
+    {% if user.role == "admin" %}
+      <span class="badge admin">Admin</span>
+    {% elsif user.role == "moderator" %}
+      <span class="badge mod">Moderator</span>
+    {% else %}
+      <span class="badge member">Member</span>
+    {% endif %}
+
+    {% if user.notifications > 0 %}
+      <div class="notifications">
+        You have {{ user.notifications }} unread notification{{ user.notifications | minus: 1 | at_least: 1 | times: 0 | plus: user.notifications | minus: 1 }}{% if user.notifications != 1 %}s{% endif %}.
+      </div>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="login-prompt">
+    <p>Please <a href="/login">log in</a> to continue.</p>
+  </div>
+{% endif %}
+
+<div class="product-catalog">
+  <h2>Products ({{ products | size }} items)</h2>
+
+  {% assign featured = "" %}
+  {% assign sale_count = 0 %}
+
+  {% for product in products %}
+    {% assign price_display = product.price | times: 100 | divided_by: 100.0 | round: 2 %}
+    {% assign name_slug = product.name | downcase | replace: " ", "-" | truncate: 30, "" %}
+
+    <div class="product {% cycle 'row-odd', 'row-even' %}" id="product-{{ name_slug }}">
+      <h3>
+        {{ forloop.index }}. {{ product.name | escape }}
+        {% if product.on_sale %}<span class="sale">SALE</span>{% endif %}
+      </h3>
+
+      <p class="description">{{ product.description | truncatewords: 20 | escape }}</p>
+      <p class="price">${{ price_display }}</p>
+
+      {% if product.on_sale %}
+        {% assign discounted = product.price | times: 0.8 | round: 2 %}
+        <p class="sale-price">Sale price: ${{ discounted }}</p>
+        {% assign sale_count = sale_count | plus: 1 %}
+      {% endif %}
+
+      {% if product.tags.size > 0 %}
+        <div class="tags">
+          {% for tag in product.tags %}
+            <span class="tag {% cycle 'tag-a', 'tag-b', 'tag-c' %}">{{ tag | capitalize }}</span>
+            {% unless forloop.last %}, {% endunless %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if product.variants.size > 0 %}
+        <table class="variants">
+          <tr><th>Variant</th><th>SKU</th><th>Stock</th></tr>
+          {% for variant in product.variants %}
+            <tr class="{% cycle 'light', 'dark' %}">
+              <td>{{ variant.name | capitalize }}</td>
+              <td>{{ variant.sku | upcase }}</td>
+              <td>
+                {% if variant.stock > 10 %}
+                  <span class="in-stock">In Stock ({{ variant.stock }})</span>
+                {% elsif variant.stock > 0 %}
+                  <span class="low-stock">Low Stock ({{ variant.stock }})</span>
+                {% else %}
+                  <span class="out-of-stock">Out of Stock</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </table>
+      {% endif %}
+
+      {% if product.featured %}
+        {% if featured != "" %}
+          {% assign featured = featured | append: ", " | append: product.name %}
+        {% else %}
+          {% assign featured = product.name %}
+        {% endif %}
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  {% if sale_count > 0 %}
+    <div class="sale-summary">{{ sale_count }} products on sale!</div>
+  {% endif %}
+
+  {% if featured != "" %}
+    <div class="featured-list">Featured: {{ featured }}</div>
+  {% endif %}
+</div>
+
+<div class="categories">
+  <h2>Browse by Category</h2>
+  {% for category in categories %}
+    <div class="category">
+      <h3>{{ category.name | upcase }}</h3>
+      <p>{{ category.description | truncatewords: 15 }}</p>
+      <ul>
+        {% for item in category.items %}
+          <li>
+            {{ item.name }} - ${{ item.price | round: 2 }}
+            {% if item.rating %}
+              ({{ item.rating | divided_by: 1.0 | round: 1 }} stars)
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+</div>
+
+{% tablerow product in products cols:3 %}
+  {{ product.name | truncate: 15 }} - ${{ product.price | round: 2 }}
+{% endtablerow %}
+
+<div class="stats">
+  {% assign all_prices = "" %}
+  {% for product in products %}
+    {% if all_prices != "" %}
+      {% assign all_prices = all_prices | append: "," | append: product.price %}
+    {% else %}
+      {% assign all_prices = product.price %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign price_list = all_prices | split: "," %}
+  <p>Number of products: {{ price_list | size }}</p>
+  <p>Price range display: {{ price_list | first }} to {{ price_list | last }}</p>
+</div>
+
+<footer>
+  {% assign year = "now" | date: "%Y" %}
+  <p>&copy; {{ year }} {{ site.title | escape }}. All rights reserved.</p>
+  <p>{{ site.tagline | default: "Quality products for everyone" | upcase }}</p>
+  {% for link in site.footer_links %}
+    <a href="{{ link.url }}">{{ link.label | capitalize }}</a>
+    {% unless forloop.last %} | {% endunless %}
+  {% endfor %}
+</footer>
+
+</body>
+</html>
