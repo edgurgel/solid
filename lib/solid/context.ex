@@ -7,7 +7,8 @@ defmodule Solid.Context do
             cycle_state: %{},
             registers: %{},
             errors: [],
-            matcher_module: Solid.Matcher
+            matcher_module: Solid.Matcher,
+            tags: Solid.Tag.default_tags()
 
   @type t :: %__MODULE__{
           vars: map,
@@ -16,7 +17,8 @@ defmodule Solid.Context do
           cycle_state: map,
           registers: map,
           errors: Solid.errors(),
-          matcher_module: module
+          matcher_module: module,
+          tags: %{String.t() => module}
         }
   @type scope :: :counter_vars | :vars | :iteration_vars
 
