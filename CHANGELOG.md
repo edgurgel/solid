@@ -1,3 +1,9 @@
+# 1.2.3 (2026-03-22)
+
+## Bug fixes
+
+* Fix custom tags rendering on partial templates
+
 # 1.2.2 (2026-02-07)
 
 ## Bug fixes
