@@ -89,6 +89,8 @@ defmodule Solid.Tags.RenderTag do
 
       {file_system, instance} = options[:file_system] || {Solid.BlankFileSystem, nil}
 
+      options = Keyword.put(options, :tags, context.tags)
+
       case file_system.read_template_file(tag.template, instance) do
         {:ok, template_str} ->
           do_render(tag, template_str, cache_module, context, options)

@@ -4,10 +4,19 @@ defmodule Solid.Integration.LinesTest do
   @tags Solid.Tag.default_tags()
         |> Map.put("current_line", CustomTags.CurrentLine)
 
-  defp render(template) do
+  defmodule TestFileSystem do
+    @behaviour Solid.FileSystem
+
+    @impl true
+    def read_template_file("current_line", _opts) do
+      {:ok, "{% current_line %}"}
+    end
+  end
+
+  defp render(template, options \\ []) do
     template
     |> Solid.parse!(tags: @tags)
-    |> Solid.render!(%{})
+    |> Solid.render!(%{}, options)
     |> IO.iodata_to_binary()
   end
 
@@ -49,6 +58,23 @@ defmodule Solid.Integration.LinesTest do
                """
                {% assign x = 1 %}
                2
+               """
+    end
+
+    test "render tag with current_line" do
+      template = """
+      text
+      {% render "current_line" %}
+      text
+      """
+
+      options = [file_system: {TestFileSystem, nil}]
+
+      assert render(template, options) ==
+               """
+               text
+               1
+               text
                """
     end
   end

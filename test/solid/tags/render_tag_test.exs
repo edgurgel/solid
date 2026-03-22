@@ -32,10 +32,14 @@ defmodule Solid.Tags.RenderTagTest do
       {:ok,
        "{{forloop.key}}{{ forloop.index }}{{ forloop.rindex }}{{ forloop.first }}{{ forloop.last }}{{ forloop.length }}"}
     end
+
+    def read_template_file("current_line", _opts) do
+      {:ok, "{% current_line %}"}
+    end
   end
 
-  defp parse(template) do
-    context = %ParserContext{rest: template, line: 1, column: 1, mode: :normal}
+  defp parse(template, opts \\ []) do
+    context = %ParserContext{rest: template, line: 1, column: 1, mode: :normal, tags: opts[:tags]}
 
     with {:ok, "render", context} <- Lexer.tokenize_tag_start(context) do
       RenderTag.parse("render", %Loc{line: 1, column: 1}, context)
@@ -300,6 +304,20 @@ defmodule Solid.Tags.RenderTagTest do
                {[
                   ["value1", "1", "2", "true", "false", "2"],
                   ["value2", "2", "1", "false", "true", "2"]
+                ], context}
+    end
+
+    test "renders current_line" do
+      tags = Solid.Tag.default_tags() |> Map.put("current_line", CustomTags.CurrentLine)
+      template = ~s<{% render "current_line" %}>
+      context = %Solid.Context{tags: tags}
+
+      {:ok, tag, _rest} = parse(template, tags: tags)
+      options = [file_system: {TestFileSystem, nil}]
+
+      assert Solid.Renderable.render(tag, context, options) ==
+               {[
+                  [["1"]]
                 ], context}
     end
   end
