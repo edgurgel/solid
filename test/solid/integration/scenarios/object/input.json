@@ -21,5 +21,6 @@
   "question?" : "?",
   "a var" : {
     "foo" : "bar"
-  }
+  },
+  "contains123" : "yo"
 }
