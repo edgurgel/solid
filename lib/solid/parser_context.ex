@@ -6,9 +6,10 @@ defmodule Solid.ParserContext do
           line: Lexer.line(),
           column: Lexer.column(),
           mode: :normal | :liquid_tag,
-          tags: %{String.t() => module} | nil
+          tags: %{String.t() => module} | nil,
+          opts: keyword
         }
 
   @enforce_keys [:rest, :line, :column, :mode]
-  defstruct [:rest, :line, :column, :mode, tags: nil]
+  defstruct [:rest, :line, :column, :mode, tags: nil, opts: []]
 end

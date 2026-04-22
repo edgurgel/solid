@@ -5,10 +5,10 @@ defmodule Solid.ConditionExpressionTest do
 
   alias Solid.Parser.Loc
 
-  defp parse(template) do
+  defp parse(template, opts \\ []) do
     context = %Solid.ParserContext{rest: "{{#{template}}}", line: 1, column: 1, mode: :normal}
     {:ok, tokens, _context} = Solid.Lexer.tokenize_object(context)
-    ConditionExpression.parse(tokens)
+    ConditionExpression.parse(tokens, opts)
   end
 
   describe "parse/1" do
@@ -120,7 +120,7 @@ defmodule Solid.ConditionExpressionTest do
     test "unary condition with filter" do
       template = "var1 | size"
 
-      {:ok, condition} = parse(template)
+      {:ok, condition} = parse(template, filters_in_conditional_tags: true)
 
       assert %UnaryCondition{
                argument: %Solid.Variable{identifier: "var1"},
@@ -131,7 +131,7 @@ defmodule Solid.ConditionExpressionTest do
     test "binary condition with filters on both sides" do
       template = "var1 | upcase == var2 | upcase"
 
-      {:ok, condition} = parse(template)
+      {:ok, condition} = parse(template, filters_in_conditional_tags: true)
 
       assert %BinaryCondition{
                left_argument: %Solid.Variable{identifier: "var1"},
@@ -145,7 +145,7 @@ defmodule Solid.ConditionExpressionTest do
     test "binary condition with filter with arguments" do
       template = ~s(name | append: " Jr." == "John Jr.")
 
-      {:ok, condition} = parse(template)
+      {:ok, condition} = parse(template, filters_in_conditional_tags: true)
 
       assert %BinaryCondition{
                left_argument: %Solid.Variable{identifier: "name"},
@@ -163,7 +163,7 @@ defmodule Solid.ConditionExpressionTest do
     test "condition with filter and child condition" do
       template = "items | size > 0 and active"
 
-      {:ok, condition} = parse(template)
+      {:ok, condition} = parse(template, filters_in_conditional_tags: true)
 
       assert %BinaryCondition{
                left_argument: %Solid.Variable{identifier: "items"},
@@ -190,7 +190,7 @@ defmodule Solid.ConditionExpressionTest do
 
     test "unary condition with filter" do
       template = "items | size"
-      {:ok, condition} = parse(template)
+      {:ok, condition} = parse(template, filters_in_conditional_tags: true)
       context = %Solid.Context{vars: %{"items" => [1, 2, 3]}}
 
       assert {:ok, true, _} = ConditionExpression.eval(condition, context, [])
@@ -198,7 +198,7 @@ defmodule Solid.ConditionExpressionTest do
 
     test "binary condition with filter comparing size to zero" do
       template = "items | size == 0"
-      {:ok, condition} = parse(template)
+      {:ok, condition} = parse(template, filters_in_conditional_tags: true)
       context = %Solid.Context{vars: %{"items" => []}}
 
       assert {:ok, true, _} = ConditionExpression.eval(condition, context, [])
@@ -206,7 +206,7 @@ defmodule Solid.ConditionExpressionTest do
 
     test "binary condition with filter" do
       template = "name | upcase == \"JOHN\""
-      {:ok, condition} = parse(template)
+      {:ok, condition} = parse(template, filters_in_conditional_tags: true)
       context = %Solid.Context{vars: %{"name" => "john"}}
 
       assert {:ok, true, _} = ConditionExpression.eval(condition, context, [])
@@ -214,7 +214,7 @@ defmodule Solid.ConditionExpressionTest do
 
     test "binary condition with filters on both sides" do
       template = "a | upcase == b | upcase"
-      {:ok, condition} = parse(template)
+      {:ok, condition} = parse(template, filters_in_conditional_tags: true)
       context = %Solid.Context{vars: %{"a" => "hello", "b" => "Hello"}}
 
       assert {:ok, true, _} = ConditionExpression.eval(condition, context, [])

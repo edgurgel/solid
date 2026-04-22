@@ -39,7 +39,7 @@ defmodule Solid.Tags.IfTag do
   @impl true
   def parse(starting_tag_name, loc, context) when starting_tag_name in ["if", "unless"] do
     with {:ok, tokens, context} <- Solid.Lexer.tokenize_tag_end(context),
-         {:ok, condition} <- ConditionExpression.parse(tokens),
+         {:ok, condition} <- ConditionExpression.parse(tokens, context.opts),
          {:ok, body, tag_name, tokens, context} <- parse_body(starting_tag_name, context),
          {:ok, elsifs, tag_name, context} <-
            parse_elsifs(starting_tag_name, tag_name, tokens, context),
@@ -95,7 +95,7 @@ defmodule Solid.Tags.IfTag do
         {:ok, Enum.reverse(acc), tag_name, context}
 
       _ ->
-        with {:ok, condition} <- ConditionExpression.parse(tokens),
+        with {:ok, condition} <- ConditionExpression.parse(tokens, context.opts),
              {:ok, body, tag_name, tokens, context} <- parse_body(starting_tag_name, context) do
           parse_elsifs(starting_tag_name, tag_name, tokens, context, [
             {condition, Parser.remove_blank_text_if_blank_body(body)} | acc

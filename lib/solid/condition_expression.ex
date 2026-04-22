@@ -3,9 +3,9 @@ defmodule Solid.ConditionExpression do
 
   @type condition :: BinaryCondition.t() | UnaryCondition.t()
 
-  @spec parse(Lexer.tokens()) :: {:ok, condition} | {:error, reason :: term, Lexer.loc()}
-  def parse(tokens) do
-    with {:ok, first_argument, first_filters, rest} <- Argument.parse_with_filters(tokens) do
+  @spec parse(Lexer.tokens(), keyword) :: {:ok, condition} | {:error, reason :: term, Lexer.loc()}
+  def parse(tokens, opts \\ []) do
+    with {:ok, first_argument, first_filters, rest} <- parse_argument(tokens, opts) do
       case rest do
         [{:end, _}] ->
           {:ok,
@@ -16,7 +16,7 @@ defmodule Solid.ConditionExpression do
            }}
 
         [{:identifier, _, relation} | rest] when relation in ["and", "or"] ->
-          with {:ok, child_condition} <- parse(rest) do
+          with {:ok, child_condition} <- parse(rest, opts) do
             {:ok,
              %Solid.UnaryCondition{
                argument: first_argument,
@@ -28,7 +28,7 @@ defmodule Solid.ConditionExpression do
 
         [{:comparison, _, operator} | rest] ->
           with {:ok, second_argument, second_filters, rest} <-
-                 Argument.parse_with_filters(rest) do
+                 parse_argument(rest, opts) do
             case rest do
               [{:end, _}] ->
                 {:ok,
@@ -42,7 +42,7 @@ defmodule Solid.ConditionExpression do
                  }}
 
               [{:identifier, _, relation} | rest] when relation in ["and", "or"] ->
-                with {:ok, child_condition} <- parse(rest) do
+                with {:ok, child_condition} <- parse(rest, opts) do
                   {:ok,
                    %Solid.BinaryCondition{
                      left_argument: first_argument,
@@ -62,6 +62,16 @@ defmodule Solid.ConditionExpression do
 
         _ ->
           {:error, "Expected Condition", Solid.Parser.meta_head(rest)}
+      end
+    end
+  end
+
+  defp parse_argument(tokens, opts) do
+    if opts[:filters_in_conditional_tags] do
+      Argument.parse_with_filters(tokens)
+    else
+      with {:ok, argument, rest} <- Argument.parse(tokens) do
+        {:ok, argument, [], rest}
       end
     end
   end

@@ -86,6 +86,7 @@ defmodule Solid do
   # Options
 
   - `tags` - Override tags allowed during compilation. See `Solid.Tag.default_tags/0` for more information on the default set of tags
+  - `filters_in_conditional_tags` - If `true`, enables filters inside `if`, `elsif`, and `unless` conditions (e.g. `{% if items | size > 0 %}`). Defaults to `false`. This diverges from the original Liquid specification which does not support filters in conditional tags.
 
   """
   @spec parse(binary, keyword) :: {:ok, Template.t()} | {:error, TemplateError.t()}
