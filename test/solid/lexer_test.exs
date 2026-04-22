@@ -416,6 +416,19 @@ defmodule Solid.LexerTest do
              }
     end
 
+    test "identifier that contains contains" do
+      context = "{{contains123}}" |> build_context
+
+      assert Lexer.tokenize_object(context) == {
+               :ok,
+               [
+                 {:identifier, %{column: 3, line: 1}, "contains123"},
+                 {:end, %{column: 14, line: 1}}
+               ],
+               %ParserContext{rest: "", line: 1, column: 16, mode: :normal}
+             }
+    end
+
     test "specials" do
       context = "{{. | [ ] : , }}" |> build_context
 

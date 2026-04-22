@@ -16,10 +16,10 @@ defmodule Solid do
           | Solid.TemplateError.t()
 
   defmodule Template do
-    @type t :: %__MODULE__{parsed_template: Parser.parse_tree()}
+    @type t :: %__MODULE__{parsed_template: Parser.parse_tree(), tags: %{String.t() => module}}
 
     @enforce_keys [:parsed_template]
-    defstruct [:parsed_template]
+    defstruct [:parsed_template, tags: Solid.Tag.default_tags()]
   end
 
   defmodule RenderError do
@@ -91,7 +91,11 @@ defmodule Solid do
   @spec parse(binary, keyword) :: {:ok, Template.t()} | {:error, TemplateError.t()}
   def parse(text, opts \\ []) do
     with {:ok, parse_tree} <- Parser.parse(text, opts) do
-      {:ok, %Template{parsed_template: parse_tree}}
+      {:ok,
+       %Template{
+         parsed_template: parse_tree,
+         tags: Keyword.get(opts, :tags, Solid.Tag.default_tags())
+       }}
     else
       {:error, errors} ->
         lines = String.splitter(text, "\n")
@@ -147,9 +151,9 @@ defmodule Solid do
   @spec render(Parser.parse_tree(), Context.t(), keyword) :: {iolist, Context.t()}
   def render(template_or_text, values, options \\ [])
 
-  def render(%Template{parsed_template: parse_tree}, context = %Context{}, options) do
+  def render(%Template{parsed_template: parse_tree, tags: tags}, context = %Context{}, options) do
     matcher_module = Keyword.get(options, :matcher_module, Solid.Matcher)
-    context = %{context | matcher_module: matcher_module}
+    context = %{context | matcher_module: matcher_module, tags: tags}
 
     {result, context} = render(parse_tree, context, options)
 

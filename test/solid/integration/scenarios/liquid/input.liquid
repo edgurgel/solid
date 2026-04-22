@@ -57,3 +57,9 @@ b
 {%- liquid echo "c" -%}
 
 {{ value3 }}
+
+{% liquid
+if 1 contains '1'
+  echo contains123
+endif
+%}
