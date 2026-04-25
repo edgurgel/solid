@@ -4,8 +4,8 @@ defmodule Solid.Tags.IfTagTest do
   alias Solid.{Lexer, ParserContext, Renderable}
   alias Solid.Parser.Loc
 
-  defp parse(template) do
-    context = %ParserContext{rest: template, line: 1, column: 1, mode: :normal}
+  defp parse(template, opts \\ []) do
+    context = %ParserContext{rest: template, line: 1, column: 1, mode: :normal, opts: opts}
 
     with {:ok, tag_name, context} <- Lexer.tokenize_tag_start(context) do
       IfTag.parse(tag_name, %Loc{line: 1, column: 1}, context)
@@ -411,6 +411,33 @@ defmodule Solid.Tags.IfTagTest do
       {:ok, tag, _rest} = parse(template)
 
       assert {[%Solid.Text{text: " elsif3 "}], ^context} = Renderable.render(tag, context, [])
+    end
+
+    test "if with filter in unary condition" do
+      template = ~s<{% if items | size %} has items {% endif %}>
+      context = %Solid.Context{vars: %{"items" => [1, 2, 3]}}
+
+      {:ok, tag, _rest} = parse(template, filters_in_conditional_tags: true)
+
+      assert {[%Solid.Text{text: " has items "}], _} = Renderable.render(tag, context, [])
+    end
+
+    test "if with filter in binary condition" do
+      template = ~s<{% if name | upcase == "JOHN" %} match {% endif %}>
+      context = %Solid.Context{vars: %{"name" => "john"}}
+
+      {:ok, tag, _rest} = parse(template, filters_in_conditional_tags: true)
+
+      assert {[%Solid.Text{text: " match "}], _} = Renderable.render(tag, context, [])
+    end
+
+    test "unless with filter in condition" do
+      template = ~s({% unless items | size > 0 %} empty {% endunless %})
+      context = %Solid.Context{vars: %{"items" => []}}
+
+      {:ok, tag, _rest} = parse(template, filters_in_conditional_tags: true)
+
+      assert {[%Solid.Text{text: " empty "}], _} = Renderable.render(tag, context, [])
     end
   end
 end

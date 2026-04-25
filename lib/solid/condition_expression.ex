@@ -3,42 +3,53 @@ defmodule Solid.ConditionExpression do
 
   @type condition :: BinaryCondition.t() | UnaryCondition.t()
 
-  @spec parse(Lexer.tokens()) :: {:ok, condition} | {:error, reason :: term, Lexer.loc()}
-  def parse(tokens) do
-    with {:ok, first_argument, rest} <- Argument.parse(tokens) do
+  @spec parse(Lexer.tokens(), keyword) :: {:ok, condition} | {:error, reason :: term, Lexer.loc()}
+  def parse(tokens, opts \\ []) do
+    with {:ok, first_argument, first_filters, rest} <- parse_argument(tokens, opts) do
       case rest do
         [{:end, _}] ->
-          {:ok, %Solid.UnaryCondition{argument: first_argument, loc: first_argument.loc}}
+          {:ok,
+           %Solid.UnaryCondition{
+             argument: first_argument,
+             argument_filters: first_filters,
+             loc: first_argument.loc
+           }}
 
         [{:identifier, _, relation} | rest] when relation in ["and", "or"] ->
-          with {:ok, child_condition} <- parse(rest) do
+          with {:ok, child_condition} <- parse(rest, opts) do
             {:ok,
              %Solid.UnaryCondition{
                argument: first_argument,
+               argument_filters: first_filters,
                loc: first_argument.loc,
                child_condition: {String.to_atom(relation), child_condition}
              }}
           end
 
         [{:comparison, _, operator} | rest] ->
-          with {:ok, second_argument, rest} <- Argument.parse(rest) do
+          with {:ok, second_argument, second_filters, rest} <-
+                 parse_argument(rest, opts) do
             case rest do
               [{:end, _}] ->
                 {:ok,
                  %Solid.BinaryCondition{
                    left_argument: first_argument,
+                   left_argument_filters: first_filters,
                    operator: operator,
                    right_argument: second_argument,
+                   right_argument_filters: second_filters,
                    loc: first_argument.loc
                  }}
 
               [{:identifier, _, relation} | rest] when relation in ["and", "or"] ->
-                with {:ok, child_condition} <- parse(rest) do
+                with {:ok, child_condition} <- parse(rest, opts) do
                   {:ok,
                    %Solid.BinaryCondition{
                      left_argument: first_argument,
+                     left_argument_filters: first_filters,
                      operator: operator,
                      right_argument: second_argument,
+                     right_argument_filters: second_filters,
                      loc: first_argument.loc,
                      child_condition: {String.to_atom(relation), child_condition}
                    }}
@@ -55,11 +66,24 @@ defmodule Solid.ConditionExpression do
     end
   end
 
+  defp parse_argument(tokens, opts) do
+    if opts[:filters_in_conditional_tags] do
+      Argument.parse_with_filters(tokens)
+    else
+      with {:ok, argument, rest} <- Argument.parse(tokens) do
+        {:ok, argument, [], rest}
+      end
+    end
+  end
+
   @spec eval(condition, Context.t(), keyword) ::
           {:ok, boolean, Context.t()} | {:error, Exception.t(), Context.t()}
   def eval(%BinaryCondition{} = condition, context, options) do
-    {:ok, left_argument, context} = Argument.get(condition.left_argument, context, [], options)
-    {:ok, right_argument, context} = Argument.get(condition.right_argument, context, [], options)
+    {:ok, left_argument, context} =
+      Argument.get(condition.left_argument, context, condition.left_argument_filters, options)
+
+    {:ok, right_argument, context} =
+      Argument.get(condition.right_argument, context, condition.right_argument_filters, options)
 
     case BinaryCondition.eval({left_argument, condition.operator, right_argument}) do
       {:ok, result} -> eval_child_condition(result, condition, context, options)
@@ -68,7 +92,8 @@ defmodule Solid.ConditionExpression do
   end
 
   def eval(%UnaryCondition{} = condition, context, options) do
-    {:ok, argument, context} = Argument.get(condition.argument, context, [], options)
+    {:ok, argument, context} =
+      Argument.get(condition.argument, context, condition.argument_filters, options)
 
     UnaryCondition.eval(argument)
     |> eval_child_condition(condition, context, options)

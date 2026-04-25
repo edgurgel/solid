@@ -20,7 +20,12 @@ defmodule Solid.Parser do
   @spec parse(binary, keyword) :: {:ok, parse_tree} | {:error, errors}
   def parse(text, opts \\ []) do
     tags = Keyword.get(opts, :tags)
-    parse(%ParserContext{rest: text, line: 1, column: 1, mode: :normal, tags: tags}, [], [])
+
+    parse(
+      %ParserContext{rest: text, line: 1, column: 1, mode: :normal, tags: tags, opts: opts},
+      [],
+      []
+    )
   end
 
   defp parse(%ParserContext{rest: ""}, acc, errors) do
