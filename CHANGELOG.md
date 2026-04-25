@@ -1,3 +1,15 @@
+# 1.3.0 (2026-04-25)
+
+## Features
+
+* Add support to `filters_in_conditional_tags` option during parsing to account for a feature that Solid pre-1.0.0 supported that diverged from Liquid. It enables teampltes like:
+
+```liquid
+{% if items | size > 0 %}...{% endif %}
+{% if name | upcase == "JOHN" %}...{% endif %}
+{% unless items | size > 0 %}...{% endunless %}
+```
+
 # 1.2.4 (2026-04-18)
 
 ## Bug fixes
