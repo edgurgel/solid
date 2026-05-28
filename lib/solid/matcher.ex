@@ -7,7 +7,17 @@ end
 defimpl Solid.Matcher, for: Any do
   def match(data, []), do: {:ok, data}
 
-  def match(_, _), do: {:error, :not_found}
+  def match(data, _) do
+    raise Protocol.UndefinedError,
+      protocol: @protocol,
+      value: data
+  end
+end
+
+defimpl Solid.Matcher, for: Integer do
+  def match(data, []), do: {:ok, data}
+
+  def match(_data, _), do: {:error, :not_found}
 end
 
 defimpl Solid.Matcher, for: List do
