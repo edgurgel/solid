@@ -1,6 +1,6 @@
 defmodule Solid.BinaryCondition do
   alias Solid.{Argument, Filter}
-  alias Solid.Literal.Empty
+  alias Solid.Literal.{Blank, Empty}
 
   defstruct [
     :loc,
@@ -23,14 +23,24 @@ defmodule Solid.BinaryCondition do
         }
 
   @spec eval({term, Solid.Lexer.operator(), term}) :: {:ok, boolean} | {:error, binary}
-  def eval({v1, :==, %Empty{}}) when is_map(v1) and not is_struct(v1), do: {:ok, v1 == %{}}
-  def eval({%Empty{}, :==, v2}) when is_map(v2) and not is_struct(v2), do: {:ok, v2 == %{}}
 
-  def eval({v1, :==, %Empty{}}) when is_list(v1), do: {:ok, v1 == []}
-  def eval({%Empty{}, :==, v2}) when is_list(v2), do: {:ok, v2 == []}
+  for struct <- [Blank, Empty] do
+    @struct struct
+    def eval({v1, :==, %@struct{}}) when is_map(v1) and not is_struct(v1), do: {:ok, v1 == %{}}
+    def eval({%@struct{}, :==, v2}) when is_map(v2) and not is_struct(v2), do: {:ok, v2 == %{}}
 
-  def eval({v1, _, %Empty{}}) when is_map(v1) and not is_struct(v1), do: {:ok, false}
-  def eval({%Empty{}, _, v2}) when is_map(v2) and not is_struct(v2), do: {:ok, false}
+    def eval({v1, :==, %@struct{}}) when is_list(v1), do: {:ok, v1 == []}
+    def eval({%@struct{}, :==, v2}) when is_list(v2), do: {:ok, v2 == []}
+
+    def eval({v1, :==, %@struct{}}) when is_binary(v1), do: {:ok, v1 == ""}
+    def eval({%@struct{}, :==, v2}) when is_binary(v2), do: {:ok, v2 == ""}
+
+    def eval({v1, _, %@struct{}}) when is_map(v1) and not is_struct(v1), do: {:ok, false}
+    def eval({%@struct{}, _, v2}) when is_map(v2) and not is_struct(v2), do: {:ok, false}
+  end
+
+  def eval({nil, :==, %Blank{}}), do: {:ok, true}
+  def eval({%Blank{}, :==, nil}), do: {:ok, true}
 
   def eval({v1, _, v2})
       when (is_map(v1) or is_map(v2)) and not is_struct(v1) and not is_struct(v2),

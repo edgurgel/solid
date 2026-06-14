@@ -6,10 +6,14 @@ defmodule Solid.Literal do
     defstruct []
   end
 
+  defmodule Blank do
+    defstruct []
+  end
+
   @enforce_keys [:loc, :value]
   defstruct [:loc, :value]
 
-  @type value :: boolean | nil | binary | integer | float | %Empty{}
+  @type value :: boolean | nil | binary | integer | float | %Empty{} | %Blank{}
   @type t :: %__MODULE__{loc: Loc.t(), value: value}
 
   defimpl String.Chars do

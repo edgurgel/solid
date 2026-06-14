@@ -1,5 +1,6 @@
 defmodule Solid.BinaryConditionTest do
   use ExUnit.Case, async: true
+  alias Solid.Literal.{Blank, Empty}
 
   import Solid.BinaryCondition
 
@@ -27,6 +28,28 @@ defmodule Solid.BinaryConditionTest do
       assert eval({1, :>=, 3}) == {:ok, false}
       assert eval({2, :>=, 4}) == {:ok, false}
       assert eval({1, :<=, 0}) == {:ok, false}
+    end
+
+    test "literals" do
+      assert eval({%{}, :==, %Empty{}}) == {:ok, true}
+      assert eval({%Empty{}, :==, %{}}) == {:ok, true}
+      assert eval({%{}, :==, %Blank{}}) == {:ok, true}
+      assert eval({%Blank{}, :==, %{}}) == {:ok, true}
+
+      assert eval({[], :==, %Empty{}}) == {:ok, true}
+      assert eval({%Empty{}, :==, []}) == {:ok, true}
+      assert eval({[], :==, %Blank{}}) == {:ok, true}
+      assert eval({%Blank{}, :==, []}) == {:ok, true}
+
+      assert eval({"", :==, %Empty{}}) == {:ok, true}
+      assert eval({%Empty{}, :==, ""}) == {:ok, true}
+      assert eval({"", :==, %Blank{}}) == {:ok, true}
+      assert eval({%Blank{}, :==, ""}) == {:ok, true}
+
+      assert eval({nil, :==, %Empty{}}) == {:ok, false}
+      assert eval({%Empty{}, :==, nil}) == {:ok, false}
+      assert eval({nil, :==, %Blank{}}) == {:ok, true}
+      assert eval({%Blank{}, :==, nil}) == {:ok, true}
     end
 
     test "contains" do

@@ -114,6 +114,14 @@ endif
 {% if empty == array %}empty{% else %}not empty{% endif %}
 {% if array == blank %}blank{% else %}not blank{% endif %}
 {% if blank == array %}blank{% else %}not blank{% endif %}
+{% if "" == blank %}blank{% else %}not blank{% endif %}
+{% if blank == "" %}blank{% else %}not blank{% endif %}
+{% if "" == empty %}empty{% else %}not empty{% endif %}
+{% if empty == "" %}empty{% else %}not empty{% endif %}
+{% if nil == blank %}blank{% else %}not blank{% endif %}
+{% if blank == nil %}blank{% else %}not blank{% endif %}
+{% if nil == empty %}empty{% else %}not empty{% endif %}
+{% if empty == nil %}empty{% else %}not empty{% endif %}
 
 Empty bodies
 {% if true %}  {% elsif false %} {% else %} {% endif %}

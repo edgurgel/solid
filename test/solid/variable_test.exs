@@ -191,7 +191,7 @@ defmodule Solid.VariableTest do
     test "blank" do
       assert parse("blank") == {
                :ok,
-               %Solid.Literal{loc: %Loc{line: 1, column: 3}, value: ""},
+               %Solid.Literal{loc: %Loc{line: 1, column: 3}, value: %Solid.Literal.Blank{}},
                [end: %{line: 1, column: 8}]
              }
     end

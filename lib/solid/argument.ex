@@ -178,6 +178,7 @@ defmodule Solid.Argument do
   end
 
   defp stringify!(%Literal.Empty{}), do: ""
+  defp stringify!(%Literal.Blank{}), do: ""
 
   defp stringify!(range) when is_struct(range, Range) do
     "#{range.first}..#{range.last}"

@@ -68,7 +68,7 @@ defmodule Solid.Variable do
       "true" -> true
       "false" -> false
       "empty" -> %Literal.Empty{}
-      "blank" -> ""
+      "blank" -> %Literal.Blank{}
     end
   end
 

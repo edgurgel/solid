@@ -3,7 +3,7 @@ defmodule Solid.StandardFilter do
   Standard filters
   """
 
-  alias Solid.Literal.Empty
+  alias Solid.Literal.{Blank, Empty}
 
   import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1, apply: 2]
 
@@ -261,7 +261,7 @@ defmodule Solid.StandardFilter do
   456
   """
 
-  @empty_values [nil, false, [], "", %{}, %Empty{}]
+  @empty_values [nil, false, [], "", %{}, %Empty{}, %Blank{}]
 
   @spec default(any, any, map) :: any
   def default(input, value \\ "", opts \\ %{}) do
@@ -348,6 +348,7 @@ defmodule Solid.StandardFilter do
   """
   @spec first(term) :: any
   def first(input) when is_list(input), do: List.first(input)
+  def first(input) when is_binary(input), do: String.first(input)
   def first(start.._//_), do: start
   # Maps are not ordered making this result not consistent with Ruby's liquid ordered hash
   def first(input) when is_map(input) do
@@ -455,6 +456,7 @@ defmodule Solid.StandardFilter do
   """
   @spec last(list) :: any
   def last(input) when is_list(input), do: List.last(input)
+  def last(input) when is_binary(input), do: String.last(input)
   def last(_..finish//_), do: finish
   def last(_), do: nil
 
@@ -628,7 +630,8 @@ defmodule Solid.StandardFilter do
 
             true ->
               cond do
-                is_struct(value, Empty) or is_binary(value) or is_boolean(value) or is_nil(value) ->
+                is_struct(value, Empty) or is_struct(value, Blank) or is_binary(value) or
+                  is_boolean(value) or is_nil(value) ->
                   0
 
                 is_map(value) ->
@@ -715,6 +718,7 @@ defmodule Solid.StandardFilter do
   end
 
   defp to_str(%Empty{}), do: ""
+  defp to_str(%Blank{}), do: ""
 
   # defp to_str(%datetime_module{} = datetime)
   #      when datetime_module in [DateTime, NaiveDateTime, Date, Time] do
