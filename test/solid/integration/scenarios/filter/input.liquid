@@ -136,6 +136,15 @@ strip
 {{ unknown | strip }}
 {% # {{ posts | strip }} %}
 
+squish
+
+{{ "  foo   bar  baz  " | squish }}
+{{ "foo
+  bar	 baz" | squish }}
+{{ "   " | squish }}
+{{ nil | squish }}
+{{ 5 | squish }}
+
 minus
 
 {{ 4 | minus: 2 }}

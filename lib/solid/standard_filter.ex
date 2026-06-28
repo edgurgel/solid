@@ -990,6 +990,29 @@ defmodule Solid.StandardFilter do
   def strip(input), do: String.trim(to_str(input))
 
   @doc """
+  Removes leading and trailing whitespace and collapses consecutive whitespace to a single space.
+
+  iex> Solid.StandardFilter.squish("  foo   bar  baz  ")
+  "foo bar baz"
+
+  iex> Solid.StandardFilter.squish("foo\\n  bar\\t baz")
+  "foo bar baz"
+
+  iex> Solid.StandardFilter.squish("   ")
+  ""
+
+  iex> Solid.StandardFilter.squish(nil)
+  ""
+  """
+  @spec squish(term) :: String.t()
+  def squish(input) do
+    input
+    |> to_str()
+    |> String.split()
+    |> Enum.join(" ")
+  end
+
+  @doc """
   Multiplies a number by another number.
 
   iex> Solid.StandardFilter.times(3, 2)
