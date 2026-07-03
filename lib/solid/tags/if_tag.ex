@@ -28,6 +28,9 @@ defmodule Solid.Tags.IfTag do
       {:ok, _result, _tag_name, _tokens, context} ->
         {:ok, context}
 
+      {:error, "Maximum template depth exceeded", meta} ->
+        {:error, "Maximum template depth exceeded", meta}
+
       {:error, "Expected 'endif'", meta} ->
         {:error, "Expected '#{tags}'", meta}
 
@@ -67,6 +70,9 @@ defmodule Solid.Tags.IfTag do
     case Parser.parse_until(context, tags, "Expected 'endif'") do
       {:ok, result, tag_name, tokens, context} ->
         {:ok, result, tag_name, tokens, context}
+
+      {:error, "Maximum template depth exceeded", meta} ->
+        {:error, "Maximum template depth exceeded", meta}
 
       {:error, "Expected 'endif'", meta} ->
         {:error, "Expected '#{expected_end_tag}'", meta}
@@ -114,6 +120,9 @@ defmodule Solid.Tags.IfTag do
     case Parser.parse_until(context, tag, "Expected 'endif'") do
       {:ok, result, tag_name, _tokens, context} ->
         {:ok, result, tag_name, context}
+
+      {:error, "Maximum template depth exceeded", meta} ->
+        {:error, "Maximum template depth exceeded", meta}
 
       {:error, "Expected 'endif'", meta} ->
         {:error, "Expected '#{expected_tag}'", meta}

@@ -25,6 +25,8 @@ defmodule Solid.Tags.RenderTag do
     end
   end
 
+  def default_max_render_depth, do: 100
+
   defp parse_arguments(tokens, template) do
     case tokens do
       [{:identifier, _, "with"} | rest] -> parse_with_or_for_arguments(rest, :with, template)
@@ -122,7 +124,7 @@ defmodule Solid.Tags.RenderTag do
 
           {rendered_text, context} =
             Enum.reduce(inner_contexts, {[], context}, fn inner_context, {result, context} ->
-              case Solid.render(template, inner_context, options) do
+              case render_partial(template, tag.template, inner_context, context, options) do
                 {:ok, rendered_text, errors} ->
                   {[rendered_text | result],
                    Solid.Context.put_errors(context, Enum.reverse(errors))}
@@ -137,6 +139,21 @@ defmodule Solid.Tags.RenderTag do
 
         {:error, exception} ->
           {[], Solid.Context.put_errors(context, [exception])}
+      end
+    end
+
+    defp render_partial(template, template_name, inner_context, context, options) do
+      next_depth = context.render_depth + 1
+
+      max_depth =
+        Keyword.get(options, :max_render_depth, Solid.Tags.RenderTag.default_max_render_depth())
+
+      if next_depth > max_depth do
+        error = %Solid.RenderDepthError{max_depth: max_depth, template: template_name}
+        {:error, [error], []}
+      else
+        inner_context = %{inner_context | render_depth: next_depth}
+        Solid.render(template, inner_context, options)
       end
     end
 

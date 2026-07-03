@@ -36,6 +36,30 @@ defmodule Solid.Tags.RenderTagTest do
     def read_template_file("current_line", _opts) do
       {:ok, "{% current_line %}"}
     end
+
+    def read_template_file("self", _opts) do
+      {:ok, "{% render 'self' %}"}
+    end
+
+    def read_template_file("a", _opts) do
+      {:ok, "{% render 'b' %}"}
+    end
+
+    def read_template_file("b", _opts) do
+      {:ok, "{% render 'a' %}"}
+    end
+
+    def read_template_file("chain_a", _opts) do
+      {:ok, "{% render 'chain_b' %}"}
+    end
+
+    def read_template_file("chain_b", _opts) do
+      {:ok, "{% render 'chain_c' %}"}
+    end
+
+    def read_template_file("chain_c", _opts) do
+      {:ok, "done"}
+    end
   end
 
   defp parse(template, opts \\ []) do
@@ -319,6 +343,48 @@ defmodule Solid.Tags.RenderTagTest do
                {[
                   [["1"]]
                 ], context}
+    end
+
+    test "stops direct recursive renders at the configured depth" do
+      template = ~s<{% render "self" %}>
+
+      {:ok, _result, [error]} =
+        template
+        |> Solid.parse!()
+        |> Solid.render(%{}, file_system: {TestFileSystem, nil}, max_render_depth: 2)
+
+      assert %Solid.RenderDepthError{max_depth: 2, template: "self"} = error
+    end
+
+    test "stops indirect recursive renders at the configured depth" do
+      template = ~s<{% render "a" %}>
+
+      {:ok, _result, [error]} =
+        template
+        |> Solid.parse!()
+        |> Solid.render(%{}, file_system: {TestFileSystem, nil}, max_render_depth: 2)
+
+      assert %Solid.RenderDepthError{max_depth: 2, template: "a"} = error
+    end
+
+    test "allows overriding render depth for valid partial chains" do
+      template = ~s<{% render "chain_a" %}>
+
+      assert {:ok, result, []} =
+               Solid.render(Solid.parse!(template), %{},
+                 file_system: {TestFileSystem, nil},
+                 max_render_depth: 3
+               )
+
+      assert IO.iodata_to_binary(result) == "done"
+
+      assert {:ok, _result, [error]} =
+               Solid.render(Solid.parse!(template), %{},
+                 file_system: {TestFileSystem, nil},
+                 max_render_depth: 2
+               )
+
+      assert %Solid.RenderDepthError{max_depth: 2, template: "chain_c"} = error
     end
   end
 end

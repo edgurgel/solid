@@ -3,6 +3,8 @@ defmodule Solid.Parser do
   This module contains functions to parse Liquid templates
   """
 
+  @default_max_template_depth 100
+  @max_template_depth_error "Maximum template depth exceeded"
   @whitespaces [" ", "\f", "\r", "\t", "\v"]
   alias Solid.Parser.Loc
   alias Solid.ParserContext
@@ -69,7 +71,24 @@ defmodule Solid.Parser do
   @spec parse_until(ParserContext.t(), tags :: [binary] | binary, reason :: binary) ::
           {:ok, parse_tree, binary, Lexer.tokens(), ParserContext.t()}
           | {:error, binary, Lexer.loc()}
-  def parse_until(context, tags, reason), do: parse_until(context, tags, reason, [], context.mode)
+  def parse_until(context, tags, reason) do
+    next_depth = context.depth + 1
+    max_depth = Keyword.get(context.opts, :max_template_depth, @default_max_template_depth)
+
+    if next_depth > max_depth do
+      {:error, @max_template_depth_error, %{line: context.line, column: context.column}}
+    else
+      nested_context = %{context | depth: next_depth}
+
+      case parse_until(nested_context, tags, reason, [], context.mode) do
+        {:ok, result, tag_name, tokens, nested_context} ->
+          {:ok, result, tag_name, tokens, %{nested_context | depth: context.depth}}
+
+        {:error, nested_reason, meta} ->
+          {:error, nested_reason, meta}
+      end
+    end
+  end
 
   defp parse_until(context, tags, reason, acc, expected_mode) do
     case maybe_tokenize_tag(tags, context) do

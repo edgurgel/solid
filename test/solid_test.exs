@@ -119,6 +119,60 @@ defmodule SolidTest do
                   }
                 ]}
     end
+
+    test "allows 100 nested blocks by default" do
+      depth = 100
+
+      template =
+        String.duplicate("{% if true %}", depth) <>
+          "rendered" <> String.duplicate("{% endif %}", depth)
+
+      assert template
+             |> Solid.parse!()
+             |> Solid.render!(%{})
+             |> IO.iodata_to_binary() == "rendered"
+    end
+
+    test "rejects more than 100 nested blocks by default" do
+      depth = 101
+
+      template =
+        String.duplicate("{% if true %}", depth) <>
+          "rendered" <> String.duplicate("{% endif %}", depth)
+
+      assert {:error, %Solid.TemplateError{errors: errors}} = Solid.parse(template)
+
+      assert Enum.any?(
+               errors,
+               &match?(%Solid.ParserError{reason: "Maximum template depth exceeded"}, &1)
+             )
+    end
+
+    test "allows overriding the nested block limit" do
+      allowed_depth = 2
+      blocked_depth = 3
+
+      allowed_template =
+        String.duplicate("{% if true %}", allowed_depth) <>
+          "rendered" <> String.duplicate("{% endif %}", allowed_depth)
+
+      blocked_template =
+        String.duplicate("{% if true %}", blocked_depth) <>
+          "rendered" <> String.duplicate("{% endif %}", blocked_depth)
+
+      assert allowed_template
+             |> Solid.parse!(max_template_depth: allowed_depth)
+             |> Solid.render!(%{})
+             |> IO.iodata_to_binary() == "rendered"
+
+      assert {:error, %Solid.TemplateError{errors: errors}} =
+               Solid.parse(blocked_template, max_template_depth: allowed_depth)
+
+      assert Enum.any?(
+               errors,
+               &match?(%Solid.ParserError{reason: "Maximum template depth exceeded"}, &1)
+             )
+    end
   end
 
   describe "render!/3" do

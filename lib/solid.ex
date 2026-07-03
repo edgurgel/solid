@@ -13,6 +13,7 @@ defmodule Solid do
           | Solid.ArgumentError.t()
           | Solid.WrongFilterArityError.t()
           | Solid.FileSystem.Error.t()
+          | Solid.RenderDepthError.t()
           | Solid.TemplateError.t()
 
   defmodule Template do
@@ -87,6 +88,7 @@ defmodule Solid do
 
   - `tags` - Override tags allowed during compilation. See `Solid.Tag.default_tags/0` for more information on the default set of tags
   - `filters_in_conditional_tags` - If `true`, enables filters inside `if`, `elsif`, and `unless` conditions (e.g. `{% if items | size > 0 %}`). Defaults to `false`. This diverges from the original Liquid specification which does not support filters in conditional tags.
+  - `max_template_depth` - Maximum nested block depth allowed while parsing. Defaults to `100`.
 
   """
   @spec parse(binary, keyword) :: {:ok, Template.t()} | {:error, TemplateError.t()}
@@ -141,6 +143,8 @@ defmodule Solid do
   - `strict_filters`: if `true`, it collects an error when a filter is referenced in the template, but not built-in or provided via `custom_filters`
 
   - `matcher_module`: a module to replace `Solid.Matcher` when resolving variables.
+
+  - `max_render_depth`: maximum nested partial render depth allowed for the `render` tag. Defaults to `100`.
 
   ## Example
 
