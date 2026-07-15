@@ -65,21 +65,15 @@ defmodule Solid.StandardFilter do
       find_correct_function(mod_or_callback, String.to_existing_atom(func), Enum.count(args), loc)
   end
 
-  # Look up the filter's function atom among the module's exported functions
-  # instead of String.to_existing_atom/1, which raised flaky ArgumentErrors when
-  # the filter module's function-name atom had not been loaded yet.
+  # Resolve the filter name to its function atom with String.to_existing_atom/1,
+  # but ensure the module is loaded first. Its function-name atoms are only
+  # interned once it is loaded, and lazy code loading meant to_existing_atom/1
+  # could otherwise raise a flaky ArgumentError for a perfectly valid filter.
+  # Loading first keeps this an O(1) atom-table lookup and still never interns
+  # arbitrary atoms from untrusted template input.
   defp existing_function!(module, func) do
-    exported_functions = module.__info__(:functions)
-
-    function =
-      Enum.find_value(exported_functions, fn {name, _arity} ->
-        if to_string(name) == func, do: name
-      end)
-
-    case function do
-      nil -> raise ArgumentError
-      name -> name
-    end
+    Code.ensure_loaded(module)
+    String.to_existing_atom(func)
   end
 
   @doc """
