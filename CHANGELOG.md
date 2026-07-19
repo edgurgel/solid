@@ -1,3 +1,9 @@
+# Unreleased
+
+## Bug fixes
+
+* Fix custom filters being silently skipped when their module has not been loaded yet
+
 # 1.3.2 (2026-06-14)
 
 ## Bug fixes

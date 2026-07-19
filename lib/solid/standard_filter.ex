@@ -49,7 +49,7 @@ defmodule Solid.StandardFilter do
     if is_function(mod_or_callback, 2) do
       mod_or_callback.(func, args)
     else
-      func = String.to_existing_atom(func)
+      func = existing_function!(mod_or_callback, func)
       {:ok, Kernel.apply(mod_or_callback, func, args)}
     end
   rescue
@@ -63,6 +63,17 @@ defmodule Solid.StandardFilter do
 
     UndefinedFunctionError ->
       find_correct_function(mod_or_callback, String.to_existing_atom(func), Enum.count(args), loc)
+  end
+
+  # Resolve the filter name to its function atom with String.to_existing_atom/1,
+  # but ensure the module is loaded first. Its function-name atoms are only
+  # interned once it is loaded, and lazy code loading meant to_existing_atom/1
+  # could otherwise raise a flaky ArgumentError for a perfectly valid filter.
+  # Loading first keeps this an O(1) atom-table lookup and still never interns
+  # arbitrary atoms from untrusted template input.
+  defp existing_function!(module, func) do
+    Code.ensure_loaded(module)
+    String.to_existing_atom(func)
   end
 
   @doc """
