@@ -178,4 +178,17 @@ defmodule Solid.Tags.TablerowTagTest do
                }
     end
   end
+
+  describe "Renderable impl" do
+    test "large range with limit does not materialize the whole range" do
+      # A huge range literal must not be expanded into a list before the
+      # limit/offset are applied, otherwise a short template could exhaust
+      # memory (DoS). This should return quickly with a bounded result.
+      template = "{% tablerow i in (1..1000000000) cols: 2 limit: 3 %}{{ i }}{% endtablerow %}"
+
+      assert Solid.Helpers.render(template) ==
+               ~s(<tr class="row1">\n<td class="col1">1</td><td class="col2">2</td></tr>\n) <>
+                 ~s(<tr class="row2"><td class="col1">3</td></tr>\n)
+    end
+  end
 end
