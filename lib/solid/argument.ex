@@ -190,19 +190,18 @@ defmodule Solid.Argument do
 
   defp stringify!(value), do: to_string(value)
 
+  @default_scopes [:iteration_vars, :vars, :counter_vars]
+
   @spec get(t, Context.t(), [Filter.t()], Keyword.t()) :: {:ok, term, Context.t()}
   def get(arg, context, filters, opts \\ []) do
-    scopes = Keyword.get(opts, :scopes, [:iteration_vars, :vars, :counter_vars])
-    strict_variables = Keyword.get(opts, :strict_variables, false)
-
-    case do_get(arg, context, scopes, opts) do
+    case do_get(arg, context, opts) do
       {:ok, value, context} ->
         {value, context} = apply_filters(value, filters, context, opts)
         {:ok, value, context}
 
       {:error, {:not_found, key}, context} ->
         context =
-          if strict_variables do
+          if Keyword.get(opts, :strict_variables, false) do
             Context.put_errors(context, %UndefinedVariableError{
               variable: key,
               original_name: arg.original_name,
@@ -217,12 +216,14 @@ defmodule Solid.Argument do
     end
   end
 
-  defp do_get(%Literal{value: value}, context, _scopes, _options), do: {:ok, value, context}
+  defp do_get(%Literal{value: value}, context, _options), do: {:ok, value, context}
 
-  defp do_get(%Variable{} = variable, context, scopes, options),
-    do: Context.get_in(context, variable, scopes, options)
+  defp do_get(%Variable{} = variable, context, options) do
+    scopes = Keyword.get(options, :scopes, @default_scopes)
+    Context.get_in(context, variable, scopes, options)
+  end
 
-  defp do_get(%Solid.Range{} = range, context, _scopes, options) do
+  defp do_get(%Solid.Range{} = range, context, options) do
     {:ok, start, context} = get(range.start, context, [], options)
     {:ok, finish, context} = get(range.finish, context, [], options)
 

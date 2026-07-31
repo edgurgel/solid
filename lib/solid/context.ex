@@ -131,14 +131,7 @@ defmodule Solid.Context do
   end
 
   defp get_from_scope(context, scopes, variable) when is_list(scopes) do
-    scopes
-    |> Enum.reverse()
-    |> Enum.map(&get_from_scope(context, &1, variable))
-    |> Enum.reduce({:error, {:not_found, variable}}, fn
-      {:ok, nil}, acc = {:ok, _} -> acc
-      value = {:ok, _}, _acc -> value
-      _value, acc -> acc
-    end)
+    get_from_scopes(scopes, context, variable, :not_found)
   end
 
   defp get_from_scope(context, :vars, variable) do
@@ -151,5 +144,20 @@ defmodule Solid.Context do
 
   defp get_from_scope(context, :iteration_vars, variable) do
     context.matcher_module.match(context.iteration_vars, variable)
+  end
+
+  # Walk scopes in priority order, returning the first non-nil match. A nil
+  # match only wins if no lower-priority scope holds a non-nil value.
+  defp get_from_scopes([], _context, variable, :not_found),
+    do: {:error, {:not_found, variable}}
+
+  defp get_from_scopes([], _context, _variable, :nil_found), do: {:ok, nil}
+
+  defp get_from_scopes([scope | scopes], context, variable, found) do
+    case get_from_scope(context, scope, variable) do
+      {:ok, nil} -> get_from_scopes(scopes, context, variable, :nil_found)
+      {:ok, value} -> {:ok, value}
+      _error -> get_from_scopes(scopes, context, variable, found)
+    end
   end
 end
