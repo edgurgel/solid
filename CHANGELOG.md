@@ -1,5 +1,9 @@
 # 1.3.3
 
+## Features
+
+* Add `squish` filter
+
 ## Bug fixes
 
 * Fix custom filters being silently skipped when their module has not been loaded yet
