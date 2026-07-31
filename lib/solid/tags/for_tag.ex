@@ -213,7 +213,7 @@ defmodule Solid.Tags.ForTag do
           {:ok, enumerable, context}
 
         %Range{first: first, last: last} when first <= last ->
-          {:ok, Enum.to_list(first..last), context}
+          {:ok, first..last, context}
 
         %Range{} ->
           {:ok, [], context}

@@ -319,5 +319,20 @@ defmodule Solid.Tags.ForTagTest do
                }
              }
     end
+
+    test "large range with limit does not materialize the whole range" do
+      # A huge range literal must not be expanded into a list before the
+      # limit/offset are applied, otherwise a short template could exhaust
+      # memory (DoS). This should return quickly with a bounded result.
+      template = "{% for i in (1..1000000000) limit: 3 %}{{ i }} {% endfor %}"
+
+      assert Solid.Helpers.render(template) == "1 2 3 "
+    end
+
+    test "large range with offset and limit does not materialize the whole range" do
+      template = "{% for i in (1..1000000000) offset: 5 limit: 2 %}{{ i }} {% endfor %}"
+
+      assert Solid.Helpers.render(template) == "6 7 "
+    end
   end
 end

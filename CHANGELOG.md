@@ -1,8 +1,12 @@
-# Unreleased
+# 1.3.3
 
 ## Bug fixes
 
 * Fix custom filters being silently skipped when their module has not been loaded yet
+
+## Security
+
+* Fix denial-of-service where `for`/`tablerow` loops over a range literal (e.g. `(1..1000000000)`) eagerly materialized the whole range into a list before applying `limit`/`offset`, allowing a short attacker-controlled template to exhaust memory. Ranges are now kept lazy so `limit`/`offset` are applied in constant time.
 
 # 1.3.2 (2026-06-14)
 
