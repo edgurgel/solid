@@ -3,7 +3,6 @@ defmodule Solid.Parser do
   This module contains functions to parse Liquid templates
   """
 
-  @whitespaces [" ", "\f", "\r", "\t", "\v"]
   alias Solid.Parser.Loc
   alias Solid.ParserContext
   alias Solid.{Object, Lexer, Tag, Text}
@@ -22,7 +21,15 @@ defmodule Solid.Parser do
     tags = Keyword.get(opts, :tags)
 
     parse(
-      %ParserContext{rest: text, line: 1, column: 1, mode: :normal, tags: tags, opts: opts},
+      %ParserContext{
+        rest: text,
+        line: 1,
+        column: 1,
+        mode: :normal,
+        tags: tags,
+        opts: opts,
+        patterns: compile_patterns()
+      },
       [],
       []
     )
@@ -122,8 +129,8 @@ defmodule Solid.Parser do
         tag(context)
 
       _ ->
-        case text(context, [], []) do
-          {:text, [], context} ->
+        case text(context) do
+          {:text, "", context} ->
             # discard empty text
             {:ok, [], context}
 
@@ -132,7 +139,7 @@ defmodule Solid.Parser do
              [
                %Text{
                  loc: %Loc{line: context.line, column: context.column},
-                 text: IO.iodata_to_binary(text)
+                 text: text
                }
              ], final_context}
         end
@@ -167,33 +174,73 @@ defmodule Solid.Parser do
     end
   end
 
-  defp text(context, buffer, trailing_ws) do
-    case context.rest do
-      <<"\n", rest::binary>> ->
-        text(%{context | rest: rest, line: context.line + 1, column: 1}, buffer, [
-          "\n" | trailing_ws
-        ])
+  # Consume plain text up to the next `{{`/`{%` delimiter (or end of input).
+  #
+  # Rather than walking one byte at a time, we locate the next delimiter with a
+  # single `:binary.match/2` and slice the whole run out with `binary_part/3`.
+  # Whitespace immediately before a left-trimming delimiter (`{%-`/`{{-`) is
+  # stripped; before a plain delimiter or end of input it is kept.
+  defp text(context) do
+    rest = context.rest
+    {delimiter_pattern, newline_pattern} = patterns(context)
 
-      <<c::binary-size(1), rest::binary>> when c in @whitespaces ->
-        text(%{context | rest: rest, column: context.column + 1}, buffer, [c | trailing_ws])
+    case :binary.match(rest, delimiter_pattern) do
+      :nomatch ->
+        {:text, rest, advance_text(%{context | rest: ""}, rest, byte_size(rest), newline_pattern)}
 
-      <<"{%-", _::binary>> ->
-        {:text, Enum.reverse(buffer), context}
+      {pos, 2} ->
+        chunk = binary_part(rest, 0, pos)
+        new_rest = binary_part(rest, pos, byte_size(rest) - pos)
 
-      <<"{{-", _::binary>> ->
-        {:text, Enum.reverse(buffer), context}
+        text =
+          case new_rest do
+            <<_::binary-size(2), "-", _::binary>> -> rstrip_whitespace(chunk)
+            _ -> chunk
+          end
 
-      <<"{%", _::binary>> ->
-        {:text, Enum.reverse(trailing_ws ++ buffer), context}
+        {:text, text, advance_text(%{context | rest: new_rest}, chunk, pos, newline_pattern)}
+    end
+  end
 
-      <<"{{", _::binary>> ->
-        {:text, Enum.reverse(trailing_ws ++ buffer), context}
+  # Advance line/column past a fully-consumed `chunk` of `size` bytes. Every byte
+  # counts as one column (matching the previous byte-at-a-time behaviour) and a
+  # newline resets the column to 1.
+  defp advance_text(context, chunk, size, newline_pattern) do
+    case :binary.matches(chunk, newline_pattern) do
+      [] ->
+        %{context | column: context.column + size}
 
-      "" ->
-        {:text, Enum.reverse(trailing_ws ++ buffer), context}
+      newlines ->
+        {last, 1} = List.last(newlines)
+        %{context | line: context.line + length(newlines), column: size - last}
+    end
+  end
 
-      <<c, rest::binary>> ->
-        text(%{context | rest: rest, column: context.column + 1}, [c | trailing_ws ++ buffer], [])
+  # :binary.match/2 compiles list/binary patterns on every call, which shows up
+  # in parsing profiles; compile them once per parse and carry them in the
+  # ParserContext. Compiled patterns hold runtime references, so they cannot
+  # live in a module attribute.
+  defp compile_patterns do
+    {:binary.compile_pattern(["{{", "{%"]), :binary.compile_pattern("\n")}
+  end
+
+  # Fallback for ParserContext structs built outside parse/2
+  defp patterns(%ParserContext{patterns: nil}), do: compile_patterns()
+  defp patterns(%ParserContext{patterns: patterns}), do: patterns
+
+  @text_whitespace ~c" \f\r\t\v\n"
+
+  defp rstrip_whitespace(bin), do: binary_part(bin, 0, byte_size(bin) - trailing_whitespace(bin))
+
+  defp trailing_whitespace(bin), do: trailing_whitespace(bin, byte_size(bin), 0)
+
+  defp trailing_whitespace(_bin, 0, count), do: count
+
+  defp trailing_whitespace(bin, index, count) do
+    if :binary.at(bin, index - 1) in @text_whitespace do
+      trailing_whitespace(bin, index - 1, count + 1)
+    else
+      count
     end
   end
 

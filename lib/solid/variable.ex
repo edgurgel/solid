@@ -28,7 +28,7 @@ defmodule Solid.Variable do
 
           {:ok,
            %__MODULE__{
-             loc: struct!(Loc, meta),
+             loc: Loc.new(meta),
              identifier: nil,
              accesses: accesses,
              original_name: original_name
@@ -46,13 +46,13 @@ defmodule Solid.Variable do
   defp do_parse_identifier(identifier, meta, rest) do
     with {:ok, rest, accesses, accesses_original_name} <- access(rest) do
       if identifier in @literals and accesses == [] do
-        {:ok, %Literal{loc: struct!(Loc, meta), value: literal(identifier)}, rest}
+        {:ok, %Literal{loc: Loc.new(meta), value: literal(identifier)}, rest}
       else
         original_name = "#{identifier}" <> Enum.join(accesses_original_name)
 
         {:ok,
          %__MODULE__{
-           loc: struct!(Loc, meta),
+           loc: Loc.new(meta),
            identifier: identifier,
            accesses: accesses,
            original_name: original_name
@@ -75,17 +75,17 @@ defmodule Solid.Variable do
   defp access(tokens, accesses \\ [], original_name \\ []) do
     case tokens do
       [{:open_square, _}, {:integer, meta, number}, {:close_square, _} | rest] ->
-        access = %AccessLiteral{loc: struct!(Loc, meta), access_type: :brackets, value: number}
+        access = %AccessLiteral{loc: Loc.new(meta), access_type: :brackets, value: number}
         access(rest, [access | accesses], ["[#{number}]" | original_name])
 
       [{:open_square, _}, {:string, meta, string, quotes}, {:close_square, _} | rest] ->
-        access = %AccessLiteral{loc: struct!(Loc, meta), access_type: :brackets, value: string}
+        access = %AccessLiteral{loc: Loc.new(meta), access_type: :brackets, value: string}
         quotes = IO.chardata_to_string([quotes])
         access(rest, [access | accesses], ["[#{quotes}#{string}#{quotes}]" | original_name])
 
       [{:open_square, _}, {:identifier, meta, _identifier} | _] ->
         with {:ok, variable, [{:close_square, _} | rest]} <- parse(tl(tokens)) do
-          access = %AccessVariable{loc: struct!(Loc, meta), variable: variable}
+          access = %AccessVariable{loc: Loc.new(meta), variable: variable}
           access(rest, [access | accesses], ["[#{variable.original_name}]" | original_name])
         else
           {:ok, _, rest} ->
@@ -96,7 +96,7 @@ defmodule Solid.Variable do
         end
 
       [{:dot, _}, {:identifier, meta, identifier} | rest] ->
-        access = %AccessLiteral{loc: struct!(Loc, meta), access_type: :dot, value: identifier}
+        access = %AccessLiteral{loc: Loc.new(meta), access_type: :dot, value: identifier}
         access(rest, [access | accesses], [".#{identifier}" | original_name])
 
       [{:open_square, meta} | _rest] ->

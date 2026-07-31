@@ -64,7 +64,7 @@ defmodule Solid.Argument do
               {:ok, positional_arguments, named_arguments, rest} ->
                 filter =
                   %Filter{
-                    loc: struct!(Loc, meta),
+                    loc: Loc.new(meta),
                     function: filter,
                     positional_arguments: positional_arguments,
                     named_arguments: named_arguments
@@ -79,7 +79,7 @@ defmodule Solid.Argument do
           _ ->
             filter =
               %Filter{
-                loc: struct!(Loc, meta),
+                loc: Loc.new(meta),
                 function: filter,
                 positional_arguments: [],
                 named_arguments: %{}

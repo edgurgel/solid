@@ -24,10 +24,10 @@ defmodule Solid.Literal do
   def parse(tokens) do
     case tokens do
       [{type, meta, value} | rest] when type in [:float, :integer] ->
-        {:ok, %__MODULE__{loc: struct!(Loc, meta), value: value}, rest}
+        {:ok, %__MODULE__{loc: Loc.new(meta), value: value}, rest}
 
       [{:string, meta, value, _quotes} | rest] ->
-        {:ok, %__MODULE__{loc: struct!(Loc, meta), value: value}, rest}
+        {:ok, %__MODULE__{loc: Loc.new(meta), value: value}, rest}
 
       _ ->
         {:error, "Literal expected", Solid.Parser.meta_head(tokens)}

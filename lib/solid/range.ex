@@ -31,7 +31,7 @@ defmodule Solid.Range do
          [{:dot, _}, {:dot, _} | tokens] <- tokens,
          {:ok, finish, tokens} <- Argument.parse(tokens),
          [{:close_round, _} | tokens] <- tokens do
-      {:ok, %__MODULE__{loc: struct!(Loc, meta), start: start, finish: finish}, tokens}
+      {:ok, %__MODULE__{loc: Loc.new(meta), start: start, finish: finish}, tokens}
     else
       _ ->
         {:error, "Range expected", Solid.Parser.meta_head(tokens)}
