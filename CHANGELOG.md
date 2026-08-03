@@ -1,3 +1,10 @@
+# Unreleased
+
+## Performance
+
+* Optimise parsing and lexing by matching on raw bytes instead of extracting and comparing single-character sub-binaries
+* Optimise argument scope resolution
+
 # 1.3.3
 
 ## Features

@@ -9,8 +9,8 @@ defmodule Solid.Object do
   @spec parse(Lexer.tokens()) :: {:ok, t, Lexer.tokens()} | {:error, binary, Lexer.loc()}
   def parse([{:end, meta}]) do
     # Let's use a null literal if the object is empty
-    argument = %Solid.Literal{value: nil, loc: struct!(Loc, meta)}
-    object = %__MODULE__{loc: struct!(Loc, meta), argument: argument, filters: []}
+    argument = %Solid.Literal{value: nil, loc: Loc.new(meta)}
+    object = %__MODULE__{loc: Loc.new(meta), argument: argument, filters: []}
     {:ok, object, [{:end, meta}]}
   end
 
@@ -18,7 +18,7 @@ defmodule Solid.Object do
     with {:ok, argument, filters, [{:end, _}] = rest} <- Argument.parse_with_filters(tokens) do
       object =
         %__MODULE__{
-          loc: struct!(Loc, Solid.Parser.meta_head(tokens)),
+          loc: Loc.new(Solid.Parser.meta_head(tokens)),
           argument: argument,
           filters: filters
         }

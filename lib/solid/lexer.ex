@@ -29,7 +29,11 @@ defmodule Solid.Lexer do
   @type tokens :: [token]
   @type loc :: %{line: line, column: column}
 
-  @whitespaces [" ", "\f", "\r", "\t", "\v"]
+  # Whitespace as bytes (integers): matching a byte and comparing against
+  # integers is much cheaper than extracting a binary-size(1) sub-binary and
+  # comparing it against a list of strings.
+  @whitespace_bytes ~c" \f\r\t\v"
+  @whitespace_nl_bytes ~c" \f\r\t\v\n"
 
   @doc "Tokenize the input text inside an object"
   @spec tokenize_object(ParserContext.t()) ::
@@ -148,8 +152,6 @@ defmodule Solid.Lexer do
     Enum.member?(allowed_tag_names, tag_name)
   end
 
-  @whitespaces_including_new_line @whitespaces ++ ["\n"]
-
   # Special case for inline comment. Only tag that does not enforce a space
   # after the tag name
   # {% #### valid inline comment %}
@@ -170,7 +172,7 @@ defmodule Solid.Lexer do
           _ -> {:ok, transform_buffer(buffer), text, line, column}
         end
 
-      <<char::binary-size(1), rest::binary>> when char not in @whitespaces_including_new_line ->
+      <<char, rest::binary>> when char not in @whitespace_nl_bytes ->
         tag_name(rest, line, column + 1, [char | buffer])
 
       _ ->
@@ -201,7 +203,7 @@ defmodule Solid.Lexer do
           _ -> {:ok, transform_buffer(buffer), text, line, column}
         end
 
-      <<char::binary-size(1), rest::binary>> when char not in @whitespaces ->
+      <<char, rest::binary>> when char not in @whitespace_bytes ->
         tag_name_for_liquid_tag(rest, line, column + 1, [char | buffer])
 
       _ ->
@@ -212,23 +214,19 @@ defmodule Solid.Lexer do
     end
   end
 
-  @digits 0..9 |> Enum.map(&Kernel.to_string/1)
-
   @comparison_operators ["==", "!=", "<>", "<=", ">="]
 
   @special_mapping %{
-    "." => :dot,
-    "|" => :pipe,
-    "[" => :open_square,
-    "]" => :close_square,
-    "(" => :open_round,
-    ")" => :close_round,
-    ":" => :colon,
-    "," => :comma,
-    "=" => :assignment
+    ?. => :dot,
+    ?| => :pipe,
+    ?[ => :open_square,
+    ?] => :close_square,
+    ?( => :open_round,
+    ?) => :close_round,
+    ?: => :colon,
+    ?, => :comma,
+    ?= => :assignment
   }
-  @specials Map.keys(@special_mapping)
-  @letters Enum.map(?a..?z, &<<&1>>) ++ Enum.map(?A..?Z, &<<&1>>) ++ ["_"]
 
   defp tokenize(text, line, column, acc) do
     case text do
@@ -243,7 +241,7 @@ defmodule Solid.Lexer do
         {:ok, Enum.reverse(acc), text, line, column}
 
       # Whitespace
-      <<c::binary-size(1), rest::binary>> when c in @whitespaces ->
+      <<c, rest::binary>> when c in @whitespace_bytes ->
         tokenize(rest, line, column + 1, acc)
 
       # Newline
@@ -256,13 +254,13 @@ defmodule Solid.Lexer do
         tokenize(rest, line, column + 2, acc)
 
       # Special single-character tokens
-      <<special::binary-size(1), rest::binary>> when special in @specials ->
+      <<special, rest::binary>> when is_map_key(@special_mapping, special) ->
         acc = [{Map.fetch!(@special_mapping, special), build_loc(line, column)} | acc]
         tokenize(rest, line, column + 1, acc)
 
       # Comparison operators (single character)
-      <<operator::binary-size(1), rest::binary>> when operator in ["<", ">"] ->
-        acc = [{:comparison, build_loc(line, column), String.to_atom(operator)} | acc]
+      <<operator, rest::binary>> when operator in ~c"<>" ->
+        acc = [{:comparison, build_loc(line, column), comparison_operator(operator)} | acc]
         tokenize(rest, line, column + 1, acc)
 
       # Single or double quotes
@@ -274,8 +272,8 @@ defmodule Solid.Lexer do
         end
 
       # Numbers
-      <<"-", digit::binary-size(1), rest::binary>> when digit in @digits ->
-        case number_1(rest, line, column + 2, [digit, "-"]) do
+      <<"-", digit, rest::binary>> when digit in ?0..?9 ->
+        case number_1(rest, line, column + 2, [digit, ?-]) do
           {:integer, number, rest, end_line, end_column} ->
             acc = [{:integer, build_loc(line, column), String.to_integer(number)} | acc]
             tokenize(rest, end_line, end_column, acc)
@@ -285,7 +283,7 @@ defmodule Solid.Lexer do
             tokenize(rest, end_line, end_column, acc)
         end
 
-      <<digit::binary-size(1), rest::binary>> when digit in @digits ->
+      <<digit, rest::binary>> when digit in ?0..?9 ->
         case number_1(rest, line, column + 1, [digit]) do
           {:integer, number, rest, end_line, end_column} ->
             acc = [{:integer, build_loc(line, column), String.to_integer(number)} | acc]
@@ -297,7 +295,7 @@ defmodule Solid.Lexer do
         end
 
       # Identifiers (special case for contains)
-      <<letter::binary-size(1), rest::binary>> when letter in @letters ->
+      <<letter, rest::binary>> when letter in ?a..?z or letter in ?A..?Z or letter == ?_ ->
         {:identifier, identifier, rest, end_line, end_column} =
           identifier(rest, line, column + 1, [letter])
 
@@ -333,7 +331,7 @@ defmodule Solid.Lexer do
         {:ok, Enum.reverse(acc), text, line, column}
 
       # Whitespace
-      <<c::binary-size(1), rest::binary>> when c in @whitespaces ->
+      <<c, rest::binary>> when c in @whitespace_bytes ->
         tokenize_for_liquid_tag(rest, line, column + 1, acc)
 
       # Newline means end of a tag when inside a liquid tag
@@ -347,13 +345,13 @@ defmodule Solid.Lexer do
         tokenize_for_liquid_tag(rest, line, column + 2, acc)
 
       # Special single-character tokens
-      <<special::binary-size(1), rest::binary>> when special in @specials ->
+      <<special, rest::binary>> when is_map_key(@special_mapping, special) ->
         acc = [{Map.fetch!(@special_mapping, special), build_loc(line, column)} | acc]
         tokenize_for_liquid_tag(rest, line, column + 1, acc)
 
       # Comparison operators (single character)
-      <<operator::binary-size(1), rest::binary>> when operator in ["<", ">"] ->
-        acc = [{:comparison, build_loc(line, column), String.to_atom(operator)} | acc]
+      <<operator, rest::binary>> when operator in ~c"<>" ->
+        acc = [{:comparison, build_loc(line, column), comparison_operator(operator)} | acc]
         tokenize_for_liquid_tag(rest, line, column + 1, acc)
 
       # Single or double quotes
@@ -365,8 +363,8 @@ defmodule Solid.Lexer do
         end
 
       # Numbers
-      <<"-", digit::binary-size(1), rest::binary>> when digit in @digits ->
-        case number_1(rest, line, column + 2, [digit, "-"]) do
+      <<"-", digit, rest::binary>> when digit in ?0..?9 ->
+        case number_1(rest, line, column + 2, [digit, ?-]) do
           {:integer, number, rest, end_line, end_column} ->
             acc = [{:integer, build_loc(line, column), String.to_integer(number)} | acc]
             tokenize_for_liquid_tag(rest, end_line, end_column, acc)
@@ -376,7 +374,7 @@ defmodule Solid.Lexer do
             tokenize_for_liquid_tag(rest, end_line, end_column, acc)
         end
 
-      <<digit::binary-size(1), rest::binary>> when digit in @digits ->
+      <<digit, rest::binary>> when digit in ?0..?9 ->
         case number_1(rest, line, column + 1, [digit]) do
           {:integer, number, rest, end_line, end_column} ->
             acc = [{:integer, build_loc(line, column), String.to_integer(number)} | acc]
@@ -388,7 +386,7 @@ defmodule Solid.Lexer do
         end
 
       # Identifiers (special case for contains)
-      <<letter::binary-size(1), rest::binary>> when letter in @letters ->
+      <<letter, rest::binary>> when letter in ?a..?z or letter in ?A..?Z or letter == ?_ ->
         {:identifier, identifier, rest, end_line, end_column} =
           identifier(rest, line, column + 1, [letter])
 
@@ -411,13 +409,13 @@ defmodule Solid.Lexer do
     end
   end
 
-  @word_characters Enum.map(?a..?z, &<<&1>>) ++
-                     Enum.map(?A..?Z, &<<&1>>) ++
-                     Enum.map(0..9, &Kernel.to_string/1) ++ ["_"]
+  defp comparison_operator(?<), do: :<
+  defp comparison_operator(?>), do: :>
 
   defp identifier(text, line, column, buffer) do
     case text do
-      <<char::binary-size(1), rest::binary>> when char in @word_characters ->
+      <<char, rest::binary>>
+      when char in ?a..?z or char in ?A..?Z or char in ?0..?9 or char == ?_ ->
         identifier(rest, line, column + 1, [char | buffer])
 
       # Checking if the dash belongs to the whitespace control or the identifier
@@ -425,10 +423,10 @@ defmodule Solid.Lexer do
         {:identifier, transform_buffer(buffer), text, line, column}
 
       <<"-", rest::binary>> ->
-        identifier(rest, line, column + 1, ["-" | buffer])
+        identifier(rest, line, column + 1, [?- | buffer])
 
       <<"?", rest::binary>> ->
-        identifier = transform_buffer(["?" | buffer])
+        identifier = transform_buffer([?? | buffer])
 
         {:identifier, identifier, rest, line, column + 1}
 
@@ -439,12 +437,12 @@ defmodule Solid.Lexer do
 
   defp number_1(text, line, column, buffer) do
     case text do
-      <<digit::binary-size(1), rest::binary>> when digit in @digits ->
+      <<digit, rest::binary>> when digit in ?0..?9 ->
         number_1(rest, line, column + 1, [digit | buffer])
 
       # if there is a number after the dot we have a float
-      <<".", next::binary-size(1), rest::binary>> when next in @digits ->
-        number_2(next <> rest, line, column + 1, ["." | buffer])
+      <<".", next, rest::binary>> when next in ?0..?9 ->
+        number_2(rest, line, column + 2, [next, ?. | buffer])
 
       <<".", _rest::binary>> ->
         {:integer, transform_buffer(buffer), text, line, column}
@@ -456,7 +454,7 @@ defmodule Solid.Lexer do
 
   defp number_2(text, line, column, buffer) do
     case text do
-      <<number::binary-size(1), rest::binary>> when number in @digits ->
+      <<number, rest::binary>> when number in ?0..?9 ->
         number_2(rest, line, column + 1, [number | buffer])
 
       _ ->
@@ -533,8 +531,8 @@ defmodule Solid.Lexer do
     drop_all_whitespace(rest, line + 1, 1)
   end
 
-  defp drop_all_whitespace(<<c::binary-size(1), rest::binary>>, line, column)
-       when c in @whitespaces do
+  defp drop_all_whitespace(<<c, rest::binary>>, line, column)
+       when c in @whitespace_bytes do
     drop_all_whitespace(rest, line, column + 1)
   end
 

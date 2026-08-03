@@ -243,6 +243,59 @@ defmodule Solid.ParserTest do
                 }}
     end
 
+    test "text with newlines and every whitespace character tracks line/column" do
+      # The text run mixes space, tab (\t), carriage return (\r), vertical tab
+      # (\v), form feed (\f) and two line feeds (\n). Only \n advances the line;
+      # the resulting column is measured from the last \n. Every byte, including
+      # all whitespace, is preserved verbatim in the Text content.
+      text = "ab\tc\r\nde\v\ffg\nhi "
+      template = text <> "{{ obj }}"
+      context = %ParserContext{rest: template, line: 1, column: 1, mode: :normal}
+
+      assert Parser.parse_liquid_entry(context) ==
+               {:ok,
+                [
+                  %Solid.Text{
+                    loc: %Parser.Loc{line: 1, column: 1},
+                    text: "ab\tc\r\nde\v\ffg\nhi "
+                  }
+                ],
+                %Solid.ParserContext{
+                  rest: "{{ obj }}",
+                  # 2 line feeds in the text -> line 1 + 2
+                  line: 3,
+                  # "hi " (3 bytes) follow the last line feed -> column 4
+                  column: 4,
+                  mode: :normal
+                }}
+    end
+
+    test "left-trimming delimiter strips a trailing run of every whitespace, across newlines" do
+      # A `{{-`/`{%-` delimiter trims the trailing whitespace run out of the
+      # emitted text (here space, \t, \r, \v, \f and a \n), but the parser still
+      # advances line/column over those consumed bytes.
+      text = "keep \t\r\v\f\n \t"
+      template = text <> "{{- obj }}"
+      context = %ParserContext{rest: template, line: 1, column: 1, mode: :normal}
+
+      assert Parser.parse_liquid_entry(context) ==
+               {:ok,
+                [
+                  %Solid.Text{
+                    loc: %Parser.Loc{line: 1, column: 1},
+                    text: "keep"
+                  }
+                ],
+                %Solid.ParserContext{
+                  rest: "{{- obj }}",
+                  # the trimmed whitespace contained one line feed -> line 2
+                  line: 2,
+                  # " \t" (2 bytes) follow the last line feed -> column 3
+                  column: 3,
+                  mode: :normal
+                }}
+    end
+
     test "object" do
       template = "{{ obj }} text"
       context = %ParserContext{rest: template, line: 1, column: 1, mode: :normal}

@@ -156,6 +156,12 @@ defmodule Solid do
     matcher_module = Keyword.get(options, :matcher_module, Solid.Matcher)
     context = %{context | matcher_module: matcher_module, tags: tags}
 
+    # Resolve the custom filters once per render instead of once per filter call
+    options =
+      Keyword.put_new_lazy(options, :custom_filters, fn ->
+        Application.get_env(:solid, :custom_filters, Solid.StandardFilter)
+      end)
+
     {result, context} = render(parse_tree, context, options)
 
     process_result(result, context, options)
