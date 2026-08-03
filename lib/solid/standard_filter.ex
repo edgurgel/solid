@@ -7,22 +7,51 @@ defmodule Solid.StandardFilter do
 
   import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1, apply: 2]
 
+  @before_compile Solid.StandardFilter.Dispatch
+
   @spec apply(String.t(), list(), Solid.Parser.Loc.t(), keyword()) ::
           {:ok, any()} | {:error, Exception.t(), any()} | {:error, Exception.t()}
   def apply(filter, args, loc, opts) do
     custom_module_or_callback =
       opts[:custom_filters] || Application.get_env(:solid, :custom_filters, __MODULE__)
 
-    strict_filters = Keyword.get(opts, :strict_filters, false)
-
-    with :error <- apply_filter(custom_module_or_callback, filter, args, loc),
-         :error <- apply_filter(__MODULE__, filter, args, loc) do
-      if strict_filters do
+    with :error <- apply_custom_filter(custom_module_or_callback, filter, args, loc),
+         :error <- apply_standard_filter(filter, args, loc) do
+      if Keyword.get(opts, :strict_filters, false) do
         {:error, %Solid.UndefinedFilterError{loc: loc, filter: filter}, List.first(args)}
       else
         {:ok, List.first(args)}
       end
     end
+  end
+
+  # Standard filters are handled by the generated dispatch/2
+  defp apply_custom_filter(__MODULE__, _filter, _args, _loc), do: :error
+
+  defp apply_custom_filter(mod_or_callback, filter, args, loc),
+    do: apply_filter(mod_or_callback, filter, args, loc)
+
+  defp apply_standard_filter(filter, args, loc) do
+    case dispatch(filter, args) do
+      {:arity_error, name, expected_arity} ->
+        {:error,
+         %Solid.WrongFilterArityError{
+           filter: name,
+           expected_arity: expected_arity,
+           arity: Enum.count(args),
+           loc: loc
+         }}
+
+      result ->
+        result
+    end
+  rescue
+    # Filters historically swallow ArgumentError and fall back to the raw input
+    ArgumentError ->
+      :error
+
+    e in Solid.ArgumentError ->
+      {:error, %{e | loc: loc}}
   end
 
   defp find_correct_function(module, fn_name, arity, loc) when is_atom(module) do
