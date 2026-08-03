@@ -43,9 +43,8 @@ defmodule Solid.BinaryCondition do
   def eval({v1, :==, %Empty{}}) when is_binary(v1), do: {:ok, v1 == ""}
   def eval({%Empty{}, :==, v2}) when is_binary(v2), do: {:ok, v2 == ""}
 
-  # Unlike `empty`, `blank` also covers whitespace-only strings, `nil` and `false`
-  def eval({v1, :==, %Blank{}}) when is_binary(v1), do: {:ok, String.trim(v1) == ""}
-  def eval({%Blank{}, :==, v2}) when is_binary(v2), do: {:ok, String.trim(v2) == ""}
+  def eval({v1, :==, %Blank{}}) when is_binary(v1), do: {:ok, Solid.Text.blank_text?(v1)}
+  def eval({%Blank{}, :==, v2}) when is_binary(v2), do: {:ok, Solid.Text.blank_text?(v2)}
 
   def eval({v1, :==, %Blank{}}) when v1 in [nil, false], do: {:ok, true}
   def eval({%Blank{}, :==, v2}) when v2 in [nil, false], do: {:ok, true}

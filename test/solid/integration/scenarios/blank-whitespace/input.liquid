@@ -1,0 +1,16 @@
+ascii-body:[{% if true %}   {% endif %}]
+tab-nl-body:[{% if true %}	
+{% endif %}]
+nbsp-body:[{% if true %} {% endif %}]
+ideographic-body:[{% if true %}　{% endif %}]
+zwsp-body:[{% if true %}​{% endif %}]
+nel-body:[{% if true %}{% endif %}]
+mixed-body:[{% if true %}   {% endif %}]
+multi-node-body:[{% if true %}  {% assign unused = 1 %}  {% endif %}]
+for-nbsp-body:[{% for i in (1..2) %} {% endfor %}]
+unless-nbsp-body:[{% unless false %} {% endunless %}]
+ascii-eq-blank:[{% if ascii == blank %}yes{% else %}no{% endif %}]
+nbsp-eq-blank:[{% if nbsp == blank %}yes{% else %}no{% endif %}]
+nbsp-ne-blank:[{% if nbsp != blank %}yes{% else %}no{% endif %}]
+ideographic-eq-blank:[{% if ideographic == blank %}yes{% else %}no{% endif %}]
+empty-eq-blank:[{% if empty_string == blank %}yes{% else %}no{% endif %}]

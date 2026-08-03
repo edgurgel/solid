@@ -1,3 +1,19 @@
+# Unreleased
+
+## Bug fixes
+
+* Only ASCII whitespace counts as `blank`, matching Ruby Liquid's `/\A\s*\z/` check.
+  Unicode whitespace such as `U+00A0` (non-breaking space) or `U+3000` (ideographic
+  space) is no longer stripped from blank tag bodies, and no longer compares equal to
+  the `blank` literal
+
+## Performance
+
+* Optimise lexing further: tag names, identifiers, numbers and strings are now sliced
+  out of the input with `binary_part/3` instead of accumulating and reversing a byte
+  buffer for every token
+* Check `blank` without allocating a trimmed copy of the string
+
 # 1.3.4 (2026-09-13)
 
 ## Bug fixes
