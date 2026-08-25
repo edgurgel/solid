@@ -31,7 +31,7 @@ defmodule Solid.MixProject do
       {:decimal, "~> 3.0"},
       {:date_time_parser, "~> 1.2"},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.40.3", only: :dev, runtime: false},
       {:jason, "~> 1.0", only: :test},
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
@@ -56,7 +56,7 @@ defmodule Solid.MixProject do
       main: "readme",
       source_url: @source_url,
       source_ref: "v#{@version}",
-      formatters: ["html"]
+      formatters: ["html", "markdown"]
     ]
   end
 
