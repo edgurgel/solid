@@ -133,3 +133,89 @@ Extra blocks
 {% comment %}{% if false %}if{% else %}else1{% else %}else2{% endif %} {% endcomment %}
 
 {% assign x = 1 | minus: 0.15 %}{% if x <= 0.95 %}yes{% else %}no{% endif %}
+
+blank and empty
+missing == blank: {% if missing == blank %}T{% else %}F{% endif %} {% if blank == missing %}T{% else %}F{% endif %}
+str_empty == blank: {% if str_empty == blank %}T{% else %}F{% endif %} {% if blank == str_empty %}T{% else %}F{% endif %}
+str_whitespace == blank: {% if str_whitespace == blank %}T{% else %}F{% endif %} {% if blank == str_whitespace %}T{% else %}F{% endif %}
+str_x == blank: {% if str_x == blank %}T{% else %}F{% endif %} {% if blank == str_x %}T{% else %}F{% endif %}
+nil_value == blank: {% if nil_value == blank %}T{% else %}F{% endif %} {% if blank == nil_value %}T{% else %}F{% endif %}
+array_empty == blank: {% if array_empty == blank %}T{% else %}F{% endif %} {% if blank == array_empty %}T{% else %}F{% endif %}
+array_full == blank: {% if array_full == blank %}T{% else %}F{% endif %} {% if blank == array_full %}T{% else %}F{% endif %}
+hash_empty == blank: {% if hash_empty == blank %}T{% else %}F{% endif %} {% if blank == hash_empty %}T{% else %}F{% endif %}
+hash_full == blank: {% if hash_full == blank %}T{% else %}F{% endif %} {% if blank == hash_full %}T{% else %}F{% endif %}
+false_value == blank: {% if false_value == blank %}T{% else %}F{% endif %} {% if blank == false_value %}T{% else %}F{% endif %}
+true_value == blank: {% if true_value == blank %}T{% else %}F{% endif %} {% if blank == true_value %}T{% else %}F{% endif %}
+zero == blank: {% if zero == blank %}T{% else %}F{% endif %} {% if blank == zero %}T{% else %}F{% endif %}
+one == blank: {% if one == blank %}T{% else %}F{% endif %} {% if blank == one %}T{% else %}F{% endif %}
+
+missing != blank: {% if missing != blank %}T{% else %}F{% endif %} {% if blank != missing %}T{% else %}F{% endif %}
+str_empty != blank: {% if str_empty != blank %}T{% else %}F{% endif %} {% if blank != str_empty %}T{% else %}F{% endif %}
+str_whitespace != blank: {% if str_whitespace != blank %}T{% else %}F{% endif %} {% if blank != str_whitespace %}T{% else %}F{% endif %}
+str_x != blank: {% if str_x != blank %}T{% else %}F{% endif %} {% if blank != str_x %}T{% else %}F{% endif %}
+nil_value != blank: {% if nil_value != blank %}T{% else %}F{% endif %} {% if blank != nil_value %}T{% else %}F{% endif %}
+array_empty != blank: {% if array_empty != blank %}T{% else %}F{% endif %} {% if blank != array_empty %}T{% else %}F{% endif %}
+array_full != blank: {% if array_full != blank %}T{% else %}F{% endif %} {% if blank != array_full %}T{% else %}F{% endif %}
+hash_empty != blank: {% if hash_empty != blank %}T{% else %}F{% endif %} {% if blank != hash_empty %}T{% else %}F{% endif %}
+hash_full != blank: {% if hash_full != blank %}T{% else %}F{% endif %} {% if blank != hash_full %}T{% else %}F{% endif %}
+false_value != blank: {% if false_value != blank %}T{% else %}F{% endif %} {% if blank != false_value %}T{% else %}F{% endif %}
+true_value != blank: {% if true_value != blank %}T{% else %}F{% endif %} {% if blank != true_value %}T{% else %}F{% endif %}
+zero != blank: {% if zero != blank %}T{% else %}F{% endif %} {% if blank != zero %}T{% else %}F{% endif %}
+one != blank: {% if one != blank %}T{% else %}F{% endif %} {% if blank != one %}T{% else %}F{% endif %}
+
+missing <> blank: {% if missing <> blank %}T{% else %}F{% endif %} {% if blank <> missing %}T{% else %}F{% endif %}
+str_empty <> blank: {% if str_empty <> blank %}T{% else %}F{% endif %} {% if blank <> str_empty %}T{% else %}F{% endif %}
+str_whitespace <> blank: {% if str_whitespace <> blank %}T{% else %}F{% endif %} {% if blank <> str_whitespace %}T{% else %}F{% endif %}
+str_x <> blank: {% if str_x <> blank %}T{% else %}F{% endif %} {% if blank <> str_x %}T{% else %}F{% endif %}
+nil_value <> blank: {% if nil_value <> blank %}T{% else %}F{% endif %} {% if blank <> nil_value %}T{% else %}F{% endif %}
+array_empty <> blank: {% if array_empty <> blank %}T{% else %}F{% endif %} {% if blank <> array_empty %}T{% else %}F{% endif %}
+array_full <> blank: {% if array_full <> blank %}T{% else %}F{% endif %} {% if blank <> array_full %}T{% else %}F{% endif %}
+hash_empty <> blank: {% if hash_empty <> blank %}T{% else %}F{% endif %} {% if blank <> hash_empty %}T{% else %}F{% endif %}
+hash_full <> blank: {% if hash_full <> blank %}T{% else %}F{% endif %} {% if blank <> hash_full %}T{% else %}F{% endif %}
+false_value <> blank: {% if false_value <> blank %}T{% else %}F{% endif %} {% if blank <> false_value %}T{% else %}F{% endif %}
+true_value <> blank: {% if true_value <> blank %}T{% else %}F{% endif %} {% if blank <> true_value %}T{% else %}F{% endif %}
+zero <> blank: {% if zero <> blank %}T{% else %}F{% endif %} {% if blank <> zero %}T{% else %}F{% endif %}
+one <> blank: {% if one <> blank %}T{% else %}F{% endif %} {% if blank <> one %}T{% else %}F{% endif %}
+
+missing == empty: {% if missing == empty %}T{% else %}F{% endif %} {% if empty == missing %}T{% else %}F{% endif %}
+str_empty == empty: {% if str_empty == empty %}T{% else %}F{% endif %} {% if empty == str_empty %}T{% else %}F{% endif %}
+str_whitespace == empty: {% if str_whitespace == empty %}T{% else %}F{% endif %} {% if empty == str_whitespace %}T{% else %}F{% endif %}
+str_x == empty: {% if str_x == empty %}T{% else %}F{% endif %} {% if empty == str_x %}T{% else %}F{% endif %}
+nil_value == empty: {% if nil_value == empty %}T{% else %}F{% endif %} {% if empty == nil_value %}T{% else %}F{% endif %}
+array_empty == empty: {% if array_empty == empty %}T{% else %}F{% endif %} {% if empty == array_empty %}T{% else %}F{% endif %}
+array_full == empty: {% if array_full == empty %}T{% else %}F{% endif %} {% if empty == array_full %}T{% else %}F{% endif %}
+hash_empty == empty: {% if hash_empty == empty %}T{% else %}F{% endif %} {% if empty == hash_empty %}T{% else %}F{% endif %}
+hash_full == empty: {% if hash_full == empty %}T{% else %}F{% endif %} {% if empty == hash_full %}T{% else %}F{% endif %}
+false_value == empty: {% if false_value == empty %}T{% else %}F{% endif %} {% if empty == false_value %}T{% else %}F{% endif %}
+true_value == empty: {% if true_value == empty %}T{% else %}F{% endif %} {% if empty == true_value %}T{% else %}F{% endif %}
+zero == empty: {% if zero == empty %}T{% else %}F{% endif %} {% if empty == zero %}T{% else %}F{% endif %}
+one == empty: {% if one == empty %}T{% else %}F{% endif %} {% if empty == one %}T{% else %}F{% endif %}
+
+missing != empty: {% if missing != empty %}T{% else %}F{% endif %} {% if empty != missing %}T{% else %}F{% endif %}
+str_empty != empty: {% if str_empty != empty %}T{% else %}F{% endif %} {% if empty != str_empty %}T{% else %}F{% endif %}
+str_whitespace != empty: {% if str_whitespace != empty %}T{% else %}F{% endif %} {% if empty != str_whitespace %}T{% else %}F{% endif %}
+str_x != empty: {% if str_x != empty %}T{% else %}F{% endif %} {% if empty != str_x %}T{% else %}F{% endif %}
+nil_value != empty: {% if nil_value != empty %}T{% else %}F{% endif %} {% if empty != nil_value %}T{% else %}F{% endif %}
+array_empty != empty: {% if array_empty != empty %}T{% else %}F{% endif %} {% if empty != array_empty %}T{% else %}F{% endif %}
+array_full != empty: {% if array_full != empty %}T{% else %}F{% endif %} {% if empty != array_full %}T{% else %}F{% endif %}
+hash_empty != empty: {% if hash_empty != empty %}T{% else %}F{% endif %} {% if empty != hash_empty %}T{% else %}F{% endif %}
+hash_full != empty: {% if hash_full != empty %}T{% else %}F{% endif %} {% if empty != hash_full %}T{% else %}F{% endif %}
+false_value != empty: {% if false_value != empty %}T{% else %}F{% endif %} {% if empty != false_value %}T{% else %}F{% endif %}
+true_value != empty: {% if true_value != empty %}T{% else %}F{% endif %} {% if empty != true_value %}T{% else %}F{% endif %}
+zero != empty: {% if zero != empty %}T{% else %}F{% endif %} {% if empty != zero %}T{% else %}F{% endif %}
+one != empty: {% if one != empty %}T{% else %}F{% endif %} {% if empty != one %}T{% else %}F{% endif %}
+
+missing <> empty: {% if missing <> empty %}T{% else %}F{% endif %} {% if empty <> missing %}T{% else %}F{% endif %}
+str_empty <> empty: {% if str_empty <> empty %}T{% else %}F{% endif %} {% if empty <> str_empty %}T{% else %}F{% endif %}
+str_whitespace <> empty: {% if str_whitespace <> empty %}T{% else %}F{% endif %} {% if empty <> str_whitespace %}T{% else %}F{% endif %}
+str_x <> empty: {% if str_x <> empty %}T{% else %}F{% endif %} {% if empty <> str_x %}T{% else %}F{% endif %}
+nil_value <> empty: {% if nil_value <> empty %}T{% else %}F{% endif %} {% if empty <> nil_value %}T{% else %}F{% endif %}
+array_empty <> empty: {% if array_empty <> empty %}T{% else %}F{% endif %} {% if empty <> array_empty %}T{% else %}F{% endif %}
+array_full <> empty: {% if array_full <> empty %}T{% else %}F{% endif %} {% if empty <> array_full %}T{% else %}F{% endif %}
+hash_empty <> empty: {% if hash_empty <> empty %}T{% else %}F{% endif %} {% if empty <> hash_empty %}T{% else %}F{% endif %}
+hash_full <> empty: {% if hash_full <> empty %}T{% else %}F{% endif %} {% if empty <> hash_full %}T{% else %}F{% endif %}
+false_value <> empty: {% if false_value <> empty %}T{% else %}F{% endif %} {% if empty <> false_value %}T{% else %}F{% endif %}
+true_value <> empty: {% if true_value <> empty %}T{% else %}F{% endif %} {% if empty <> true_value %}T{% else %}F{% endif %}
+zero <> empty: {% if zero <> empty %}T{% else %}F{% endif %} {% if empty <> zero %}T{% else %}F{% endif %}
+one <> empty: {% if one <> empty %}T{% else %}F{% endif %} {% if empty <> one %}T{% else %}F{% endif %}
+
