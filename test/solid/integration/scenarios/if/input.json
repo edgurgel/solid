@@ -19,5 +19,17 @@
     }
   },
  "enabled?" : true,
-  "enabled2?" : false
+  "enabled2?" : false,
+  "str_empty" : "",
+  "str_whitespace" : "   ",
+  "str_x" : "x",
+  "nil_value" : null,
+  "array_empty" : [],
+  "array_full" : [1, 2],
+  "hash_empty" : {},
+  "hash_full" : { "a" : 1 },
+  "false_value" : false,
+  "true_value" : true,
+  "zero" : 0,
+  "one" : 1
 }

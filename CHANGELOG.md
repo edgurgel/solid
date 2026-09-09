@@ -1,5 +1,11 @@
 # Unreleased
 
+## Bug fixes
+
+* Fix `!=`/`<>` comparisons against `blank` and `empty`, which were always `true` for
+  strings, lists and `nil`. They are now the exact negation of the `==` comparison
+* Treat whitespace-only strings and `false` as `blank`, matching Ruby Liquid
+
 ## Performance
 
 * Optimise parsing and lexing by matching on raw bytes instead of extracting and comparing single-character sub-binaries

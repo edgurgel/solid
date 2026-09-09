@@ -22,7 +22,33 @@ defmodule Solid.BinaryCondition do
           right_argument_filters: [Filter.t()]
         }
 
+  @not_equal_operators [:!=, :<>]
+  @blank_literals [Blank, Empty]
+
   @spec eval({term, Solid.Lexer.operator(), term}) :: {:ok, boolean} | {:error, binary}
+
+  # `x != blank` is the negation of `x == blank` (same for `empty` and `<>`).
+  # These must come before the wildcard clauses below, which would otherwise
+  # swallow the negated operators for maps.
+  def eval({v1, op, %struct{} = literal})
+      when op in @not_equal_operators and struct in @blank_literals do
+    with {:ok, equal?} <- eval({v1, :==, literal}), do: {:ok, not equal?}
+  end
+
+  def eval({%struct{} = literal, op, v2})
+      when op in @not_equal_operators and struct in @blank_literals do
+    with {:ok, equal?} <- eval({literal, :==, v2}), do: {:ok, not equal?}
+  end
+
+  def eval({v1, :==, %Empty{}}) when is_binary(v1), do: {:ok, v1 == ""}
+  def eval({%Empty{}, :==, v2}) when is_binary(v2), do: {:ok, v2 == ""}
+
+  # Unlike `empty`, `blank` also covers whitespace-only strings, `nil` and `false`
+  def eval({v1, :==, %Blank{}}) when is_binary(v1), do: {:ok, String.trim(v1) == ""}
+  def eval({%Blank{}, :==, v2}) when is_binary(v2), do: {:ok, String.trim(v2) == ""}
+
+  def eval({v1, :==, %Blank{}}) when v1 in [nil, false], do: {:ok, true}
+  def eval({%Blank{}, :==, v2}) when v2 in [nil, false], do: {:ok, true}
 
   for struct <- [Blank, Empty] do
     @struct struct
@@ -32,15 +58,9 @@ defmodule Solid.BinaryCondition do
     def eval({v1, :==, %@struct{}}) when is_list(v1), do: {:ok, v1 == []}
     def eval({%@struct{}, :==, v2}) when is_list(v2), do: {:ok, v2 == []}
 
-    def eval({v1, :==, %@struct{}}) when is_binary(v1), do: {:ok, v1 == ""}
-    def eval({%@struct{}, :==, v2}) when is_binary(v2), do: {:ok, v2 == ""}
-
     def eval({v1, _, %@struct{}}) when is_map(v1) and not is_struct(v1), do: {:ok, false}
     def eval({%@struct{}, _, v2}) when is_map(v2) and not is_struct(v2), do: {:ok, false}
   end
-
-  def eval({nil, :==, %Blank{}}), do: {:ok, true}
-  def eval({%Blank{}, :==, nil}), do: {:ok, true}
 
   def eval({v1, _, v2})
       when (is_map(v1) or is_map(v2)) and not is_struct(v1) and not is_struct(v2),
