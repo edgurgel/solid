@@ -7,10 +7,15 @@
 ## Bug fixes
 
 * Fix custom filters being silently skipped when their module has not been loaded yet
+* Fix `Exception.message/1` raising on a `Solid.FileSystem.Error` instead of returning its reason
 
 ## Security
 
 * Fix denial-of-service where `for`/`tablerow` loops over a range literal (e.g. `(1..1000000000)`) eagerly materialized the whole range into a list before applying `limit`/`offset`, allowing a short attacker-controlled template to exhaust memory. Ranges are now kept lazy so `limit`/`offset` are applied in constant time.
+* Fix denial-of-service where a template nesting blocks (`if`, `for`, `case`, `capture`, `tablerow`, ...) without bound made the parser recurse until it exhausted memory. Nesting is now limited to 100 levels, configurable with the `max_template_depth` parse option (`:infinity` disables it). Parsing stops at the first template that goes over the limit
+* Fix denial-of-service where nesting variable accesses (`{{ a[a[a[...]]] }}`) recursed without a limit while taking quadratic time and memory, because every level holds the original name of the level below it. Accesses can now nest 100 levels deep. A 240KB template of nested accesses went from 9s to 90ms
+* Fix denial-of-service where the `render` tag rendered a partial that renders itself, directly or through another partial, forever. Partials can now nest 100 levels deep, configurable with the `max_render_depth` render option
+* Fix denial-of-service where a partial rendering more than one partial fanned out exponentially — `{% render 'a' %}{% render 'a' %}` in `a` is 2^100 renders even with a depth limit in place. At most 100_000 partials are now rendered per `render/3` call, configurable with the `max_render_count` render option (`:infinity` disables it)
 
 # 1.3.2 (2026-06-14)
 

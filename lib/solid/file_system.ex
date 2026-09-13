@@ -24,7 +24,8 @@ defmodule Solid.FileSystem do
     @type t :: %__MODULE__{}
     defexception [:reason, :loc]
 
-    def message(reason), do: reason
+    @impl true
+    def message(%__MODULE__{reason: reason}), do: reason
   end
 end
 

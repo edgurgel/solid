@@ -6,6 +6,10 @@ defmodule Solid.Tags.IfTag do
 
   alias Solid.{ConditionExpression, Parser.Loc, Parser}
 
+  # Matched as a literal so a depth error is never rewritten into a misleading
+  # "Expected 'endif'" by the clauses below
+  @max_template_depth_error Parser.max_template_depth_error()
+
   @enforce_keys [:loc, :tag_name, :body, :elsifs, :else_body, :condition]
   defstruct [:loc, :tag_name, :body, :elsifs, :else_body, :condition]
 
@@ -28,8 +32,8 @@ defmodule Solid.Tags.IfTag do
       {:ok, _result, _tag_name, _tokens, context} ->
         {:ok, context}
 
-      {:error, "Maximum template depth exceeded", meta} ->
-        {:error, "Maximum template depth exceeded", meta}
+      {:error, @max_template_depth_error, meta} ->
+        {:error, @max_template_depth_error, meta}
 
       {:error, "Expected 'endif'", meta} ->
         {:error, "Expected '#{tags}'", meta}
@@ -71,8 +75,8 @@ defmodule Solid.Tags.IfTag do
       {:ok, result, tag_name, tokens, context} ->
         {:ok, result, tag_name, tokens, context}
 
-      {:error, "Maximum template depth exceeded", meta} ->
-        {:error, "Maximum template depth exceeded", meta}
+      {:error, @max_template_depth_error, meta} ->
+        {:error, @max_template_depth_error, meta}
 
       {:error, "Expected 'endif'", meta} ->
         {:error, "Expected '#{expected_end_tag}'", meta}
@@ -121,8 +125,8 @@ defmodule Solid.Tags.IfTag do
       {:ok, result, tag_name, _tokens, context} ->
         {:ok, result, tag_name, context}
 
-      {:error, "Maximum template depth exceeded", meta} ->
-        {:error, "Maximum template depth exceeded", meta}
+      {:error, @max_template_depth_error, meta} ->
+        {:error, @max_template_depth_error, meta}
 
       {:error, "Expected 'endif'", meta} ->
         {:error, "Expected '#{expected_tag}'", meta}

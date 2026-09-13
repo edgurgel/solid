@@ -3,7 +3,6 @@ defmodule Solid.Parser do
   This module contains functions to parse Liquid templates
   """
 
-  @default_max_template_depth 100
   @max_template_depth_error "Maximum template depth exceeded"
   @whitespaces [" ", "\f", "\r", "\t", "\v"]
   alias Solid.Parser.Loc
@@ -23,11 +22,35 @@ defmodule Solid.Parser do
   def parse(text, opts \\ []) do
     tags = Keyword.get(opts, :tags)
 
-    parse(
-      %ParserContext{rest: text, line: 1, column: 1, mode: :normal, tags: tags, opts: opts},
-      [],
-      []
-    )
+    context =
+      %ParserContext{rest: text, line: 1, column: 1, mode: :normal, tags: tags, opts: opts}
+      |> put_max_depth(opts)
+
+    parse(context, [], [])
+  end
+
+  @doc """
+  The error reason returned when a template nests blocks deeper than the maximum depth allowed
+  """
+  @spec max_template_depth_error() :: binary
+  def max_template_depth_error, do: @max_template_depth_error
+
+  defp put_max_depth(context, opts) do
+    case Keyword.fetch(opts, :max_template_depth) do
+      :error ->
+        context
+
+      {:ok, :infinity} ->
+        %{context | max_depth: :infinity}
+
+      {:ok, max_depth} when is_integer(max_depth) and max_depth > 0 ->
+        %{context | max_depth: max_depth}
+
+      {:ok, invalid} ->
+        raise ArgumentError,
+              "expected :max_template_depth to be a positive integer or :infinity, " <>
+                "got: #{inspect(invalid)}"
+    end
   end
 
   defp parse(%ParserContext{rest: ""}, acc, errors) do
@@ -42,6 +65,12 @@ defmodule Solid.Parser do
       {:ok, result, context} ->
         acc = result ++ acc
         parse(context, acc, errors)
+
+      # Once the maximum depth is exceeded there is no point in recovering: every
+      # remaining nested block would be parsed again up to the maximum depth,
+      # turning a deeply nested template into a lot of wasted work and noisy errors
+      {:error, @max_template_depth_error = reason, loc, _context} ->
+        {:error, Enum.reverse([{reason, loc} | errors])}
 
       {:error, reason, loc, context} ->
         errors = [{reason, loc} | errors]
@@ -67,15 +96,18 @@ defmodule Solid.Parser do
 
   If one of the tags is found return what was parsed until such tag was found
   If none of the tags are found, returns the error tuple with the `reason`
+
+  Nesting is limited by the `:max_template_depth` option. Custom tags must propagate the
+  `max_template_depth_error/0` reason unchanged instead of replacing it with their own, otherwise
+  the parser keeps trying to parse an over-nested template instead of giving up on it.
   """
   @spec parse_until(ParserContext.t(), tags :: [binary] | binary, reason :: binary) ::
           {:ok, parse_tree, binary, Lexer.tokens(), ParserContext.t()}
           | {:error, binary, Lexer.loc()}
   def parse_until(context, tags, reason) do
     next_depth = context.depth + 1
-    max_depth = Keyword.get(context.opts, :max_template_depth, @default_max_template_depth)
 
-    if next_depth > max_depth do
+    if max_depth_exceeded?(next_depth, context.max_depth) do
       {:error, @max_template_depth_error, %{line: context.line, column: context.column}}
     else
       nested_context = %{context | depth: next_depth}
@@ -89,6 +121,9 @@ defmodule Solid.Parser do
       end
     end
   end
+
+  defp max_depth_exceeded?(_depth, :infinity), do: false
+  defp max_depth_exceeded?(depth, max_depth), do: depth > max_depth
 
   defp parse_until(context, tags, reason, acc, expected_mode) do
     case maybe_tokenize_tag(tags, context) do

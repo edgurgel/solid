@@ -148,6 +148,107 @@ defmodule SolidTest do
              )
     end
 
+    test "stops parsing once the nested block limit is exceeded" do
+      # Recovering from the error would parse every remaining block again, up to the maximum
+      # depth each time, which is a lot of work for a template that is already rejected
+      template = String.duplicate("{% if true %}", 5000)
+
+      assert {:error, %Solid.TemplateError{errors: errors}} =
+               Solid.parse(template, max_template_depth: 10)
+
+      assert [%Solid.ParserError{reason: "Maximum template depth exceeded"}] = errors
+    end
+
+    test "limits nesting for every block tag" do
+      blocks = [
+        {"{% if true %}", "{% endif %}"},
+        {"{% unless true %}", "{% endunless %}"},
+        {"{% for i in (1..1) %}", "{% endfor %}"},
+        {"{% case 1 %}{% when 1 %}", "{% endcase %}"},
+        {"{% capture a %}", "{% endcapture %}"},
+        {"{% tablerow i in (1..1) %}", "{% endtablerow %}"},
+        {"{% if true %}{% else %}", "{% endif %}"},
+        {"{% if true %}{% elsif true %}", "{% endif %}"}
+      ]
+
+      for {opening, closing} <- blocks do
+        template = String.duplicate(opening, 3) <> "x" <> String.duplicate(closing, 3)
+
+        assert {:error, %Solid.TemplateError{errors: errors}} =
+                 Solid.parse(template, max_template_depth: 2)
+
+        assert [%Solid.ParserError{reason: "Maximum template depth exceeded"}] = errors,
+               "expected #{opening} to be limited, got: #{inspect(errors)}"
+      end
+    end
+
+    test "limits nesting inside a liquid tag" do
+      template =
+        "{% liquid " <>
+          String.duplicate("if true\n", 3) <>
+          "echo 'x'\n" <> String.duplicate("endif\n", 3) <> "%}"
+
+      assert {:error, %Solid.TemplateError{errors: errors}} =
+               Solid.parse(template, max_template_depth: 2)
+
+      assert [%Solid.ParserError{reason: "Maximum template depth exceeded"}] = errors
+    end
+
+    test "counts nesting depth, not the number of blocks" do
+      template = String.duplicate("{% if true %}a{% endif %}", 500)
+
+      assert template
+             |> Solid.parse!(max_template_depth: 1)
+             |> Solid.render!(%{})
+             |> IO.iodata_to_binary() == String.duplicate("a", 500)
+    end
+
+    test "allows any nesting depth with :infinity" do
+      depth = 200
+
+      template =
+        String.duplicate("{% if true %}", depth) <>
+          "rendered" <> String.duplicate("{% endif %}", depth)
+
+      assert template
+             |> Solid.parse!(max_template_depth: :infinity)
+             |> Solid.render!(%{})
+             |> IO.iodata_to_binary() == "rendered"
+    end
+
+    test "limits nested variable accesses" do
+      # Every level holds the original name of the level below it, so nesting without a limit
+      # takes quadratic time and memory: `a[a[b]]` is "a[a[b]]" + "a[b]" + "b"
+      deep_access = fn depth ->
+        String.duplicate("a[", depth) <> "b" <> String.duplicate("]", depth)
+      end
+
+      assert {:ok, _} = Solid.parse("{{ #{deep_access.(100)} }}")
+
+      templates = [
+        "{{ #{deep_access.(101)} }}",
+        "{% if #{deep_access.(101)} %}x{% endif %}",
+        "{% for i in #{deep_access.(101)} %}x{% endfor %}",
+        "{% assign x = #{deep_access.(101)} %}",
+        "{{ x | default: #{deep_access.(101)} }}"
+      ]
+
+      for template <- templates do
+        assert {:error, %Solid.TemplateError{errors: errors}} = Solid.parse(template)
+
+        assert [%Solid.ParserError{reason: "Maximum template depth exceeded"}] = errors,
+               "expected #{String.slice(template, 0, 20)}... to be limited, got: #{inspect(errors)}"
+      end
+    end
+
+    test "rejects invalid nested block limits" do
+      for invalid <- [nil, 0, -1, "10", 1.5] do
+        assert_raise ArgumentError, ~r/:max_template_depth/, fn ->
+          Solid.parse("{% if true %}x{% endif %}", max_template_depth: invalid)
+        end
+      end
+    end
+
     test "allows overriding the nested block limit" do
       allowed_depth = 2
       blocked_depth = 3
@@ -295,6 +396,10 @@ defmodule SolidTest do
                  loc: %Solid.Parser.Loc{line: 1, column: 25},
                  reason: "This solid context does not allow includes."
                }
+             ]
+
+      assert Enum.map(errors, &Exception.message/1) == [
+               "This solid context does not allow includes."
              ]
     end
 

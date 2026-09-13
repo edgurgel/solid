@@ -1,6 +1,6 @@
 defmodule Solid.RenderDepthError do
-  @type t :: %__MODULE__{max_depth: pos_integer, template: String.t()}
-  defexception [:max_depth, :template]
+  @type t :: %__MODULE__{max_depth: pos_integer, template: String.t(), loc: Solid.Parser.Loc.t()}
+  defexception [:max_depth, :template, :loc]
 
   @impl true
   def message(%__MODULE__{max_depth: max_depth, template: template}) do

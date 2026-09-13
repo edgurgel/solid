@@ -25,8 +25,6 @@ defmodule Solid.Tags.RenderTag do
     end
   end
 
-  def default_max_render_depth, do: 100
-
   defp parse_arguments(tokens, template) do
     case tokens do
       [{:identifier, _, "with"} | rest] -> parse_with_or_for_arguments(rest, :with, template)
@@ -86,6 +84,9 @@ defmodule Solid.Tags.RenderTag do
   end
 
   defimpl Solid.Renderable do
+    @default_max_render_depth 100
+    @default_max_render_count 100_000
+
     def render(tag, context, options) do
       cache_module = Keyword.get(options, :cache_module, Solid.Caching.NoCache)
 
@@ -124,15 +125,8 @@ defmodule Solid.Tags.RenderTag do
 
           {rendered_text, context} =
             Enum.reduce(inner_contexts, {[], context}, fn inner_context, {result, context} ->
-              case render_partial(template, tag.template, inner_context, context, options) do
-                {:ok, rendered_text, errors} ->
-                  {[rendered_text | result],
-                   Solid.Context.put_errors(context, Enum.reverse(errors))}
-
-                {:error, errors, rendered_text} ->
-                  {[rendered_text | result],
-                   Solid.Context.put_errors(context, Enum.reverse(errors))}
-              end
+              {text, context} = render_partial(template, tag, inner_context, context, options)
+              {[text | result], context}
             end)
 
           {Enum.reverse(rendered_text), context}
@@ -142,19 +136,70 @@ defmodule Solid.Tags.RenderTag do
       end
     end
 
-    defp render_partial(template, template_name, inner_context, context, options) do
-      next_depth = context.render_depth + 1
+    # The depth limit alone does not bound the work a partial can trigger: a partial rendering
+    # itself twice fans out into 2^max_render_depth renders. The count limit bounds the whole
+    # render tree, the depth limit keeps a single branch from recursing forever.
+    #
+    # Renders blocked by a limit are counted too. A partial rendering many partials produces one
+    # blocked render per partial it lists, and only the budget keeps that from going on forever
+    defp render_partial(template, tag, inner_context, context, options) do
+      max_depth = limit(options, :max_render_depth, @default_max_render_depth)
+      max_count = limit(options, :max_render_count, @default_max_render_count)
+      depth = context.render_depth + 1
+      count = context.render_count + 1
+      context = %{context | render_count: count}
 
-      max_depth =
-        Keyword.get(options, :max_render_depth, Solid.Tags.RenderTag.default_max_render_depth())
+      cond do
+        exceeded?(depth, max_depth) ->
+          error = %Solid.RenderDepthError{
+            max_depth: max_depth,
+            template: tag.template,
+            loc: tag.loc
+          }
 
-      if next_depth > max_depth do
-        error = %Solid.RenderDepthError{max_depth: max_depth, template: template_name}
-        {:error, [error], []}
-      else
-        inner_context = %{inner_context | render_depth: next_depth}
-        Solid.render(template, inner_context, options)
+          {[], Solid.Context.put_errors(context, error)}
+
+        exceeded?(count, max_count) ->
+          # Only the render that runs out of budget reports it: the ones after it would all
+          # repeat the same thing about a render tree that is already being cut short
+          if count == max_count + 1 do
+            error = %Solid.RenderCountError{
+              max_count: max_count,
+              template: tag.template,
+              loc: tag.loc
+            }
+
+            {[], Solid.Context.put_errors(context, error)}
+          else
+            {[], context}
+          end
+
+        true ->
+          inner_context = %{inner_context | render_depth: depth, render_count: count}
+
+          {rendered_text, inner_context} =
+            Solid.render_template(template, inner_context, options)
+
+          context = %{context | render_count: inner_context.render_count}
+
+          {rendered_text, Solid.Context.put_errors(context, inner_context.errors)}
       end
+    end
+
+    defp exceeded?(_value, :infinity), do: false
+    defp exceeded?(value, limit), do: value > limit
+
+    defp limit(options, key, default) do
+      case Keyword.fetch(options, key) do
+        :error -> default
+        {:ok, :infinity} -> :infinity
+        {:ok, limit} when is_integer(limit) and limit > 0 -> limit
+        {:ok, invalid} -> raise ArgumentError, invalid_limit_message(key, invalid)
+      end
+    end
+
+    defp invalid_limit_message(key, invalid) do
+      "expected #{inspect(key)} to be a positive integer or :infinity, got: #{inspect(invalid)}"
     end
 
     defp build_contexts({:with, {source, destination}}, outter_context, options) do

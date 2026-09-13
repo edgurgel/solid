@@ -14,6 +14,7 @@ defmodule Solid do
           | Solid.WrongFilterArityError.t()
           | Solid.FileSystem.Error.t()
           | Solid.RenderDepthError.t()
+          | Solid.RenderCountError.t()
           | Solid.TemplateError.t()
 
   defmodule Template do
@@ -88,7 +89,7 @@ defmodule Solid do
 
   - `tags` - Override tags allowed during compilation. See `Solid.Tag.default_tags/0` for more information on the default set of tags
   - `filters_in_conditional_tags` - If `true`, enables filters inside `if`, `elsif`, and `unless` conditions (e.g. `{% if items | size > 0 %}`). Defaults to `false`. This diverges from the original Liquid specification which does not support filters in conditional tags.
-  - `max_template_depth` - Maximum nested block depth allowed while parsing. Defaults to `100`.
+  - `max_template_depth` - Maximum nested block depth allowed while parsing, or `:infinity` to allow any depth. Defaults to `100`. Parsing stops as soon as a template goes over the limit
 
   """
   @spec parse(binary, keyword) :: {:ok, Template.t()} | {:error, TemplateError.t()}
@@ -144,7 +145,12 @@ defmodule Solid do
 
   - `matcher_module`: a module to replace `Solid.Matcher` when resolving variables.
 
-  - `max_render_depth`: maximum nested partial render depth allowed for the `render` tag. Defaults to `100`.
+  - `max_render_depth`: maximum nested partial depth allowed for the `render` tag, or `:infinity` to allow any depth. Defaults to `100`. A partial that goes over the limit is not rendered and a `Solid.RenderDepthError` is collected instead
+
+  - `max_render_count`: maximum number of partials the `render` tag may render in total, or `:infinity` for no limit. Defaults to `100_000`. The depth limit alone does not bound how much work a partial can trigger because partials that render more than one partial fan out exponentially. Going over the limit collects a `Solid.RenderCountError`
+
+  Options are also used to parse partials read by the `render` tag, so parse options like
+  `max_template_depth` apply to them as well.
 
   ## Example
 
@@ -156,16 +162,10 @@ defmodule Solid do
   @spec render(Parser.parse_tree(), Context.t(), keyword) :: {iolist, Context.t()}
   def render(template_or_text, values, options \\ [])
 
-  def render(%Template{parsed_template: parse_tree, tags: tags}, context = %Context{}, options) do
-    matcher_module = Keyword.get(options, :matcher_module, Solid.Matcher)
-    context = %{context | matcher_module: matcher_module, tags: tags}
-
-    {result, context} = render(parse_tree, context, options)
+  def render(%Template{} = template, context = %Context{}, options) do
+    {result, context} = render_template(template, context, options)
 
     process_result(result, context, options)
-  catch
-    {exp, result, context} when exp in [:break_exp, :continue_exp] ->
-      process_result(result, context, options)
   end
 
   def render(%Template{} = template, hash, options) do
@@ -191,6 +191,28 @@ defmodule Solid do
       end)
 
     {Enum.reverse(result), context}
+  end
+
+  @doc """
+  It renders the compiled template returning the resulting context
+
+  Unlike `render/3` the context is returned instead of the collected errors, so state that must
+  survive a nested render — like the number of partials rendered so far — is not lost. It is used
+  by the `render` tag to render partials. Same options as `render/3`.
+  """
+  @spec render_template(Template.t(), Context.t(), keyword) :: {iolist, Context.t()}
+  def render_template(
+        %Template{parsed_template: parse_tree, tags: tags},
+        %Context{} = context,
+        options
+      ) do
+    matcher_module = Keyword.get(options, :matcher_module, Solid.Matcher)
+    context = %{context | matcher_module: matcher_module, tags: tags}
+
+    render(parse_tree, context, options)
+  catch
+    {exp, result, context} when exp in [:break_exp, :continue_exp] ->
+      {result, context}
   end
 
   # Optimisation for object and text to avoid extra render calls
