@@ -232,8 +232,7 @@ defmodule Solid.LexerTest do
                 {:pipe, %{line: 1, column: 22}},
                 {:identifier, %{line: 1, column: 24}, "upcase"},
                 {:end, %{line: 1, column: 31}}
-              ],
-              %ParserContext{rest: "", line: 1, column: 33, mode: :normal}} =
+              ], %ParserContext{rest: "", line: 1, column: 33, mode: :normal}} =
                Lexer.tokenize_tag(context, allowed_tag_names: ["echo"])
     end
 
@@ -618,8 +617,7 @@ defmodule Solid.LexerTest do
       context = "{{ foo-}}" |> build_context()
 
       assert Lexer.tokenize_object(context) ==
-               {:ok,
-                [{:identifier, %{column: 4, line: 1}, "foo"}, {:end, %{column: 7, line: 1}}],
+               {:ok, [{:identifier, %{column: 4, line: 1}, "foo"}, {:end, %{column: 7, line: 1}}],
                 %ParserContext{rest: "", line: 1, column: 10, mode: :normal}}
     end
 
@@ -715,15 +713,13 @@ defmodule Solid.LexerTest do
       context = "echo%}\n" |> build_context(:liquid_tag)
 
       assert Lexer.tokenize_tag_start(context) ==
-               {:ok, "echo",
-                %ParserContext{rest: "%}\n", line: 1, column: 5, mode: :liquid_tag}}
+               {:ok, "echo", %ParserContext{rest: "%}\n", line: 1, column: 5, mode: :liquid_tag}}
     end
 
     test "a unicode whitespace does not end a liquid sub-tag" do
       context = "echo abc\n%}" |> build_context(:liquid_tag)
 
-      assert {:ok, "echo abc",
-              %ParserContext{rest: "\n%}", mode: :liquid_tag}} =
+      assert {:ok, "echo abc", %ParserContext{rest: "\n%}", mode: :liquid_tag}} =
                Lexer.tokenize_tag_start(context)
     end
   end
