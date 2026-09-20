@@ -48,9 +48,6 @@ defmodule Solid.Variable do
       if identifier in @literals and accesses == [] do
         {:ok, %Literal{loc: Loc.new(meta), value: literal(identifier)}, rest}
       else
-        # A plain `{{ foo }}` is the common case and its name is already the
-        # identifier, so skip rebuilding the binary. Otherwise let
-        # iodata_to_binary/1 flatten it in one pass instead of join/1 + <>/2.
         original_name =
           case accesses_original_name do
             [] -> identifier
