@@ -5,7 +5,7 @@
   "arr": [3, 1, 2], "empty_arr": [], "strs": ["banana", "Apple", "cherry", "apple"], "nested": [[1, 2], [3, [4, 5]]],
   "mixed": [1, "a", null, 2.5, true], "with_nil": [3, null, 1],
   "hash": {"a": 1, "b": "two", "size": 99, "first": "F", "key with space": "sp", "dash-key": "dk"},
-  "empty_hash": {},
+  "empty_hash": {}, "abc_hash": {"a": 1, "b": "two", "c": [3, 4]},
   "key": "b", "idx": 1,
   "products": [
     {"title": "Shoes", "price": 50, "type": "wear", "available": true, "tags": ["a", "b"]},

@@ -61,6 +61,18 @@
 ## dot_first_last.05
 {{ empty_arr.first }}
 
+## dot_first_last.06
+{{ products.first.title }}|{{ products.last.tags.first }}|{{ nested.last.last.first }}|{{ products.first.tags.last }}|{{ empty_arr.first.title }}|{{ arr.first.x }}|{{ hash.first.last }}
+
+## dot_first_last.07
+{% if products.first.available %}4{% endif %}{% if products.last.available %}x{% endif %}
+
+## dot_first_last.08
+{{ str.first }}|{{ str.last }}|{{ str.first.size }}|{{ empty_str.first }}|{{ unicode.first }}|{{ unicode.last }}
+
+## dot_first_last.09
+{% for pair in abc_hash %}{{ pair.first }}:{{ pair.last }}:{{ pair.last.first }}:{{ pair.size }}:{{ pair.nope }};{% endfor %}
+
 ## first_last_filter
 {{ arr | first }}|{{ arr | last }}|{{ str | first }}|{{ str | last }}|{{ hash | first }}|{{ empty_arr | first }}|{{ nil | first }}|{{ int | first }}
 
