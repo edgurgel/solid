@@ -1,0 +1,18 @@
+{
+  "str": "Hello World", "empty_str": "", "blank_str": "   ", "num_str": "42", "float_str": "3.7", "mixed_str": "3abc",
+  "int": 7, "neg": -7, "zero": 0, "float": 2.5, "big": 12345678901234567890, "small": 0.000001, "whole_float": 3.0,
+  "t": true, "f": false, "n": null,
+  "arr": [3, 1, 2], "empty_arr": [], "strs": ["banana", "Apple", "cherry", "apple"], "nested": [[1, 2], [3, [4, 5]]],
+  "mixed": [1, "a", null, 2.5, true], "with_nil": [3, null, 1],
+  "hash": {"a": 1, "b": "two", "size": 99, "first": "F", "key with space": "sp", "dash-key": "dk"},
+  "empty_hash": {}, "abc_hash": {"a": 1, "b": "two", "c": [3, 4]},
+  "key": "b", "idx": 1,
+  "products": [
+    {"title": "Shoes", "price": 50, "type": "wear", "available": true, "tags": ["a", "b"]},
+    {"title": "shirt", "price": 20, "type": "wear", "available": false, "tags": ["b"]},
+    {"title": "Mug", "price": 5.5, "type": "kitchen", "available": true, "tags": []},
+    {"title": "Spoon", "price": null, "type": "kitchen", "tags": ["c"]}
+  ],
+  "unicode": "héllo wörld 👋🏽 ß", "html": "<p class=\"x\">Tom & 'Jerry' &amp; <script>alert(1)</script><!-- c --><style>p{}</style></p>",
+  "multiline": "line1\nline2\r\nline3", "date_str": "2024-02-29 13:05:09 +0200", "ts": 1700000000
+}

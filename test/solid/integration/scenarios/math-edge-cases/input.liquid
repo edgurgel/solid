@@ -1,0 +1,142 @@
+## int_div.00
+{{ 7 | divided_by: 2 }}
+
+## int_div.03
+{{ 7.0 | divided_by: 2 }}
+
+## int_div.04
+{{ "7" | divided_by: "2" }}
+
+## modulo.00
+{{ 7 | modulo: 3 }}
+
+## modulo.03
+{{ 7.5 | modulo: 2 }}
+
+## div_zero
+{{ 1 | divided_by: 0 }}|after
+
+## mod_zero
+{{ 1 | modulo: 0 }}|after
+
+## mod_zero_float
+{{ 1 | modulo: 0.0 }}|after
+
+## num_coerce.00
+{{ "3abc" | plus: 1 }}
+
+## num_coerce.01
+{{ "abc" | plus: 1 }}
+
+## num_coerce.02
+{{ "3.5" | plus: 1 }}
+
+## num_coerce.04
+{{ nil | plus: 1 }}
+
+## num_coerce.05
+{{ true | plus: 1 }}
+
+## num_coerce.06
+{{ "1e3" | plus: 1 }}
+
+## num_coerce.07
+{{ "0x10" | plus: 1 }}
+
+## round.00
+{{ 2.5 | round }}
+
+## round.01
+{{ 3.5 | round }}
+
+## round.02
+{{ -2.5 | round }}
+
+## round.03
+{{ 2.567 | round: 2 }}
+
+## round.04
+{{ 2.567 | round: 0 }}
+
+## round.07
+{{ "2.7" | round }}
+
+## round.08
+{{ nil | round }}
+
+## round.09
+{{ 2.5 | round: "1" }}
+
+## round.10
+{{ 5 | round: 2 }}
+
+## ceil_floor
+{{ 1.2 | ceil }}|{{ -1.2 | ceil }}|{{ 1.8 | floor }}|{{ -1.8 | floor }}|{{ "1.2" | ceil }}|{{ "x" | floor }}|{{ 3 | ceil }}
+
+## abs
+{{ -3 | abs }}|{{ "-3.5" | abs }}|{{ "x" | abs }}|{{ nil | abs }}|{{ -0.0 | abs }}
+
+## at_least_most.00
+{{ 3 | at_least: 5 }}
+
+## at_least_most.01
+{{ 3 | at_most: 1 }}
+
+## at_least_most.02
+{{ "3" | at_least: "5.5" }}
+
+## at_least_most.05
+{{ nil | at_least: 1 }}
+
+## big_numbers.00
+{{ 99999999999999999999 | plus: 1 }}
+
+## big_numbers.01
+{{ 2 | times: 4611686018427387904 }}
+
+## big_numbers.03
+{{ 1.0 | divided_by: 3 }}
+
+## big_numbers.04
+{{ 100000000000000000.0 }}
+
+## big_numbers.06
+{{ 123456789.123456789 }}
+
+## out_float_math.00
+{{ 0.1 | plus: 0.2 }}
+
+## out_float_math.01
+{{ 0.1 | times: 3 }}
+
+## out_float_math.02
+{{ 0.3 | minus: 0.1 }}
+
+## out_float_math.03
+{{ 1 | divided_by: 3.0 }}
+
+## out_float_math.04
+{{ 10 | divided_by: 4.0 }}
+
+## wp7.floor_div
+{{ -7 | divided_by: 2 }}|{{ 7 | divided_by: -2 }}|{{ -7 | divided_by: -2 }}|{{ "-7" | divided_by: 2 }}|{{ -7.0 | divided_by: 2 }}|{{ -7 | divided_by: 2.0 }}
+
+## wp7.modulo_sign
+{{ -7 | modulo: 3 }}|{{ 7 | modulo: -3 }}|{{ -7.5 | modulo: 2 }}|{{ 7.5 | modulo: -2 }}|{{ -7.5 | modulo: -2 }}|{{ -7 | modulo: 3.0 }}|{{ "-7" | modulo: "3" }}|{{ -6 | modulo: 3 }}|{{ -6 | modulo: 3.0 }}
+
+## wp7.float_div_zero
+{{ 1 | divided_by: 0.0 }}|{{ -1 | divided_by: 0.0 }}|{{ 0 | divided_by: 0.0 }}|{{ 1.0 | divided_by: 0 }}|{{ -1.5 | divided_by: 0 }}|{{ 1 | divided_by: "0.0" }}|{{ 0.0 | divided_by: 0 }}|{{ 1 | divided_by: 0.0 | plus: 1 }}
+
+## wp7.whitespace
+{{ " 4 " | plus: 1 }}|{{ " 4.5 " | plus: 1 }}|{{ " 4.5" | times: 2 }}|{{ " -4 " | minus: 1 }}|{{ "4 " | plus: 1 }}|{{ " 4.5 " | divided_by: 2 }}|{{ " 4.5 " | round }}|{{ " 4.5 " | ceil }}|{{ " 4.5 " | abs }}|{{ 3 | at_least: " 5 " }}
+
+## wp7.round_negative
+{{ 2.567 | round: -1 }}|{{ 1234.5 | round: -2 }}|{{ 1234 | round: -2 }}|{{ "1234.5" | round: -2 }}|{{ "1234" | round: -2 }}|{{ 1250.0 | round: -2 }}|{{ -1250.0 | round: -2 }}|{{ 1234.5 | round: "-2" }}
+
+## wp7.at_least_most_ties
+{{ 3.0 | at_least: 3 }}|{{ 3 | at_least: 3.0 }}|{{ 3 | at_most: 3.0 }}|{{ 3.0 | at_most: 3 }}|{{ "3.0" | at_least: 3 }}|{{ 3 | at_least: "3.0" }}|{{ 2 | at_least: 3.0 }}
+
+## wp7.big_int
+{{ 12345678901234567890 | times: 12345678901234567890 }}|{{ "12345678901234567890" | times: "12345678901234567890" }}|{{ 123456789012345678901234567890 | plus: 1 }}|{{ 123456789012345678901234567890 | minus: 1 }}|{{ 12345678901234567890 | divided_by: 7 }}|{{ 12345678901234567890 | modulo: 7 }}
+
+## end

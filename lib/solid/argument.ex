@@ -155,7 +155,7 @@ defmodule Solid.Argument do
   defp stringify!(value) when is_list(value) do
     value
     |> List.flatten()
-    |> Enum.join()
+    |> Enum.map_join(&stringify!/1)
   end
 
   defp stringify!(value) when is_float(value) do

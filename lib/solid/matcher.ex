@@ -13,9 +13,9 @@ end
 defimpl Solid.Matcher, for: List do
   def match(data, []), do: {:ok, data}
 
-  def match(data, ["first"]), do: {:ok, Enum.at(data, 0)}
-  def match(data, ["last"]), do: {:ok, Enum.at(data, -1)}
-  def match(data, ["size"]), do: {:ok, Enum.count(data)}
+  def match(data, ["first" | keys]), do: @protocol.match(Enum.at(data, 0), keys)
+  def match(data, ["last" | keys]), do: @protocol.match(Enum.at(data, -1), keys)
+  def match(data, ["size" | keys]), do: @protocol.match(Enum.count(data), keys)
 
   def match(data, [key | keys]) when is_integer(key) do
     case Enum.fetch(data, key) do
@@ -60,6 +60,9 @@ defimpl Solid.Matcher, for: BitString do
     {:ok, String.length(data)}
   end
 
+  def match(data, ["first" | keys]), do: @protocol.match(String.first(data) || "", keys)
+  def match(data, ["last" | keys]), do: @protocol.match(String.last(data) || "", keys)
+
   def match(_data, [i | _]) when is_integer(i) do
     {:error, :not_found}
   end
@@ -87,6 +90,9 @@ defimpl Solid.Matcher, for: Tuple do
     {:ok, tuple_size(data)}
   end
 
+  def match(data, ["first" | keys]), do: match(data, [0 | keys])
+  def match(data, ["last" | keys]), do: match(data, [tuple_size(data) - 1 | keys])
+
   def match(data, [key | keys]) when is_integer(key) do
     try do
       elem(data, key)
@@ -95,4 +101,6 @@ defimpl Solid.Matcher, for: Tuple do
       ArgumentError -> {:error, :not_found}
     end
   end
+
+  def match(_data, _), do: {:error, :not_found}
 end
