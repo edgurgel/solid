@@ -102,7 +102,7 @@ defmodule Solid.Context do
         {:ok, value, context} = Argument.get(name, context, [])
         {value, context}
       else
-        {cycle_slug(name || values), context}
+        {cycle_slug(values), context}
       end
 
     case cycle_state[name] do

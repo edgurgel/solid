@@ -1,0 +1,11 @@
+Hello, ALICE! You're odd-numbered. 
+Hello, BOB! You're even-numbered. 
+Hello, CHARLIE! You're odd-numbered. 
+Hello, DAVID! You're even-numbered. 
+Hello, EVA! You're odd-numbered. 
+Hello, FRANK! You're even-numbered. 
+Hello, GRACE! You're odd-numbered. 
+Hello, HANK! You're even-numbered. 
+Hello, IVY! You're odd-numbered. 
+Hello, JACK! You're even-numbered. 
+

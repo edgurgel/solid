@@ -24,7 +24,7 @@ defmodule Solid.Variable do
 
       [{:open_square, meta} | _] ->
         with {:ok, rest, accesses, accesses_original_name} <- access(tokens) do
-          original_name = Enum.join(accesses_original_name)
+          original_name = IO.iodata_to_binary(accesses_original_name)
 
           {:ok,
            %__MODULE__{
@@ -48,7 +48,11 @@ defmodule Solid.Variable do
       if identifier in @literals and accesses == [] do
         {:ok, %Literal{loc: Loc.new(meta), value: literal(identifier)}, rest}
       else
-        original_name = "#{identifier}" <> Enum.join(accesses_original_name)
+        original_name =
+          case accesses_original_name do
+            [] -> identifier
+            parts -> IO.iodata_to_binary([identifier | parts])
+          end
 
         {:ok,
          %__MODULE__{

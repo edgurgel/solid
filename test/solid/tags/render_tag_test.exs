@@ -88,8 +88,7 @@ defmodule Solid.Tags.RenderTagTest do
                   "key" => %Solid.Variable{identifier: "value"},
                   "title" => %Solid.Literal{value: "text"}
                 }
-              },
-              %Solid.ParserContext{rest: "", line: 1, column: 54, mode: :normal, tags: nil}} =
+              }, %Solid.ParserContext{rest: "", line: 1, column: 54, mode: :normal, tags: nil}} =
                parse(template)
     end
 

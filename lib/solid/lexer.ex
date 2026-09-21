@@ -157,29 +157,34 @@ defmodule Solid.Lexer do
   # {% #### valid inline comment %}
   defp tag_name("#" <> text, line, column, []), do: {:ok, "#", text, line, column + 1}
 
-  defp tag_name(text, line, column, buffer) do
+  defp tag_name(text, line, column, []) do
+    case tag_name_end(text, 0) do
+      0 ->
+        {:error, "Empty tag name", text, build_loc(line, column)}
+
+      len ->
+        rest = binary_part(text, len, byte_size(text) - len)
+        {:ok, binary_part(text, 0, len), rest, line, column + len}
+    end
+  end
+
+  # A tag name is a contiguous slice ending at `%}`/`}}` (optionally with a
+  # leading `-` whitespace-control marker) or the first whitespace byte, so we
+  # just count its byte length and let the caller slice it out with binary_part/3.
+  defp tag_name_end(text, len) do
     case text do
       <<tag_or_object_end::binary-size(2), _::binary>> when tag_or_object_end in ["%}", "}}"] ->
-        case buffer do
-          [] -> {:error, "Empty tag name", text, build_loc(line, column)}
-          _ -> {:ok, transform_buffer(buffer), text, line, column}
-        end
+        len
 
       <<tag_or_object_ws_end::binary-size(3), _::binary>>
       when tag_or_object_ws_end in ["-%}", "-}}"] ->
-        case buffer do
-          [] -> {:error, "Empty tag name", text, build_loc(line, column)}
-          _ -> {:ok, transform_buffer(buffer), text, line, column}
-        end
+        len
 
       <<char, rest::binary>> when char not in @whitespace_nl_bytes ->
-        tag_name(rest, line, column + 1, [char | buffer])
+        tag_name_end(rest, len + 1)
 
       _ ->
-        case buffer do
-          [] -> {:error, "Empty tag name", text, build_loc(line, column)}
-          _ -> {:ok, transform_buffer(buffer), text, line, column}
-        end
+        len
     end
   end
 
@@ -189,28 +194,35 @@ defmodule Solid.Lexer do
   defp tag_name_for_liquid_tag("#" <> text, line, column, []),
     do: {:ok, "#", text, line, column + 1}
 
-  defp tag_name_for_liquid_tag(text, line, column, buffer) do
-    case text do
-      <<tag_or_object_end::binary-size(2), _::binary>> when tag_or_object_end in ["%}"] ->
-        case buffer do
-          [] -> {:error, "Empty tag name", text, build_loc(line, column)}
-          _ -> {:ok, transform_buffer(buffer), text, line, column}
+  defp tag_name_for_liquid_tag(text, line, column, []) do
+    case liquid_tag_name_end(text, 0) do
+      0 ->
+        case text do
+          <<"\n", rest::binary>> -> {:error, "Empty tag name", rest, build_loc(line + 1, 1)}
+          _ -> {:error, "Empty tag name", text, build_loc(line, column)}
         end
 
-      <<"\n", rest::binary>> ->
-        case buffer do
-          [] -> {:error, "Empty tag name", rest, build_loc(line + 1, 1)}
-          _ -> {:ok, transform_buffer(buffer), text, line, column}
-        end
+      len ->
+        rest = binary_part(text, len, byte_size(text) - len)
+        {:ok, binary_part(text, 0, len), rest, line, column + len}
+    end
+  end
+
+  # Inside a `{% liquid %}` tag the terminators are `%}` or a newline (which ends
+  # the individual sub-tag); otherwise the same contiguous-slice logic applies.
+  defp liquid_tag_name_end(text, len) do
+    case text do
+      <<"%}", _::binary>> ->
+        len
+
+      <<"\n", _::binary>> ->
+        len
 
       <<char, rest::binary>> when char not in @whitespace_bytes ->
-        tag_name_for_liquid_tag(rest, line, column + 1, [char | buffer])
+        liquid_tag_name_end(rest, len + 1)
 
       _ ->
-        case buffer do
-          [] -> {:error, "Empty tag name", text, build_loc(line, column)}
-          _ -> {:ok, transform_buffer(buffer), text, line, column}
-        end
+        len
     end
   end
 
@@ -272,32 +284,25 @@ defmodule Solid.Lexer do
         end
 
       # Numbers
-      <<"-", digit, rest::binary>> when digit in ?0..?9 ->
-        case number_1(rest, line, column + 2, [digit, ?-]) do
-          {:integer, number, rest, end_line, end_column} ->
-            acc = [{:integer, build_loc(line, column), String.to_integer(number)} | acc]
-            tokenize(rest, end_line, end_column, acc)
+      <<"-", digit, after_digit::binary>> when digit in ?0..?9 ->
+        {type, len} = number_end(after_digit, 2)
+        number = binary_part(text, 0, len)
+        rest = binary_part(text, len, byte_size(text) - len)
+        acc = [number_token(type, build_loc(line, column), number) | acc]
+        tokenize(rest, line, column + len, acc)
 
-          {:float, number, rest, end_line, end_column} ->
-            acc = [{:float, build_loc(line, column), String.to_float(number)} | acc]
-            tokenize(rest, end_line, end_column, acc)
-        end
-
-      <<digit, rest::binary>> when digit in ?0..?9 ->
-        case number_1(rest, line, column + 1, [digit]) do
-          {:integer, number, rest, end_line, end_column} ->
-            acc = [{:integer, build_loc(line, column), String.to_integer(number)} | acc]
-            tokenize(rest, end_line, end_column, acc)
-
-          {:float, number, rest, end_line, end_column} ->
-            acc = [{:float, build_loc(line, column), String.to_float(number)} | acc]
-            tokenize(rest, end_line, end_column, acc)
-        end
+      <<digit, after_digit::binary>> when digit in ?0..?9 ->
+        {type, len} = number_end(after_digit, 1)
+        number = binary_part(text, 0, len)
+        rest = binary_part(text, len, byte_size(text) - len)
+        acc = [number_token(type, build_loc(line, column), number) | acc]
+        tokenize(rest, line, column + len, acc)
 
       # Identifiers (special case for contains)
-      <<letter, rest::binary>> when letter in ?a..?z or letter in ?A..?Z or letter == ?_ ->
-        {:identifier, identifier, rest, end_line, end_column} =
-          identifier(rest, line, column + 1, [letter])
+      <<letter, _::binary>> when letter in ?a..?z or letter in ?A..?Z or letter == ?_ ->
+        len = identifier_end(text, 0)
+        identifier = binary_part(text, 0, len)
+        rest = binary_part(text, len, byte_size(text) - len)
 
         identifier_or_contains =
           case identifier do
@@ -305,7 +310,7 @@ defmodule Solid.Lexer do
             _ -> {:identifier, build_loc(line, column), identifier}
           end
 
-        tokenize(rest, end_line, end_column, [identifier_or_contains | acc])
+        tokenize(rest, line, column + len, [identifier_or_contains | acc])
 
       # Empty string (end of input)
       "" ->
@@ -363,32 +368,25 @@ defmodule Solid.Lexer do
         end
 
       # Numbers
-      <<"-", digit, rest::binary>> when digit in ?0..?9 ->
-        case number_1(rest, line, column + 2, [digit, ?-]) do
-          {:integer, number, rest, end_line, end_column} ->
-            acc = [{:integer, build_loc(line, column), String.to_integer(number)} | acc]
-            tokenize_for_liquid_tag(rest, end_line, end_column, acc)
+      <<"-", digit, after_digit::binary>> when digit in ?0..?9 ->
+        {type, len} = number_end(after_digit, 2)
+        number = binary_part(text, 0, len)
+        rest = binary_part(text, len, byte_size(text) - len)
+        acc = [number_token(type, build_loc(line, column), number) | acc]
+        tokenize_for_liquid_tag(rest, line, column + len, acc)
 
-          {:float, number, rest, end_line, end_column} ->
-            acc = [{:float, build_loc(line, column), String.to_float(number)} | acc]
-            tokenize_for_liquid_tag(rest, end_line, end_column, acc)
-        end
-
-      <<digit, rest::binary>> when digit in ?0..?9 ->
-        case number_1(rest, line, column + 1, [digit]) do
-          {:integer, number, rest, end_line, end_column} ->
-            acc = [{:integer, build_loc(line, column), String.to_integer(number)} | acc]
-            tokenize_for_liquid_tag(rest, end_line, end_column, acc)
-
-          {:float, number, rest, end_line, end_column} ->
-            acc = [{:float, build_loc(line, column), String.to_float(number)} | acc]
-            tokenize_for_liquid_tag(rest, end_line, end_column, acc)
-        end
+      <<digit, after_digit::binary>> when digit in ?0..?9 ->
+        {type, len} = number_end(after_digit, 1)
+        number = binary_part(text, 0, len)
+        rest = binary_part(text, len, byte_size(text) - len)
+        acc = [number_token(type, build_loc(line, column), number) | acc]
+        tokenize_for_liquid_tag(rest, line, column + len, acc)
 
       # Identifiers (special case for contains)
-      <<letter, rest::binary>> when letter in ?a..?z or letter in ?A..?Z or letter == ?_ ->
-        {:identifier, identifier, rest, end_line, end_column} =
-          identifier(rest, line, column + 1, [letter])
+      <<letter, _::binary>> when letter in ?a..?z or letter in ?A..?Z or letter == ?_ ->
+        len = identifier_end(text, 0)
+        identifier = binary_part(text, 0, len)
+        rest = binary_part(text, len, byte_size(text) - len)
 
         identifier_or_contains =
           case identifier do
@@ -396,7 +394,7 @@ defmodule Solid.Lexer do
             _ -> {:identifier, build_loc(line, column), identifier}
           end
 
-        tokenize_for_liquid_tag(rest, end_line, end_column, [identifier_or_contains | acc])
+        tokenize_for_liquid_tag(rest, line, column + len, [identifier_or_contains | acc])
 
       # Empty string (end of input)
       "" ->
@@ -412,85 +410,83 @@ defmodule Solid.Lexer do
   defp comparison_operator(?<), do: :<
   defp comparison_operator(?>), do: :>
 
-  defp identifier(text, line, column, buffer) do
-    case text do
+  # Count the byte length of the identifier at the front of the input. An
+  # identifier is always a contiguous slice, so the caller grabs it with a single
+  # `binary_part/3` instead of accumulating and reversing a byte buffer. `rest`
+  # walks forward one byte at a time while `len` counts the bytes consumed.
+  defp identifier_end(rest, len) do
+    case rest do
       <<char, rest::binary>>
       when char in ?a..?z or char in ?A..?Z or char in ?0..?9 or char == ?_ ->
-        identifier(rest, line, column + 1, [char | buffer])
+        identifier_end(rest, len + 1)
 
       # Checking if the dash belongs to the whitespace control or the identifier
       <<"-", object_or_tag::binary-size(2), _::binary>> when object_or_tag in ["}}", "%}"] ->
-        {:identifier, transform_buffer(buffer), text, line, column}
+        len
 
       <<"-", rest::binary>> ->
-        identifier(rest, line, column + 1, [?- | buffer])
+        identifier_end(rest, len + 1)
 
-      <<"?", rest::binary>> ->
-        identifier = transform_buffer([?? | buffer])
-
-        {:identifier, identifier, rest, line, column + 1}
+      # A trailing `?` is part of the identifier
+      <<"?", _::binary>> ->
+        len + 1
 
       _ ->
-        {:identifier, transform_buffer(buffer), text, line, column}
+        len
     end
   end
 
-  defp number_1(text, line, column, buffer) do
-    case text do
-      <<digit, rest::binary>> when digit in ?0..?9 ->
-        number_1(rest, line, column + 1, [digit | buffer])
+  # A number is a contiguous slice, so we count its byte length (noting whether a
+  # `.digit` made it a float) and let the caller slice it out with binary_part/3.
+  # `len` starts at the bytes the caller already matched (1 for a bare digit, 2
+  # for a leading `-`).
+  defp number_end(<<digit, rest::binary>>, len) when digit in ?0..?9,
+    do: number_end(rest, len + 1)
 
-      # if there is a number after the dot we have a float
-      <<".", next, rest::binary>> when next in ?0..?9 ->
-        number_2(rest, line, column + 2, [next, ?. | buffer])
+  # Only a digit after the dot makes it a float; otherwise the dot is left in the
+  # rest (e.g. the `..` of a range, or `5.foo`).
+  defp number_end(<<".", digit, rest::binary>>, len) when digit in ?0..?9,
+    do: number_end_float(rest, len + 2)
 
-      <<".", _rest::binary>> ->
-        {:integer, transform_buffer(buffer), text, line, column}
+  defp number_end(_text, len), do: {:integer, len}
 
-      _ ->
-        {:integer, transform_buffer(buffer), text, line, column}
-    end
-  end
+  defp number_end_float(<<digit, rest::binary>>, len) when digit in ?0..?9,
+    do: number_end_float(rest, len + 1)
 
-  defp number_2(text, line, column, buffer) do
-    case text do
-      <<number, rest::binary>> when number in ?0..?9 ->
-        number_2(rest, line, column + 1, [number | buffer])
+  defp number_end_float(_text, len), do: {:float, len}
 
-      _ ->
-        {:float, transform_buffer(buffer), text, line, column}
-    end
-  end
-
-  defp transform_buffer(buffer) do
-    buffer
-    |> Enum.reverse()
-    |> IO.iodata_to_binary()
-  end
+  defp number_token(:integer, loc, number), do: {:integer, loc, String.to_integer(number)}
+  defp number_token(:float, loc, number), do: {:float, loc, String.to_float(number)}
 
   defp tokenize_string(<<quotes, rest::binary>> = text, line, column) do
-    case string_value(rest, quotes, line, column + 1, []) do
-      {:string, string_value, quotes, rest, end_line, end_column} ->
-        {:string, string_value, quotes, rest, end_line, end_column}
+    case string_end(rest, quotes, line, column + 1, 0) do
+      {:ok, len, end_line, end_column} ->
+        value = binary_part(rest, 0, len)
+        # Drop the content and the closing quote from the remaining input.
+        new_rest = binary_part(rest, len + 1, byte_size(rest) - len - 1)
+        {:string, value, quotes, new_rest, end_line, end_column}
 
       {:error, reason} ->
         {:error, reason, text, %{line: line, column: column}}
     end
   end
 
-  defp string_value(text, quotes, line, column, buffer) do
+  # String contents are copied verbatim (no escaping), so the value is a
+  # contiguous slice between the quotes. Count its byte length while tracking
+  # line/column for the location metadata.
+  defp string_end(text, quotes, line, column, len) do
     case text do
       "" ->
         {:error, "String with #{[quotes]} not terminated"}
 
       <<"\n", rest::binary>> ->
-        string_value(rest, quotes, line + 1, column, ["\n" | buffer])
+        string_end(rest, quotes, line + 1, column, len + 1)
 
-      <<c, rest::binary>> when c != quotes ->
-        string_value(rest, quotes, line, column + 1, [c | buffer])
+      <<^quotes, _rest::binary>> ->
+        {:ok, len, line, column + 1}
 
-      <<^quotes, rest::binary>> ->
-        {:string, transform_buffer(buffer), quotes, rest, line, column + 1}
+      <<_c, rest::binary>> ->
+        string_end(rest, quotes, line, column + 1, len + 1)
     end
   end
 

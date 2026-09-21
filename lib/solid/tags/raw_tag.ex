@@ -99,8 +99,6 @@ defmodule Solid.Tags.RawTag do
   end
 
   defimpl Solid.Block do
-    def blank?(tag) do
-      String.trim(tag.text) == ""
-    end
+    def blank?(tag), do: Solid.Text.blank_text?(tag.text)
   end
 end
