@@ -737,7 +737,7 @@ defmodule Solid.StandardFilter do
   # end
 
   defp to_str(input) when is_map(input), do: inspect(input)
-  defp to_str(input) when is_list(input), do: inspect(input)
+  defp to_str(input) when is_list(input), do: inspect(input, charlists: :as_lists)
 
   defp to_str(input) when is_float(input) do
     input
@@ -1288,10 +1288,10 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.escape("Have you read 'James & the Giant Peach'?")
   "Have you read &#39;James &amp; the Giant Peach&#39;?"
   """
-  @spec escape(iodata()) :: String.t()
-  def escape(iodata) do
-    iodata
-    |> IO.iodata_to_binary()
+  @spec escape(term) :: String.t()
+  def escape(input) do
+    input
+    |> to_str()
     |> Solid.HTML.html_escape()
   end
 

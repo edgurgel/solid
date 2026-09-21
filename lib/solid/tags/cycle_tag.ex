@@ -53,8 +53,8 @@ defmodule Solid.Tags.CycleTag do
       {context, result} = Solid.Context.run_cycle(context, tag.name, tag.values)
 
       if result do
-        {:ok, value, context} = Argument.get(result, context, [], options)
-        {[to_string(value)], context}
+        {:ok, value, context} = Argument.render(result, context, [], options)
+        {[value], context}
       else
         {[], context}
       end

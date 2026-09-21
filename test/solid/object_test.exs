@@ -99,5 +99,14 @@ defmodule Solid.ObjectTest do
 
       assert {"a string", ^context} = Renderable.render(object, context, [])
     end
+
+    test "list of maps rendering does not crash" do
+      template = "products }}"
+      assert {:ok, object, _tokens} = parse(template)
+
+      context = %Solid.Context{vars: %{"products" => [%{"a" => 1}, [%{"b" => 2}, nil, 2.5]]}}
+
+      assert {~s(%{"a" => 1}%{"b" => 2}2.5), ^context} = Renderable.render(object, context, [])
+    end
   end
 end

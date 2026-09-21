@@ -1,0 +1,20 @@
+Lists rendered directly are concatenated:
+{{ arr }}|{{ nested }}|{{ with_nil }}
+{{ products | map: "title" }}
+
+2.2 list through escape:
+{{ arr | escape }}
+{{ with_nil | escape }}
+{{ arr | escape | size }}
+{% assign strs = "a,b" | split: "," %}{{ strs | escape }}
+{% assign empty_list = "" | split: "," %}[{{ empty_list }}][{{ empty_list | escape }}]
+
+2.3 nested list through escape:
+{{ nested | escape }}
+
+2.4 cycle with list values:
+{% cycle arr, 1 %}{% cycle arr, 1 %}{% cycle arr, 1 %}
+{% cycle "named": nested, 1 %}
+{% cycle "nils": with_nil, 1 %}
+{% cycle "floats": float, int %}{% cycle "floats": float, int %}
+Done
