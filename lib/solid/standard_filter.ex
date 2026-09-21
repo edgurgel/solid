@@ -122,7 +122,7 @@ defmodule Solid.StandardFilter do
     decimal_input = to_decimal(input)
     decimal_minimum = to_decimal(minimum)
 
-    if Decimal.compare(decimal_input, decimal_minimum) in [:eq, :lt] do
+    if Decimal.compare(decimal_input, decimal_minimum) == :lt do
       if original_float?(minimum) do
         decimal_to_float(decimal_minimum)
       else
@@ -152,7 +152,7 @@ defmodule Solid.StandardFilter do
     decimal_input = to_decimal(input)
     decimal_maximum = to_decimal(maximum)
 
-    if Decimal.compare(decimal_input, decimal_maximum) in [:eq, :gt] do
+    if Decimal.compare(decimal_input, decimal_maximum) == :gt do
       if original_float?(maximum) do
         decimal_to_float(decimal_maximum)
       else
@@ -297,21 +297,19 @@ defmodule Solid.StandardFilter do
   1
   iex> Solid.StandardFilter.divided_by(20, 7)
   2
+  iex> Solid.StandardFilter.divided_by(-7, 2)
+  -4
   """
   @spec divided_by(term, term) :: number
   def divided_by(input, operand) do
-    input_number = to_decimal(input)
-    operand_number = to_decimal(operand)
-
-    if original_float?(input) or original_float?(operand) do
-      Decimal.div(input_number, operand_number)
-      |> decimal_to_float()
-    else
-      Decimal.div_int(input_number, operand_number)
-      |> try_decimal_to_integer()
-    end
+    apply_operation(input, operand, &Integer.floor_div/2, fn input, operand ->
+      # Float division by zero results in Infinity, -Infinity or NaN
+      Decimal.Context.with(%{Decimal.Context.get() | traps: []}, fn ->
+        Decimal.div(input, operand)
+      end)
+    end)
   rescue
-    Decimal.Error ->
+    ArithmeticError ->
       raise %Solid.ArgumentError{message: "divided by 0"}
   end
 
@@ -534,16 +532,7 @@ defmodule Solid.StandardFilter do
   """
   @spec minus(term, term) :: number
   def minus(input, number) do
-    input
-    |> to_decimal()
-    |> Decimal.sub(to_decimal(number))
-    |> then(fn result ->
-      if original_float?(input) or original_float?(number) do
-        decimal_to_float(result)
-      else
-        try_decimal_to_integer(result)
-      end
-    end)
+    apply_operation(input, number, &Kernel.-/2, &Decimal.sub/2)
   end
 
   @doc """
@@ -555,23 +544,25 @@ defmodule Solid.StandardFilter do
   3
   iex> Solid.StandardFilter.modulo(183.357, 12)
   3.357
+  iex> Solid.StandardFilter.modulo(-7, 3)
+  2
   """
   @spec modulo(term, term) :: number
   def modulo(dividend, divisor) do
-    dividend_decimal = to_decimal(dividend)
-    divisor_decimal = to_decimal(divisor)
-
-    if Decimal.equal?(Decimal.new(0), divisor_decimal) do
+    if Decimal.equal?(Decimal.new(0), to_decimal(divisor)) do
       raise %Solid.ArgumentError{message: "divided by 0"}
     end
 
-    result = Decimal.rem(dividend_decimal, divisor_decimal)
+    # The result takes the sign of the divisor
+    apply_operation(dividend, divisor, &Integer.mod/2, fn dividend, divisor ->
+      result = Decimal.rem(dividend, divisor)
 
-    if original_float?(dividend) or original_float?(divisor) do
-      decimal_to_float(result)
-    else
-      try_decimal_to_integer(result)
-    end
+      if Decimal.equal?(result, 0) or result.sign == divisor.sign do
+        result
+      else
+        Decimal.add(result, divisor)
+      end
+    end)
   end
 
   @doc """
@@ -592,16 +583,7 @@ defmodule Solid.StandardFilter do
   """
   @spec plus(term, term) :: number
   def plus(input, number) do
-    input
-    |> to_decimal()
-    |> Decimal.add(to_decimal(number))
-    |> then(fn result ->
-      if original_float?(input) or original_float?(number) do
-        decimal_to_float(result)
-      else
-        try_decimal_to_integer(result)
-      end
-    end)
+    apply_operation(input, number, &Kernel.+/2, &Decimal.add/2)
   end
 
   @doc """
@@ -871,12 +853,23 @@ defmodule Solid.StandardFilter do
     end)
   end
 
-  def round(input, _precision) when is_integer(input), do: input
+  def round(input, precision) when is_integer(input) do
+    precision = to_integer(precision)
+
+    if precision < 0 do
+      input
+      |> Decimal.new()
+      |> Decimal.round(precision)
+      |> Decimal.to_integer()
+    else
+      input
+    end
+  end
 
   def round(input, precision) when is_float(input) do
     precision = to_integer(precision)
 
-    if precision == 0 do
+    if precision <= 0 do
       Decimal.from_float(input)
       |> Decimal.round(precision)
       |> Decimal.to_integer()
@@ -1035,16 +1028,20 @@ defmodule Solid.StandardFilter do
   """
   @spec times(term, term) :: number
   def times(input, operand) do
-    input
-    |> to_decimal()
-    |> Decimal.mult(to_decimal(operand))
-    |> then(fn result ->
-      if original_float?(input) or original_float?(operand) do
-        decimal_to_float(result)
-      else
-        try_decimal_to_integer(result)
-      end
-    end)
+    apply_operation(input, operand, &Kernel.*/2, &Decimal.mult/2)
+  end
+
+  # Integers are operated on directly so big integers keep their precision
+  defp apply_operation(input, operand, integer_fun, decimal_fun) do
+    input_number = to_decimal(input)
+    operand_number = to_decimal(operand)
+
+    if original_float?(input) or original_float?(operand) do
+      decimal_fun.(input_number, operand_number)
+      |> decimal_to_float()
+    else
+      integer_fun.(Decimal.to_integer(input_number), Decimal.to_integer(operand_number))
+    end
   end
 
   @doc """
@@ -1408,7 +1405,9 @@ defmodule Solid.StandardFilter do
   defp to_decimal(input) when is_binary(input) do
     # It must accept "1ABC" being integer 1
     # It must NOT accept "1.0ABC" being float 1.0
+    # Surrounding whitespace is ignored
     # That's just how Liquid ruby does
+    input = String.trim(input)
 
     if Regex.match?(~r/\A-?\d+\.\d+\z/, input) do
       case Decimal.parse(input) do
@@ -1425,15 +1424,22 @@ defmodule Solid.StandardFilter do
 
   defp to_decimal(input) when is_integer(input), do: Decimal.new(input)
   defp to_decimal(input) when is_float(input), do: Decimal.from_float(input)
+  defp to_decimal(%Decimal{} = input), do: input
   defp to_decimal(_input), do: @zero
 
   defp decimal_to_float(value) do
-    if Decimal.integer?(value) do
-      Decimal.to_integer(value) + 0.0
-    else
-      value
-      |> Decimal.normalize()
-      |> Decimal.to_float()
+    cond do
+      # Infinity and NaN have no float representation on the BEAM
+      Decimal.inf?(value) or Decimal.nan?(value) ->
+        value
+
+      Decimal.integer?(value) ->
+        Decimal.to_integer(value) + 0.0
+
+      true ->
+        value
+        |> Decimal.normalize()
+        |> Decimal.to_float()
     end
   end
 
@@ -1446,6 +1452,10 @@ defmodule Solid.StandardFilter do
   end
 
   defp original_float?(input) when is_float(input), do: true
-  defp original_float?(input) when is_binary(input), do: Regex.match?(~r/\A-?\d+\.\d+\z/, input)
+  defp original_float?(%Decimal{}), do: true
+
+  defp original_float?(input) when is_binary(input),
+    do: Regex.match?(~r/\A-?\d+\.\d+\z/, String.trim(input))
+
   defp original_float?(_), do: false
 end
