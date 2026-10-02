@@ -232,7 +232,8 @@ defmodule Solid.LexerTest do
                 {:pipe, %{line: 1, column: 22}},
                 {:identifier, %{line: 1, column: 24}, "upcase"},
                 {:end, %{line: 1, column: 31}}
-              ], %ParserContext{rest: "", line: 1, column: 33, mode: :normal}} =
+              ],
+              %ParserContext{rest: "", line: 1, column: 33, mode: :normal}} =
                Lexer.tokenize_tag(context, allowed_tag_names: ["echo"])
     end
 
