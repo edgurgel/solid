@@ -134,17 +134,21 @@ defmodule Solid.Context do
     get_from_scopes(scopes, context, variable, :not_found)
   end
 
-  defp get_from_scope(context, :vars, variable) do
-    context.matcher_module.match(context.vars, variable)
+  defp get_from_scope(context, scope, variable)
+       when scope in [:vars, :counter_vars, :iteration_vars] do
+    data = Map.fetch!(context, scope)
+
+    # A scope is not a value the template can read properties of: `size` and
+    # `first` name a variable here, never the size or first entry of the scope
+    if missing_root?(data, variable),
+      do: {:error, :not_found},
+      else: context.matcher_module.match(data, variable)
   end
 
-  defp get_from_scope(context, :counter_vars, variable) do
-    context.matcher_module.match(context.counter_vars, variable)
-  end
+  defp missing_root?(data, [key | _]) when is_map(data) and not is_struct(data),
+    do: not Map.has_key?(data, key)
 
-  defp get_from_scope(context, :iteration_vars, variable) do
-    context.matcher_module.match(context.iteration_vars, variable)
-  end
+  defp missing_root?(_data, _variable), do: false
 
   # Walk scopes in priority order, returning the first non-nil match. A nil
   # match only wins if no lower-priority scope holds a non-nil value.
