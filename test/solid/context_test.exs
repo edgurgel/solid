@@ -110,6 +110,26 @@ defmodule Solid.ContextTest do
       context = %Context{vars: %{"x" => %{"a" => 1, "b" => 2, "size" => 42}}}
       assert Context.get_in(context, var, [:vars]) == {:ok, 42, context}
     end
+
+    test "size and first as variable names" do
+      for name <- ["size", "first"] do
+        var = %Variable{original_name: name, loc: @loc, identifier: name, accesses: []}
+        context = %Context{vars: %{name => "value"}}
+
+        assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+                 {:ok, "value", context}
+      end
+    end
+
+    test "size and first as undefined variables" do
+      for name <- ["size", "first"] do
+        var = %Variable{original_name: name, loc: @loc, identifier: name, accesses: []}
+        context = %Context{vars: %{"x" => 1}, iteration_vars: %{"y" => 2}}
+
+        assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+                 {:error, {:not_found, [name]}, context}
+      end
+    end
   end
 
   defmodule CustomMatcher do

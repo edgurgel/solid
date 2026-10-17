@@ -22,3 +22,6 @@ render with
 {% render "inner_argument" with my_name as name %}
 
 {% for i in (1..3) %}{% render 'item' for items %}{% endfor %}
+
+render with size and first as arguments
+{% render "size_argument", size: "big", first: "one" %}

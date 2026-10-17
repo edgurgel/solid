@@ -107,3 +107,9 @@
 {{ (1..3) }}|{% assign r = (1..int) %}{{ r }}|{{ r | join: "," }}
 
 ## end
+
+## root_size_first_undefined
+{{ size }}|{{ first }}|{% for x in arr %}{{ size }}{{ first }}{% endfor %}
+
+## root_size_first
+{% assign size = "big" %}{% assign first = "one" %}{{ size }}|{{ first }}|{% if size == "big" %}yes{% endif %}|{% for x in arr %}{{ size }}{% endfor %}
