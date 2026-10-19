@@ -13,6 +13,8 @@
   out of the input with `binary_part/3` instead of accumulating and reversing a byte
   buffer for every token
 * Check `blank` without allocating a trimmed copy of the string
+* Parse `comment` and `raw` tag bodies without copying the parser context on every
+  byte, and slice the `raw` body out of the input instead of building it byte by byte
 
 # 1.3.4 (2026-09-13)
 

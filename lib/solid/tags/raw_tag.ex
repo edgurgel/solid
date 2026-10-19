@@ -9,8 +9,8 @@ defmodule Solid.Tags.RawTag do
   def parse("raw", loc, context) do
     with {:ok, tokens, context} <- Solid.Lexer.tokenize_tag_end(context),
          {:tokens, [{:end, _}]} <- {:tokens, tokens},
-         {:ok, raw_body, context} <- parse_raw_body(context, [], []) do
-      {:ok, %__MODULE__{loc: loc, text: IO.iodata_to_binary(raw_body)}, context}
+         {:ok, raw_body, context} <- parse_raw_body(context) do
+      {:ok, %__MODULE__{loc: loc, text: raw_body}, context}
     else
       {:tokens, tokens} -> {:error, "Unexpected token", Solid.Parser.meta_head(tokens)}
       {:error, reason, _rest, loc} -> {:error, reason, loc}
@@ -18,77 +18,65 @@ defmodule Solid.Tags.RawTag do
     end
   end
 
-  @whitespaces [" ", "\f", "\r", "\t", "\v"]
+  @whitespace_bytes ~c" \f\r\t\v"
 
-  defp parse_raw_body(%ParserContext{mode: :normal} = context, buffer, trailing_ws) do
-    case context.rest do
+  defp parse_raw_body(%ParserContext{mode: :normal} = context) do
+    parse_raw_body(context.rest, 0, 0, context.line, context.column, context)
+  end
+
+  defp parse_raw_body(context) do
+    parse_liquid_raw_body(context.rest, 0, context.line, context.column, context)
+  end
+
+  defp parse_raw_body(text, len, keep, line, column, context) do
+    case text do
       <<"\n", rest::binary>> ->
-        trailing_ws = ["\n" | trailing_ws]
+        parse_raw_body(rest, len + 1, keep, line + 1, 1, context)
 
-        parse_raw_body(
-          %{context | rest: rest, line: context.line + 1, column: 1},
-          buffer,
-          trailing_ws
-        )
-
-      <<c::binary-size(1), rest::binary>> when c in @whitespaces ->
-        trailing_ws = [c | trailing_ws]
-        parse_raw_body(%{context | rest: rest, column: context.column + 1}, buffer, trailing_ws)
+      <<c, rest::binary>> when c in @whitespace_bytes ->
+        parse_raw_body(rest, len + 1, keep, line, column + 1, context)
 
       <<"{%", rest::binary>> ->
-        case Solid.Parser.maybe_tokenize_tag("endraw", context) do
-          {:tag, _tag_name, _tokens, context} ->
-            # check for whitespace control: {%-
-            if String.starts_with?(rest, "-") do
-              {:ok, Enum.reverse(buffer), context}
-            else
-              {:ok, Enum.reverse(trailing_ws ++ buffer), context}
-            end
+        case end_tag(text, line, column, context) do
+          # check for whitespace control: {%-
+          {:ok, end_context} ->
+            body_len = if match?(<<"-", _::binary>>, rest), do: keep, else: len
+            {:ok, binary_part(context.rest, 0, body_len), end_context}
 
-          {:not_found, context} ->
-            parse_raw_body(
-              %{context | rest: rest, column: context.column + 2},
-              ["{%" | trailing_ws ++ buffer],
-              []
-            )
+          :not_found ->
+            parse_raw_body(rest, len + 2, len + 2, line, column + 2, context)
         end
 
       "" ->
-        {:error, "Raw tag not terminated", %{line: context.line, column: context.column}}
+        {:error, "Raw tag not terminated", %{line: line, column: column}}
 
-      <<c, rest::binary>> ->
-        buffer = [c | trailing_ws ++ buffer]
-        parse_raw_body(%{context | rest: rest, column: context.column + 1}, buffer, [])
+      <<_c, rest::binary>> ->
+        parse_raw_body(rest, len + 1, len + 1, line, column + 1, context)
     end
   end
 
-  defp parse_raw_body(context, buffer, trailing_ws) do
-    case context.rest do
+  defp parse_liquid_raw_body(text, len, line, column, context) do
+    case text do
       <<"\n", rest::binary>> ->
-        case Solid.Parser.maybe_tokenize_tag("endraw", context) do
-          {:tag, _tag_name, _tokens, context} ->
-            {:ok, Enum.reverse(trailing_ws ++ buffer), context}
-
-          {:not_found, context} ->
-            trailing_ws = ["\n" | trailing_ws]
-
-            parse_raw_body(
-              %{context | rest: rest, line: context.line + 1, column: 1},
-              buffer,
-              trailing_ws
-            )
+        case end_tag(text, line, column, context) do
+          {:ok, end_context} -> {:ok, binary_part(context.rest, 0, len), end_context}
+          :not_found -> parse_liquid_raw_body(rest, len + 1, line + 1, 1, context)
         end
 
-      <<c::binary-size(1), rest::binary>> when c in @whitespaces ->
-        trailing_ws = [c | trailing_ws]
-        parse_raw_body(%{context | rest: rest, column: context.column + 1}, buffer, trailing_ws)
-
       "" ->
-        {:error, "Raw tag not terminated", %{line: context.line, column: context.column}}
+        {:error, "Raw tag not terminated", %{line: line, column: column}}
 
-      <<c, rest::binary>> ->
-        buffer = [c | trailing_ws ++ buffer]
-        parse_raw_body(%{context | rest: rest, column: context.column + 1}, buffer, [])
+      <<_c, rest::binary>> ->
+        parse_liquid_raw_body(rest, len + 1, line, column + 1, context)
+    end
+  end
+
+  defp end_tag(text, line, column, context) do
+    context = %{context | rest: text, line: line, column: column}
+
+    case Solid.Parser.maybe_tokenize_tag("endraw", context) do
+      {:tag, _tag_name, _tokens, context} -> {:ok, context}
+      {:not_found, _context} -> :not_found
     end
   end
 
