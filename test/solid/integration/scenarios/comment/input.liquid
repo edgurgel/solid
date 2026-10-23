@@ -27,3 +27,11 @@ hi {% myblock %}
 comment
 echo 'true'
 endcomment %}
+
+{% liquid
+comment
+foo endcomment
+echo 'still a comment'
+endcommentx
+endcomment
+echo 'after comment' %}

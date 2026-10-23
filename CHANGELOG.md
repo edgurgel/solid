@@ -6,6 +6,10 @@
   Unicode whitespace such as `U+00A0` (non-breaking space) or `U+3000` (ideographic
   space) is no longer stripped from blank tag bodies, and no longer compares equal to
   the `blank` literal
+* Inside `{% liquid %}`, `endcomment` now only ends a `comment` at the start of a line,
+  matching Ruby Liquid. Previously `endcomment` anywhere in the comment ended it, and a
+  line such as `endcommentx`, or an `endcomment` without the closing `%}`, raised
+  `MatchError` instead of returning a parse error
 
 ## Performance
 
