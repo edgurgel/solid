@@ -27,6 +27,42 @@ defmodule Solid.Tags.CommentTagTest do
     end
   end
 
+  describe "inside a liquid tag" do
+    defp render(template) do
+      with {:ok, template} <- Solid.parse(template) do
+        {:ok, template |> Solid.render!(%{}) |> IO.iodata_to_binary()}
+      end
+    end
+
+    test "endcomment ends the comment at the start of a line" do
+      assert render("{% liquid comment\nendcomment %}after") == {:ok, "after"}
+      assert render("{% liquid comment\n  endcomment\necho 1 %}after") == {:ok, "1after"}
+    end
+
+    test "endcomment in the middle of a line is part of the comment" do
+      template = "{% liquid comment\nfoo endcomment\necho 1\nendcomment %}after"
+      assert render(template) == {:ok, "after"}
+    end
+
+    test "a line starting with endcomment but naming another tag is part of the comment" do
+      assert render("{% liquid comment\nendcommentx\nendcomment %}after") == {:ok, "after"}
+    end
+
+    test "endcomment without the end of the liquid tag is an error" do
+      assert {:error, %Solid.TemplateError{errors: [error | _]}} =
+               render("{% liquid comment\nendcomment")
+
+      assert error.reason == "Comment tag not terminated"
+    end
+
+    test "endcomment only in the middle of a line leaves the comment unterminated" do
+      assert {:error, %Solid.TemplateError{errors: [error | _]}} =
+               render("{% liquid comment\nfoo endcomment %}after")
+
+      assert error.reason == "Comment tag not terminated"
+    end
+  end
+
   describe "Renderable impl" do
     test "does nothing" do
       template = ~s<{% comment %} {{ yo }} comment {% endcomment %}>

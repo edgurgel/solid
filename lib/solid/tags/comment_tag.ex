@@ -12,49 +12,50 @@ defmodule Solid.Tags.CommentTag do
     end
   end
 
-  @whitespaces [" ", "\f", "\r", "\t", "\v"]
+  # Inside a liquid tag each line is a tag, so `endcomment` can only end the
+  # comment at the start of a line: here for the first one, then after each newline
+  defp ignore_body(%{mode: :liquid_tag} = context) do
+    case end_tag(context.rest, context.line, context.column, context) do
+      {:ok, context} -> {:ok, context}
+      :not_found -> ignore_body(context.rest, context.line, context.column, :liquid_tag, context)
+    end
+  end
 
   defp ignore_body(context) do
-    case context.rest do
-      <<"\n", rest::binary>> ->
-        if context.mode == :liquid_tag do
-          case Solid.Parser.maybe_tokenize_tag("endcomment", context) do
-            {:tag, _tag_name, _tokens, context} ->
-              {:ok, context}
+    ignore_body(context.rest, context.line, context.column, :normal, context)
+  end
 
-            {:not_found, context} ->
-              ignore_body(%{context | rest: rest, line: context.line + 1, column: 1})
-          end
-        else
-          ignore_body(%{context | rest: rest, line: context.line + 1, column: 1})
+  defp ignore_body(text, line, column, mode, context) do
+    case text do
+      <<"\n", rest::binary>> when mode == :liquid_tag ->
+        case end_tag(text, line, column, context) do
+          {:ok, context} -> {:ok, context}
+          :not_found -> ignore_body(rest, line + 1, 1, mode, context)
         end
 
-      <<c::binary-size(1), rest::binary>> when c in @whitespaces ->
-        ignore_body(%{context | rest: rest, column: context.column + 1})
+      <<"\n", rest::binary>> ->
+        ignore_body(rest, line + 1, 1, mode, context)
 
       <<"{%", rest::binary>> ->
-        case Solid.Parser.maybe_tokenize_tag("endcomment", context) do
-          {:tag, _tag_name, _tokens, context} ->
-            {:ok, context}
-
-          {:not_found, context} ->
-            ignore_body(%{context | rest: rest, column: context.column + 2})
+        case end_tag(text, line, column, context) do
+          {:ok, context} -> {:ok, context}
+          :not_found -> ignore_body(rest, line, column + 2, mode, context)
         end
 
       "" ->
-        {:error, "Comment tag not terminated", %{line: context.line, column: context.column}}
-
-      "endcomment" <> _ ->
-        if context.mode == :liquid_tag do
-          {:tag, _, _, context} = Solid.Parser.maybe_tokenize_tag("endcomment", context)
-          {:ok, context}
-        else
-          <<_c, rest::binary>> = context.rest
-          ignore_body(%{context | rest: rest, line: context.line, column: context.column + 1})
-        end
+        {:error, "Comment tag not terminated", %{line: line, column: column}}
 
       <<_c, rest::binary>> ->
-        ignore_body(%{context | rest: rest, column: context.column + 1})
+        ignore_body(rest, line, column + 1, mode, context)
+    end
+  end
+
+  defp end_tag(text, line, column, context) do
+    context = %{context | rest: text, line: line, column: column}
+
+    case Solid.Parser.maybe_tokenize_tag("endcomment", context) do
+      {:tag, _tag_name, _tokens, context} -> {:ok, context}
+      {:not_found, _context} -> :not_found
     end
   end
 

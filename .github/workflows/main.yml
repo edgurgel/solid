@@ -31,11 +31,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Oldest supported Elixir (see mix.exs)
+          - otp: 27.x
+            elixir: 1.17.x
           - otp: 28.x
             elixir: 1.18.x
           - otp: 29.x
             elixir: 1.19.x
             coverage: true
+          - otp: 29.x
+            elixir: 1.20.x
     env:
       MIX_ENV: test
     steps:
