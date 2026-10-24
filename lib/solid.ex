@@ -150,6 +150,7 @@ defmodule Solid do
   @spec render(Template.t(), map, keyword) ::
           {:ok, result :: iolist, errors} | {:error, errors, partial_result :: iolist}
   @spec render(Parser.parse_tree(), Context.t(), keyword) :: {iolist, Context.t()}
+
   def render(template_or_text, values, options \\ [])
 
   def render(%Template{parsed_template: parse_tree, tags: tags}, context = %Context{}, options) do
@@ -220,7 +221,13 @@ defmodule Solid do
   end
 
   defp strict_errors?(errors, options) do
-    variable_errors? = Enum.any?(errors, &match?(%Solid.UndefinedVariableError{}, &1))
+    variable_errors? =
+      Enum.any?(errors, fn
+        %Solid.UndefinedVariableError{} -> true
+        %Solid.MatcherNotImplementedError{} -> true
+        _ -> false
+      end)
+
     filter_errors? = Enum.any?(errors, &match?(%Solid.UndefinedFilterError{}, &1))
 
     (options[:strict_variables] == true && variable_errors?) ||

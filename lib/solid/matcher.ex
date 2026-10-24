@@ -7,6 +7,7 @@ end
 defimpl Solid.Matcher, for: Any do
   def match(data, []), do: {:ok, data}
 
+  def match(%{__struct__: module}, _), do: {:error, {:protocol_not_implemented, module}}
   def match(_, _), do: {:error, :not_found}
 end
 

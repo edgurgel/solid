@@ -157,6 +157,7 @@ defmodule Solid.Context do
     case get_from_scope(context, scope, variable) do
       {:ok, nil} -> get_from_scopes(scopes, context, variable, :nil_found)
       {:ok, value} -> {:ok, value}
+      {:error, {:protocol_not_implemented, _} = reason} -> {:error, {reason, variable}}
       _error -> get_from_scopes(scopes, context, variable, found)
     end
   end

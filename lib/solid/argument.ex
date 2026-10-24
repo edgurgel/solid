@@ -6,7 +6,8 @@ defmodule Solid.Argument do
     Literal,
     StandardFilter,
     UndefinedVariableError,
-    Variable
+    Variable,
+    MatcherNotImplementedError
   }
 
   alias Solid.Parser.Loc
@@ -205,6 +206,21 @@ defmodule Solid.Argument do
             Context.put_errors(context, %UndefinedVariableError{
               variable: key,
               original_name: arg.original_name,
+              loc: arg.loc
+            })
+          else
+            context
+          end
+
+        {value, context} = apply_filters(nil, filters, context, opts)
+        {:ok, value, context}
+
+      {:error, {{:protocol_not_implemented, mod}, key}, context} ->
+        context =
+          if Keyword.get(opts, :strict_variables, false) do
+            Context.put_errors(context, %MatcherNotImplementedError{
+              struct: mod,
+              variable: key,
               loc: arg.loc
             })
           else
