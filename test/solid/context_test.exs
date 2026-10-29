@@ -171,6 +171,12 @@ defmodule Solid.ContextTest do
       context = %{context | iteration_vars: %{"x" => 1}}
       assert Context.get_in(context, var, [:iteration_vars]) == {:ok, 42, context}
     end
+
+    test "variable missing from the scope", %{context: context} do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+      context = %{context | vars: %{"y" => 1}}
+      assert Context.get_in(context, var, [:vars]) == {:ok, 42, context}
+    end
   end
 
   describe "run_cycle/2" do

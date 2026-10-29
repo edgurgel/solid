@@ -141,8 +141,9 @@ defmodule Solid.Context do
     data = Map.fetch!(context, scope)
 
     # A scope is not a value the template can read properties of: `size` and
-    # `first` name a variable here, never the size or first entry of the scope
-    if missing_root?(data, variable),
+    # `first` name a variable here, never the size or first entry of the scope.
+    # A custom matcher is still asked, as it may resolve names the map lacks
+    if context.matcher_module == Solid.Matcher and missing_root?(data, variable),
       do: {:error, :not_found},
       else: context.matcher_module.match(data, variable)
   end
