@@ -1,5 +1,12 @@
 # Unreleased
 
+## Enhancements
+
+* Looking up a key on a struct that does not implement `Solid.Matcher` (e.g. `{{ user.email }}`
+  where `user` is a plain struct) now reports `Solid.MatcherNotImplementedError` when
+  `strict_variables: true`, instead of `Solid.UndefinedVariableError`. This also applies to
+  built-in structs such as `Date` or `Decimal`. Non-strict rendering is unchanged (renders `nil`)
+
 ## Bug fixes
 
 * Only ASCII whitespace counts as `blank`, matching Ruby Liquid's `/\A\s*\z/` check.

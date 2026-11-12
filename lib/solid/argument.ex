@@ -4,10 +4,10 @@ defmodule Solid.Argument do
     Filter,
     Lexer,
     Literal,
+    MatcherNotImplementedError,
     StandardFilter,
     UndefinedVariableError,
-    Variable,
-    MatcherNotImplementedError
+    Variable
   }
 
   alias Solid.Parser.Loc
@@ -221,6 +221,7 @@ defmodule Solid.Argument do
             Context.put_errors(context, %MatcherNotImplementedError{
               struct: mod,
               variable: key,
+              original_name: arg.original_name,
               loc: arg.loc
             })
           else

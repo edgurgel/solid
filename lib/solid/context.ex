@@ -36,7 +36,9 @@ defmodule Solid.Context do
   Possible scope values: :counter_vars, :vars or :iteration_vars
   """
   @spec get_in(t, Variable.t(), [scope], keyword) ::
-          {:ok, term, t} | {:error, {:not_found, [term()]}, t}
+          {:ok, term, t}
+          | {:error, {:not_found, [term()]}, t}
+          | {:error, {{:protocol_not_implemented, module}, [term()]}, t}
   def get_in(context, variable, scopes, opts \\ []) do
     {keys, context} =
       Enum.reduce(variable.accesses, {[], context}, fn access, {keys, context} ->

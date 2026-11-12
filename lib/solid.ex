@@ -9,6 +9,7 @@ defmodule Solid do
   @type errors :: [error]
   @type error ::
           Solid.UndefinedVariableError.t()
+          | Solid.MatcherNotImplementedError.t()
           | Solid.UndefinedFilterError.t()
           | Solid.ArgumentError.t()
           | Solid.WrongFilterArityError.t()
@@ -150,7 +151,6 @@ defmodule Solid do
   @spec render(Template.t(), map, keyword) ::
           {:ok, result :: iolist, errors} | {:error, errors, partial_result :: iolist}
   @spec render(Parser.parse_tree(), Context.t(), keyword) :: {iolist, Context.t()}
-
   def render(template_or_text, values, options \\ [])
 
   def render(%Template{parsed_template: parse_tree, tags: tags}, context = %Context{}, options) do
