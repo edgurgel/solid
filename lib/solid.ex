@@ -9,6 +9,7 @@ defmodule Solid do
   @type errors :: [error]
   @type error ::
           Solid.UndefinedVariableError.t()
+          | Solid.MatcherNotImplementedError.t()
           | Solid.UndefinedFilterError.t()
           | Solid.ArgumentError.t()
           | Solid.WrongFilterArityError.t()
@@ -220,7 +221,13 @@ defmodule Solid do
   end
 
   defp strict_errors?(errors, options) do
-    variable_errors? = Enum.any?(errors, &match?(%Solid.UndefinedVariableError{}, &1))
+    variable_errors? =
+      Enum.any?(errors, fn
+        %Solid.UndefinedVariableError{} -> true
+        %Solid.MatcherNotImplementedError{} -> true
+        _ -> false
+      end)
+
     filter_errors? = Enum.any?(errors, &match?(%Solid.UndefinedFilterError{}, &1))
 
     (options[:strict_variables] == true && variable_errors?) ||
