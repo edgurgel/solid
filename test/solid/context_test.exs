@@ -176,20 +176,23 @@ defmodule Solid.ContextTest do
       assert Context.get_in(context, var, [:iteration_vars]) == {:ok, 42, context}
     end
 
-    test "variable missing from the scope is not asked to the matcher", %{context: context} do
+    test "variable missing from vars or iteration_vars is not asked to the matcher",
+         %{context: context} do
       var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
-      context = %{context | vars: %{"y" => 1}}
-      assert Context.get_in(context, var, [:vars]) == {:error, {:not_found, ["x"]}, context}
-    end
+      context = %{context | vars: %{"y" => 1}, iteration_vars: %{"z" => 2}}
 
-    test "variable missing from every scope", %{context: context} do
-      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
-
-      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+      assert Context.get_in(context, var, [:iteration_vars, :vars]) ==
                {:error, {:not_found, ["x"]}, context}
     end
 
-    test "non plain map scope is still given to the matcher", %{context: context} do
+    test "variable missing from counter_vars is still asked to the matcher",
+         %{context: context} do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+      context = %{context | counter_vars: %{"y" => 1}}
+      assert Context.get_in(context, var, [:counter_vars]) == {:ok, 42, context}
+    end
+
+    test "non plain map counter_vars is still given to the matcher", %{context: context} do
       var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
       context = %{context | counter_vars: %StructData{}}
       assert Context.get_in(context, var, [:counter_vars]) == {:ok, 42, context}
@@ -215,12 +218,29 @@ defmodule Solid.ContextTest do
       end
     end
 
-    test "size and first as undefined variables", %{context: context} do
+    test "size and first in counter_vars after missing from vars and iteration_vars",
+         %{context: context} do
+      for name <- ["size", "first"] do
+        var = %Variable{original_name: name, loc: @loc, identifier: name, accesses: []}
+
+        context = %{
+          context
+          | vars: %{"x" => 1},
+            iteration_vars: %{"y" => 2},
+            counter_vars: %{name => "value"}
+        }
+
+        assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+                 {:ok, "value", context}
+      end
+    end
+
+    test "size and first missing from vars and iteration_vars", %{context: context} do
       for name <- ["size", "first"] do
         var = %Variable{original_name: name, loc: @loc, identifier: name, accesses: []}
         context = %{context | vars: %{"x" => 1}, iteration_vars: %{"y" => 2}}
 
-        assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+        assert Context.get_in(context, var, [:iteration_vars, :vars]) ==
                  {:error, {:not_found, [name]}, context}
       end
     end

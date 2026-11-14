@@ -1,15 +1,5 @@
 # 1.4.0 (2026-11-15)
 
-## Upgrade notes
-
-* **Custom `matcher_module`:** the matcher is no longer asked about a variable name that no
-  scope holds, so it can't make up root variables from a plain-map render data anymore. A
-  matcher that answered e.g. `{{ now }}` without `"now"` being in the render data now renders
-  nothing (or reports `Solid.UndefinedVariableError` with `strict_variables: true`). To keep
-  such a variable, either put it in the render data, or pass the render data as a struct: a
-  struct is still handed to the matcher for every name. See "Using structs in context" in the
-  README (#215)
-
 ## Enhancements
 
 * Looking up a key on a struct that does not implement `Solid.Matcher` (e.g. `{{ user.email }}`
@@ -30,9 +20,14 @@
 * Variables named `size` or `first` now read their own value, matching Ruby Liquid.
   Previously `{% assign size = "big" %}{{ size }}` rendered `0` (the size of Solid's
   internal loop scope), an undefined `{{ first }}` rendered the first render variable,
-  and `{{ first }}` inside a `for` loop raised `Protocol.UndefinedError`. This applies
-  to the default `Solid.Matcher` and to custom matcher modules (see Upgrade notes).
-  `hash.size` and `hash.first` are unchanged (#215)
+  and `{{ first }}` inside a `for` loop raised `Protocol.UndefinedError`. `hash.size`
+  and `hash.first` are unchanged (#215)
+* A custom `matcher_module` is no longer asked about a name missing from the `for` loop
+  or `assign`ed variables, so `size` and `first` read their own value there too. It is
+  still asked about every name in the render data. A matcher that hands the whole render
+  data to `Solid.Matcher` still reads an undefined `size`/`first` as the render data's
+  size or first entry, in `{{ size }}` and as the starting value of `{% increment size %}`
+  or `{% decrement size %}`: see the README for a matcher that avoids it (#215)
 
 ## Performance
 

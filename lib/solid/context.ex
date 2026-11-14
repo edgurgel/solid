@@ -140,15 +140,19 @@ defmodule Solid.Context do
        when scope in [:vars, :counter_vars, :iteration_vars] do
     data = Map.fetch!(context, scope)
 
-    # A scope is Solid's own storage, not a value the template can read
-    # properties of: `size` and `first` name a variable here, never the size or
-    # first entry of the scope. So no matcher, default or custom, is asked about
-    # a name a plain-map scope lacks. Render data that is not a plain map (e.g.
-    # a struct) still goes to the matcher, which then resolves every name
-    if missing_root?(data, variable),
+    # A scope is not a value the template can read properties of: `size` and
+    # `first` name a variable here, never the size or first entry of the scope.
+    # So a matcher is not asked about a name a plain-map scope lacks
+    if guarded_scope?(context, scope) and missing_root?(data, variable),
       do: {:error, :not_found},
       else: context.matcher_module.match(data, variable)
   end
+
+  # `iteration_vars` and `vars` are built by Solid, always with string keys.
+  # `counter_vars` holds the render data, which a custom matcher may resolve
+  # in its own way (e.g. atom keys), so it is handed every name there
+  defp guarded_scope?(_context, scope) when scope in [:iteration_vars, :vars], do: true
+  defp guarded_scope?(context, :counter_vars), do: context.matcher_module == Solid.Matcher
 
   defp missing_root?(data, [key | _]) when is_map(data) and not is_struct(data),
     do: not Map.has_key?(data, key)

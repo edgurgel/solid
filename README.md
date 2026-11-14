@@ -209,26 +209,29 @@ end
 Solid.render!(template, %{"number" => 4}, matcher_module: MyMatcher)
 ```
 
-A variable's name is looked up in Solid's scopes (`for` loop variables, then `assign`ed
-variables, then the render data) and the matcher is only asked about a scope that holds that
-name. With the example above, `{{ number }}` renders `42`, but `{{ missing }}` renders nothing,
-since no scope holds `missing`.
+The matcher is called with a scope and the variable's full path, e.g.
+`match(render_data, ["user", "email"])` for `{{ user.email }}`. Solid looks a name up in `for`
+loop variables, then `assign`ed variables, then the render data. The matcher is asked about loop
+and `assign`ed variables only when the scope holds that name, and about every name in the render
+data, so it can resolve them its own way (e.g. atom keys or computed values).
 
-To resolve names that are not keys of a map, such as loading them on demand, pass the render
-data as a struct. The matcher then resolves every name in it:
+`Solid.Matcher` reads `size` and `first` on a map as its size and first entry. A matcher that
+hands the whole render data to `Solid.Matcher` therefore renders an undefined `{{ size }}` as the
+size of the render data, and `{% increment size %}` starts counting from it, since
+`increment`/`decrement` counters are kept alongside the render data. To avoid that, look the root
+name up yourself and hand only the rest of the path to `Solid.Matcher`:
 
 ```elixir
-defmodule LazyData do
-  defstruct [:loader]
-end
+defmodule RootLookupMatcher do
+  def match(data, [root | keys]) when is_map(data) and not is_struct(data) do
+    case Map.fetch(data, root) do
+      {:ok, value} -> Solid.Matcher.match(value, keys)
+      :error -> {:error, :not_found}
+    end
+  end
 
-defmodule LazyMatcher do
-  def match(%LazyData{loader: loader}, [key | keys]), do: Solid.Matcher.match(loader.(key), keys)
   def match(data, keys), do: Solid.Matcher.match(data, keys)
 end
-
-data = %LazyData{loader: fn "now" -> DateTime.utc_now(); _ -> nil end}
-Solid.render!(template, data, matcher_module: LazyMatcher)
 ```
 
 ## Sigil Support

@@ -8,6 +8,7 @@ defmodule SolidTest do
     @impl true
     def read_template_file("error", _opts), do: {:ok, "{% error %}"}
     def read_template_file("missing_var", _opts), do: {:ok, "{{ var3 }}"}
+    def read_template_file("size_args", _opts), do: {:ok, "[{{ size }}|{{ first }}]"}
   end
 
   describe "parser/2" do
@@ -359,6 +360,24 @@ defmodule SolidTest do
     def match(data, keys), do: Solid.Matcher.match(data, keys)
   end
 
+  defmodule AtomKeysMatcher do
+    def match(data, []), do: {:ok, data}
+
+    def match(data, [key | keys]) when is_map(data) and is_binary(key) do
+      case Map.fetch(data, String.to_atom(key)) do
+        {:ok, value} -> match(value, keys)
+        :error -> Solid.Matcher.match(data, [key | keys])
+      end
+    end
+
+    def match(data, keys), do: Solid.Matcher.match(data, keys)
+  end
+
+  defmodule GlobalsMatcher do
+    def match(data, ["today"]) when not is_map_key(data, "today"), do: {:ok, "2026-11-15"}
+    def match(data, keys), do: Solid.Matcher.match(data, keys)
+  end
+
   defmodule LazyData do
     defstruct [:loader]
   end
@@ -378,7 +397,10 @@ defmodule SolidTest do
     defp render_with(template, data, matcher) do
       template
       |> Solid.parse!()
-      |> Solid.render!(data, matcher_module: matcher)
+      |> Solid.render!(data,
+        matcher_module: matcher,
+        file_system: {TestFileSystem, nil}
+      )
       |> IO.iodata_to_binary()
     end
 
@@ -392,19 +414,69 @@ defmodule SolidTest do
                "big|one|bigonebigone|1\n"
     end
 
-    test "undefined size and first with a matcher delegating to Solid.Matcher" do
-      template = "[{{ size }}|{{ first }}|{% for x in (1..2) %}{{ size }}{{ first }}{% endfor %}]"
-      assert render_with(template, %{"x" => 1}, DelegatingMatcher) == "[||]"
+    test "size and first as render arguments with a matcher delegating to Solid.Matcher" do
+      template = ~S({% render "size_args", size: "big", first: "one" %})
+      assert render_with(template, %{}, DelegatingMatcher) == "[big|one]"
+    end
+
+    test "undefined size and first with a matcher that looks up the root name itself" do
+      template =
+        ~S'[{{ size }}|{{ first }}|{% for x in (1..2) %}{{ size }}{{ first }}{% endfor %}]' <>
+          ~S({% render "size_args" %})
+
+      assert render_with(template, %{"x" => 1}, Solid.RootLookupMatcher) == "[||][|]"
+    end
+
+    test "increment and decrement on undefined size and first" do
+      template =
+        ~S({% increment size %}{% increment size %}{% decrement first %}|{{ size }}|{{ first }})
+
+      for matcher <- [Solid.Matcher, Solid.RootLookupMatcher] do
+        assert render_with(template, %{"a" => 1, "b" => 2}, matcher) == "01-1|2|-1"
+      end
+    end
+
+    test "increment starts from a size or first defined in the render data" do
+      template = ~S({% increment size %}{% decrement first %}|{{ size }}|{{ first }})
+
+      assert render_with(template, %{"size" => 5, "first" => 7}, DelegatingMatcher) ==
+               "56|6|6"
     end
 
     test "undefined size reports an undefined variable with strict_variables" do
       {:error, errors, result} =
         "{{ size }}"
         |> Solid.parse!()
-        |> Solid.render(%{}, matcher_module: DelegatingMatcher, strict_variables: true)
+        |> Solid.render(%{}, matcher_module: Solid.RootLookupMatcher, strict_variables: true)
 
       assert IO.iodata_to_binary(result) == ""
       assert [%Solid.UndefinedVariableError{variable: ["size"]}] = errors
+    end
+
+    test "render data with atom keys" do
+      data = %{name: "Ann", user: %{email: "a@x"}, size: "big", first: "one"}
+
+      assert render_with(
+               "{{ name }}|{{ user.email }}|{{ size }}|{{ first }}",
+               data,
+               AtomKeysMatcher
+             ) ==
+               "Ann|a@x|big|one"
+    end
+
+    test "size and first assigned or looped over with atom keys in render data" do
+      template =
+        ~S'{% assign size = "s" %}{{ size }}|{% for first in (1..2) %}{{ size }}{{ first }}{% endfor %}|{{ first }}'
+
+      assert render_with(template, %{first: "one"}, AtomKeysMatcher) == "s|s1s2|one"
+    end
+
+    test "a matcher answering for a name missing from the render data" do
+      assert render_with("{{ today }}|{{ number }}", %{"number" => 4}, GlobalsMatcher) ==
+               "2026-11-15|4"
+
+      assert render_with("{{ number }}|{{ missing }}", %{"number" => 4}, AnswerEverythingMatcher) ==
+               "42|42"
     end
 
     test "render data that is not a plain map is resolved by the matcher" do
@@ -418,11 +490,6 @@ defmodule SolidTest do
       template = ~S({% assign size = "big" %}{{ user.name }}|{{ size }}|{{ missing }})
 
       assert render_with(template, data, LazyMatcher) == "Ed|big|"
-    end
-
-    test "names missing from plain map scopes are not asked to the matcher" do
-      assert render_with("{{ number }}|{{ missing }}", %{"number" => 4}, AnswerEverythingMatcher) ==
-               "42|"
     end
   end
 end
