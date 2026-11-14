@@ -1,5 +1,13 @@
 # Unreleased
 
+## Breaking changes
+
+* A custom `matcher_module` is no longer asked about a variable name that no scope holds.
+  `{{ missing }}` now renders nothing even if the matcher would answer for it, and with
+  `strict_variables: true` it reports `Solid.UndefinedVariableError`. Matchers that made up
+  root variables (e.g. a `now` global) must either put them in the render data, or receive
+  the render data as a struct, which is still handed to the matcher for every name (#215)
+
 ## Enhancements
 
 * Looking up a key on a struct that does not implement `Solid.Matcher` (e.g. `{{ user.email }}`
@@ -17,6 +25,12 @@
   matching Ruby Liquid. Previously `endcomment` anywhere in the comment ended it, and a
   line such as `endcommentx`, or an `endcomment` without the closing `%}`, raised
   `MatchError` instead of returning a parse error
+* Variables named `size` or `first` now read their own value, matching Ruby Liquid.
+  Previously `{% assign size = "big" %}{{ size }}` rendered `0` (the size of Solid's
+  internal loop scope), an undefined `{{ first }}` rendered the first render variable,
+  and `{{ first }}` inside a `for` loop raised `Protocol.UndefinedError`. This applies
+  to the default `Solid.Matcher` and to custom matcher modules. `hash.size` and
+  `hash.first` are unchanged (#215)
 
 ## Performance
 

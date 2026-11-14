@@ -354,4 +354,75 @@ defmodule SolidTest do
                    end
     end
   end
+
+  defmodule DelegatingMatcher do
+    def match(data, keys), do: Solid.Matcher.match(data, keys)
+  end
+
+  defmodule LazyData do
+    defstruct [:loader]
+  end
+
+  defmodule LazyMatcher do
+    def match(%LazyData{loader: loader}, [key | keys]),
+      do: Solid.Matcher.match(loader.(key), keys)
+
+    def match(data, keys), do: Solid.Matcher.match(data, keys)
+  end
+
+  defmodule AnswerEverythingMatcher do
+    def match(_data, _keys), do: {:ok, 42}
+  end
+
+  describe "matcher_module" do
+    defp render_with(template, data, matcher) do
+      template
+      |> Solid.parse!()
+      |> Solid.render!(data, matcher_module: matcher)
+      |> IO.iodata_to_binary()
+    end
+
+    test "size and first as variable names with a matcher delegating to Solid.Matcher" do
+      template = """
+      {%- assign size = "big" -%}
+      {{ size }}|{{ first }}|{% for x in (1..2) %}{{ size }}{{ first }}{% endfor %}|{{ h.size }}
+      """
+
+      assert render_with(template, %{"first" => "one", "h" => %{"a" => 1}}, DelegatingMatcher) ==
+               "big|one|bigonebigone|1\n"
+    end
+
+    test "undefined size and first with a matcher delegating to Solid.Matcher" do
+      template = "[{{ size }}|{{ first }}|{% for x in (1..2) %}{{ size }}{{ first }}{% endfor %}]"
+      assert render_with(template, %{"x" => 1}, DelegatingMatcher) == "[||]"
+    end
+
+    test "undefined size reports an undefined variable with strict_variables" do
+      {:error, errors, result} =
+        "{{ size }}"
+        |> Solid.parse!()
+        |> Solid.render(%{}, matcher_module: DelegatingMatcher, strict_variables: true)
+
+      assert IO.iodata_to_binary(result) == ""
+      assert [%Solid.UndefinedVariableError{variable: ["size"]}] = errors
+    end
+
+    test "render data that is not a plain map is resolved by the matcher" do
+      data = %LazyData{
+        loader: fn
+          "user" -> %{"name" => "Ed"}
+          _ -> nil
+        end
+      }
+
+      template = ~S({% assign size = "big" %}{{ user.name }}|{{ size }}|{{ missing }})
+
+      assert render_with(template, data, LazyMatcher) == "Ed|big|"
+    end
+
+    test "names missing from plain map scopes are not asked to the matcher" do
+      assert render_with("{{ number }}|{{ missing }}", %{"number" => 4}, AnswerEverythingMatcher) ==
+               "42|"
+    end
+  end
 end

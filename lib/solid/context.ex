@@ -140,10 +140,12 @@ defmodule Solid.Context do
        when scope in [:vars, :counter_vars, :iteration_vars] do
     data = Map.fetch!(context, scope)
 
-    # A scope is not a value the template can read properties of: `size` and
-    # `first` name a variable here, never the size or first entry of the scope.
-    # A custom matcher is still asked, as it may resolve names the map lacks
-    if context.matcher_module == Solid.Matcher and missing_root?(data, variable),
+    # A scope is Solid's own storage, not a value the template can read
+    # properties of: `size` and `first` name a variable here, never the size or
+    # first entry of the scope. So no matcher, default or custom, is asked about
+    # a name a plain-map scope lacks. Render data that is not a plain map (e.g.
+    # a struct) still goes to the matcher, which then resolves every name
+    if missing_root?(data, variable),
       do: {:error, :not_found},
       else: context.matcher_module.match(data, variable)
   end

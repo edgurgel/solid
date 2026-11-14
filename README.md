@@ -209,6 +209,28 @@ end
 Solid.render!(template, %{"number" => 4}, matcher_module: MyMatcher)
 ```
 
+A variable's name is looked up in Solid's scopes (`for` loop variables, then `assign`ed
+variables, then the render data) and the matcher is only asked about a scope that holds that
+name. With the example above, `{{ number }}` renders `42`, but `{{ missing }}` renders nothing,
+since no scope holds `missing`.
+
+To resolve names that are not keys of a map, such as loading them on demand, pass the render
+data as a struct. The matcher then resolves every name in it:
+
+```elixir
+defmodule LazyData do
+  defstruct [:loader]
+end
+
+defmodule LazyMatcher do
+  def match(%LazyData{loader: loader}, [key | keys]), do: Solid.Matcher.match(loader.(key), keys)
+  def match(data, keys), do: Solid.Matcher.match(data, keys)
+end
+
+data = %LazyData{loader: fn "now" -> DateTime.utc_now(); _ -> nil end}
+Solid.render!(template, data, matcher_module: LazyMatcher)
+```
+
 ## Sigil Support
 
 Solid provides a `~LIQUID` sigil for validating and compiling templates at compile time:

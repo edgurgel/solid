@@ -1,0 +1,26 @@
+## render data
+{{ size }}|{{ first }}|{{ last }}
+
+## inside for
+{% for x in arr %}{{ size }}{{ first }}{{ last }}{% endfor %}
+
+## nested for
+{% for x in arr %}{% for y in arr %}{{ size }}{{ first }}{% endfor %}{% endfor %}
+
+## tablerow
+{% tablerow x in arr %}{{ size }}{{ first }}{% endtablerow %}
+
+## conditions and filters
+{% if size == "big" %}yes{% endif %}|{% unless first == "one" %}no{% endunless %}|{{ size | upcase }}|{{ first | size }}|{% case size %}{% when "big" %}case{% endcase %}
+
+## loop variable named size
+{% for size in arr %}{{ size }}{% endfor %}|{{ size }}
+
+## property access
+{{ h.size }}|{{ h.first }}|{{ arr.size }}|{{ arr.first }}|{{ arr.last }}|{{ sized.size }}|{{ sized.first }}|{{ size.size }}|{{ first.first }}
+
+## render
+{% render "show", size: size, first: first, last: last %}|{% render "show" %}|{% render "show" for arr as size %}|{% render "show" with first as first %}
+
+## assign and capture shadow render data
+{% assign size = "small" %}{% capture first %}two{% endcapture %}{{ size }}|{{ first }}|{% for x in arr %}{{ size }}{{ first }}{% endfor %}

@@ -25,3 +25,6 @@ render with
 
 render with size and first as arguments
 {% render "size_argument", size: "big", first: "one" %}
+
+render for and with, with size and first undefined
+{% render "size_argument" for items %}|{% render "size_argument" with "big" as size %}|{% render "size_argument" for names as first %}

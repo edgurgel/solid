@@ -136,6 +136,10 @@ defmodule Solid.ContextTest do
     def match(_, _), do: {:ok, 42}
   end
 
+  defmodule StructData do
+    defstruct []
+  end
+
   describe "get_in/3 with custom matcher module" do
     setup do
       context = %Context{matcher_module: CustomMatcher}
@@ -172,10 +176,71 @@ defmodule Solid.ContextTest do
       assert Context.get_in(context, var, [:iteration_vars]) == {:ok, 42, context}
     end
 
-    test "variable missing from the scope", %{context: context} do
+    test "variable missing from the scope is not asked to the matcher", %{context: context} do
       var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
       context = %{context | vars: %{"y" => 1}}
-      assert Context.get_in(context, var, [:vars]) == {:ok, 42, context}
+      assert Context.get_in(context, var, [:vars]) == {:error, {:not_found, ["x"]}, context}
+    end
+
+    test "variable missing from every scope", %{context: context} do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+
+      assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+               {:error, {:not_found, ["x"]}, context}
+    end
+
+    test "non plain map scope is still given to the matcher", %{context: context} do
+      var = %Variable{original_name: "x", loc: @loc, identifier: "x", accesses: []}
+      context = %{context | counter_vars: %StructData{}}
+      assert Context.get_in(context, var, [:counter_vars]) == {:ok, 42, context}
+    end
+  end
+
+  defmodule DelegatingMatcher do
+    def match(data, keys), do: Solid.Matcher.match(data, keys)
+  end
+
+  describe "get_in/3 with a matcher delegating to Solid.Matcher" do
+    setup do
+      {:ok, context: %Context{matcher_module: DelegatingMatcher}}
+    end
+
+    test "size and first as variable names", %{context: context} do
+      for name <- ["size", "first"] do
+        var = %Variable{original_name: name, loc: @loc, identifier: name, accesses: []}
+        context = %{context | vars: %{name => "value"}}
+
+        assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+                 {:ok, "value", context}
+      end
+    end
+
+    test "size and first as undefined variables", %{context: context} do
+      for name <- ["size", "first"] do
+        var = %Variable{original_name: name, loc: @loc, identifier: name, accesses: []}
+        context = %{context | vars: %{"x" => 1}, iteration_vars: %{"y" => 2}}
+
+        assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+                 {:error, {:not_found, [name]}, context}
+      end
+    end
+
+    test "size and first of a hash", %{context: context} do
+      for {name, expected} <- [{"size", 2}, {"first", {"a", 1}}] do
+        accesses = [%AccessLiteral{loc: @loc, access_type: :dot, value: name}]
+
+        var = %Variable{
+          original_name: "h.#{name}",
+          loc: @loc,
+          identifier: "h",
+          accesses: accesses
+        }
+
+        context = %{context | vars: %{"h" => %{"a" => 1, "b" => 2}}}
+
+        assert Context.get_in(context, var, [:iteration_vars, :vars, :counter_vars]) ==
+                 {:ok, expected, context}
+      end
     end
   end
 

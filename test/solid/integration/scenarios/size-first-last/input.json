@@ -1,0 +1,4 @@
+{
+  "size": "big", "first": "one", "last": "end",
+  "arr": [1, 2], "h": {"a": 1, "b": 2}, "sized": {"size": 99, "first": "F"}
+}
