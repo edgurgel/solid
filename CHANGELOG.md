@@ -1,12 +1,14 @@
-# Unreleased
+# 1.4.0 (2026-11-15)
 
-## Breaking changes
+## Upgrade notes
 
-* A custom `matcher_module` is no longer asked about a variable name that no scope holds.
-  `{{ missing }}` now renders nothing even if the matcher would answer for it, and with
-  `strict_variables: true` it reports `Solid.UndefinedVariableError`. Matchers that made up
-  root variables (e.g. a `now` global) must either put them in the render data, or receive
-  the render data as a struct, which is still handed to the matcher for every name (#215)
+* **Custom `matcher_module`:** the matcher is no longer asked about a variable name that no
+  scope holds, so it can't make up root variables from a plain-map render data anymore. A
+  matcher that answered e.g. `{{ now }}` without `"now"` being in the render data now renders
+  nothing (or reports `Solid.UndefinedVariableError` with `strict_variables: true`). To keep
+  such a variable, either put it in the render data, or pass the render data as a struct: a
+  struct is still handed to the matcher for every name. See "Using structs in context" in the
+  README (#215)
 
 ## Enhancements
 
@@ -29,8 +31,8 @@
   Previously `{% assign size = "big" %}{{ size }}` rendered `0` (the size of Solid's
   internal loop scope), an undefined `{{ first }}` rendered the first render variable,
   and `{{ first }}` inside a `for` loop raised `Protocol.UndefinedError`. This applies
-  to the default `Solid.Matcher` and to custom matcher modules. `hash.size` and
-  `hash.first` are unchanged (#215)
+  to the default `Solid.Matcher` and to custom matcher modules (see Upgrade notes).
+  `hash.size` and `hash.first` are unchanged (#215)
 
 ## Performance
 
