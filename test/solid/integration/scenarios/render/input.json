@@ -3,5 +3,6 @@
     "name": "my_product"
   },
   "my_var": "42",
-  "items" : [{"title" : "one"}, {"title" : "two"}]
+  "items" : [{"title" : "one"}, {"title" : "two"}],
+  "names" : ["one", "two"]
 }

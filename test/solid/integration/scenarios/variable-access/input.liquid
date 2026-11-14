@@ -107,3 +107,15 @@
 {{ (1..3) }}|{% assign r = (1..int) %}{{ r }}|{{ r | join: "," }}
 
 ## end
+
+## root_size_first_undefined
+{{ size }}|{{ first }}|{% for x in arr %}{{ size }}{{ first }}{% endfor %}
+
+## root_size_first
+{% assign size = "big" %}{% assign first = "one" %}{{ size }}|{{ first }}|{% if size == "big" %}yes{% endif %}|{% for x in arr %}{{ size }}{% endfor %}
+
+## root_size_first_last_undefined_in_tags
+{% tablerow x in arr %}{{ size }}{{ first }}{{ last }}{% endtablerow %}|{% for x in arr %}{% for y in arr %}{{ size }}{{ first }}{% endfor %}{% endfor %}|{{ last }}|{% if size %}defined{% else %}undefined{% endif %}|{{ size | default: "fallback" }}
+
+## root_size_first_increment
+{% increment size %}{% increment size %}{% decrement first %}{{ size }}|{{ first }}

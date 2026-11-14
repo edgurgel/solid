@@ -209,6 +209,31 @@ end
 Solid.render!(template, %{"number" => 4}, matcher_module: MyMatcher)
 ```
 
+The matcher is called with a scope and the variable's full path, e.g.
+`match(render_data, ["user", "email"])` for `{{ user.email }}`. Solid looks a name up in `for`
+loop variables, then `assign`ed variables, then the render data. The matcher is asked about loop
+and `assign`ed variables only when the scope holds that name, and about every name in the render
+data, so it can resolve them its own way (e.g. atom keys or computed values).
+
+`Solid.Matcher` reads `size` and `first` on a map as its size and first entry. A matcher that
+hands the whole render data to `Solid.Matcher` therefore renders an undefined `{{ size }}` as the
+size of the render data, and `{% increment size %}` starts counting from it, since
+`increment`/`decrement` counters are kept alongside the render data. To avoid that, look the root
+name up yourself and hand only the rest of the path to `Solid.Matcher`:
+
+```elixir
+defmodule RootLookupMatcher do
+  def match(data, [root | keys]) when is_map(data) and not is_struct(data) do
+    case Map.fetch(data, root) do
+      {:ok, value} -> Solid.Matcher.match(value, keys)
+      :error -> {:error, :not_found}
+    end
+  end
+
+  def match(data, keys), do: Solid.Matcher.match(data, keys)
+end
+```
+
 ## Sigil Support
 
 Solid provides a `~LIQUID` sigil for validating and compiling templates at compile time:

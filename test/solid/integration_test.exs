@@ -21,5 +21,13 @@ for scenario <- File.ls!(scenarios_dir) do
       opts = [custom_filters: Solid.CustomFilters]
       assert_render(liquid_input, json_input, @template_directory, opts)
     end
+
+    @tag scenario: scenario
+    test "scenario #{scenario} with a custom matcher_module" do
+      liquid_input = File.read!(@liquid_input_file)
+      json_input = File.read!(@json_input_file)
+      opts = [custom_filters: Solid.CustomFilters, matcher_module: Solid.RootLookupMatcher]
+      assert_render(liquid_input, json_input, @template_directory, opts)
+    end
   end
 end

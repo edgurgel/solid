@@ -141,7 +141,10 @@ defmodule Solid do
 
   - `strict_filters`: if `true`, it collects an error when a filter is referenced in the template, but not built-in or provided via `custom_filters`
 
-  - `matcher_module`: a module to replace `Solid.Matcher` when resolving variables.
+  - `matcher_module`: a module to replace `Solid.Matcher` when resolving variables. It is called
+  with the scope a variable is looked up in and the variable's full path. It is asked about a loop
+  or `assign`ed variable only when that scope holds the name, and about every name in the render
+  data. See the README for an example.
 
   ## Example
 
