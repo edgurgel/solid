@@ -309,6 +309,17 @@ split
 {{ '' | split: "," | join: '#'}}
 {{ ' a bc ' | split: "" | join: '#'}}
 {{ ' a bc ' | split: " " | join: '#'}}
+{{ "a b
+c" | split: " " | join: '#'}}
+{{ whitespace_string | split: " " | join: '#'}}
+{{ whitespace_string | split: " " | size }}
+{{ whitespace_string | split: "  " | join: '#'}}
+{{ whitespace_string | split: "
+" | join: '#'}}
+{{ "  " | split: " " | size }}
+{{ 56 | split: ' ' | first }}
+{% assign space = " " %}{{ "a b
+c" | split: space | join: '#'}}
 {{ fruits | split: ", " | reverse | join: ", " }}
 {{ fruits | split: "," |  size }}
 {{ "Ground control to Major Tom." | size }}
@@ -561,6 +572,15 @@ where
 {{ post | where: unknown, unknown | map: 'title' }}
 {{ post | where: "title", unknown | map: 'title' }}
 {{ posts | where: "title", unknown | map: 'title' }}
+{{ truthy_rows | where: 'x' | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'x', nil | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'x', unknown | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'x', false | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'x', true | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'x', 0 | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'y' | size }}
+{{ hashes | where: 'a' | map: 'a' | join: ',' }}
+{% assign filtered = truthy_rows | where: 'x' %}{% for row in filtered %}{{ row.i }};{% endfor %}
 
 newline_to_br
 

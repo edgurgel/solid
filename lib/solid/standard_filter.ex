@@ -7,6 +7,8 @@ defmodule Solid.StandardFilter do
 
   import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1, apply: 2]
 
+  @ascii_whitespace [" ", "\t", "\n", "\v", "\f", "\r"]
+
   @spec apply(String.t(), list(), Solid.Parser.Loc.t(), keyword()) ::
           {:ok, any()} | {:error, Exception.t(), any()} | {:error, Exception.t()}
   def apply(filter, args, loc, opts) do
@@ -486,9 +488,16 @@ defmodule Solid.StandardFilter do
   ~w(a b c)
   iex> Solid.StandardFilter.split("", " ")
   []
+  iex> Solid.StandardFilter.split(" a  b\\tc\\nd ", " ")
+  ~w(a b c d)
   """
   @spec split(term, term) :: list(String.t())
-  def split(input, pattern), do: to_str(input) |> String.split(to_str(pattern), trim: true)
+  def split(input, pattern) do
+    case to_str(pattern) do
+      " " -> String.split(to_str(input), @ascii_whitespace, trim: true)
+      pattern -> String.split(to_str(input), pattern, trim: true)
+    end
+  end
 
   @doc """
   Map through a list of hashes accessing `property`
@@ -1195,8 +1204,10 @@ defmodule Solid.StandardFilter do
 
   iex> input = [
   ...>   %{"id" => 1, "available" => true},
-  ...>   %{"id" => 2, "type" => false},
-  ...>   %{"id" => 3, "available" => true}
+  ...>   %{"id" => 2, "available" => false},
+  ...>   %{"id" => 3, "available" => true},
+  ...>   %{"id" => 4, "available" => nil},
+  ...>   %{"id" => 5}
   ...> ]
   iex> Solid.StandardFilter.where(input, "available")
   [%{"id" => 1, "available" => true}, %{"id" => 3, "available" => true}]
@@ -1220,7 +1231,7 @@ defmodule Solid.StandardFilter do
         raise %Solid.ArgumentError{message: "cannot select the property '#{key}'"}
       end
 
-      if is_map(item) && Map.has_key?(item, key) do
+      if is_map(item) && item[key] not in [nil, false] do
         [item]
       else
         []

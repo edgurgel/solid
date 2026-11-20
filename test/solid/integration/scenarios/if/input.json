@@ -31,5 +31,8 @@
   "false_value" : false,
   "true_value" : true,
   "zero" : 0,
-  "one" : 1
+  "one" : 1,
+  "array_with_false" : [1, 2, 3, false],
+  "array_with_nil" : [1, 2, null],
+  "hash_foo" : { "foo" : "bar" }
 }
