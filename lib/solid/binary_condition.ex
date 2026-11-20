@@ -61,12 +61,15 @@ defmodule Solid.BinaryCondition do
     def eval({%@struct{}, _, v2}) when is_map(v2) and not is_struct(v2), do: {:ok, false}
   end
 
+  def eval({v1, :contains, v2}) when v1 in [nil, false] or v2 in [nil, false], do: {:ok, false}
+
+  def eval({v1, :contains, v2}) when is_map(v1) and not is_struct(v1),
+    do: {:ok, Map.has_key?(v1, v2)}
+
   def eval({v1, _, v2})
       when (is_map(v1) or is_map(v2)) and not is_struct(v1) and not is_struct(v2),
       do: {:ok, false}
 
-  def eval({nil, :contains, _v2}), do: {:ok, false}
-  def eval({_v1, :contains, nil}), do: {:ok, false}
   def eval({v1, :contains, v2}) when is_list(v1), do: {:ok, v2 in v1}
 
   def eval({v1, :contains, v2}) when is_binary(v1) and is_binary(v2),

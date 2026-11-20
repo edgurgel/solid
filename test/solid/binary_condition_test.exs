@@ -96,6 +96,21 @@ defmodule Solid.BinaryConditionTest do
       assert eval({"jose", :contains, "john"}) == {:ok, false}
     end
 
+    test "contains is false when either side is nil or false" do
+      assert eval({[1, false], :contains, false}) == {:ok, false}
+      assert eval({[1, nil], :contains, nil}) == {:ok, false}
+      assert eval({"false", :contains, false}) == {:ok, false}
+      assert eval({%{"a" => 1}, :contains, false}) == {:ok, false}
+      assert eval({false, :contains, "a"}) == {:ok, false}
+      assert eval({nil, :contains, "a"}) == {:ok, false}
+    end
+
+    test "contains on a map checks its keys" do
+      assert eval({%{"foo" => "bar"}, :contains, "foo"}) == {:ok, true}
+      assert eval({%{"foo" => "bar"}, :contains, "bar"}) == {:ok, false}
+      assert eval({%{}, :contains, "foo"}) == {:ok, false}
+    end
+
     test "number and string" do
       assert eval({1, :<, "jose"}) == {:error, "comparison of Integer with String failed"}
       assert eval({"jose", :<, 1}) == {:error, "comparison of String with 1 failed"}
