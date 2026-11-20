@@ -202,6 +202,17 @@ defmodule Solid.Parser do
     end
   end
 
+  @doc false
+  # Move the context past the first `size` bytes of its rest, keeping line and
+  # column in sync. Used by tags that skip their body without parsing it
+  @spec skip(ParserContext.t(), non_neg_integer) :: ParserContext.t()
+  def skip(%ParserContext{rest: rest} = context, size) do
+    {_delimiter_pattern, newline_pattern} = patterns(context)
+    chunk = binary_part(rest, 0, size)
+    new_rest = binary_part(rest, size, byte_size(rest) - size)
+    advance_text(%{context | rest: new_rest}, chunk, size, newline_pattern)
+  end
+
   # Advance line/column past a fully-consumed `chunk` of `size` bytes. Every byte
   # counts as one column (matching the previous byte-at-a-time behaviour) and a
   # newline resets the column to 1.
