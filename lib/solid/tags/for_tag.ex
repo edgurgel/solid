@@ -1,5 +1,6 @@
 defmodule Solid.Tags.ForTag do
   alias Solid.{Argument, Parser, Variable}
+  alias Solid.Tags.CollectionSlice
 
   import Solid.NumberHelper, only: [to_integer: 1]
 
@@ -232,17 +233,16 @@ defmodule Solid.Tags.ForTag do
     end
 
     defp apply_parameters(enumerable, tag, for_name, context, options) do
-      with {:ok, start, context} <- offset(tag, for_name, context, options),
-           {:ok, finish, context} <- limit(enumerable, tag, context, options) do
-        last_offset = start + finish
-        context = %{context | registers: Map.put(context.registers, for_name, last_offset + 1)}
-        enumerable = slice(enumerable, start..last_offset//1)
-        {:ok, apply_reversed(enumerable, tag), context}
+      with {:ok, from, context} <- offset(tag, for_name, context, options),
+           {:ok, limit, context} <- limit(tag, context, options) do
+        to = if limit, do: from + limit
+        segment = CollectionSlice.slice(enumerable, from, to)
+        # `offset: continue` resumes where this segment ends
+        next_offset = from + length(segment)
+        context = %{context | registers: Map.put(context.registers, for_name, next_offset)}
+        {:ok, apply_reversed(segment, tag), context}
       end
     end
-
-    defp slice(string, _range) when is_binary(string), do: [string]
-    defp slice(enumerable, range), do: Enum.slice(enumerable, range)
 
     defp offset(tag, for_name, context, options) do
       if argument = tag.parameters[:offset] do
@@ -267,21 +267,18 @@ defmodule Solid.Tags.ForTag do
 
     defp continue?(_), do: false
 
-    defp limit(enumerable, tag, context, options) do
+    defp limit(tag, context, options) do
       if argument = tag.parameters[:limit] do
         {:ok, limit, context} = Argument.get(argument, context, [], options)
 
         case to_integer(limit) do
-          {:ok, limit} -> {:ok, limit - 1, context}
+          {:ok, limit} -> {:ok, limit, context}
           {:error, message} -> {:error, message, context}
         end
       else
-        {:ok, count(enumerable), context}
+        {:ok, nil, context}
       end
     end
-
-    defp count(string) when is_binary(string), do: 1
-    defp count(enumerable), do: Enum.count(enumerable)
 
     defp apply_reversed(enumerable, tag) do
       if tag.reversed do

@@ -204,3 +204,17 @@ Empty collections
 [{% for i in var_empty_array %}{{ i }}{% else %}else{% endfor %}]
 [{% for i in var_empty_hash %}{{ i }}{% else %}else{% endfor %}]
 [{% for i in var_hash %}{{ i[0] }}={{ i[1] }},{% else %}else{% endfor %}]
+
+Negative offset and limit
+
+[{% for i in (0..3) offset: -2 %}{{ i }} {% endfor %}]
+[{% for i in (0..3) offset: -2 limit: 3 %}{{ i }} {% endfor %}]
+[{% for i in (0..5) offset: 1 limit: -1 %}{{ i }} {% else %}else{% endfor %}]
+[{% for i in (0..5) limit: -1 %}{{ i }} {% else %}else{% endfor %}]
+[{% for i in array offset: -2 limit: 4 %}{{ i }} {% endfor %}]
+[{% for i in array reversed offset: -1 limit: 3 %}{{ i }} {% endfor %}]
+[{% for i in (0..3) offset: -2 %}{{ i }} {% endfor %}{% for i in (0..3) offset: continue %}{{ i }} {% endfor %}]
+[{% for i in (1..6) offset: -2 limit: 4 %}{{ i }} {% endfor %}{% for i in (1..6) offset: continue %}{{ i }} {% endfor %}]
+[{% for i in array offset: 2 limit: 2 %}{{ forloop.length }}:{{ i }} {% endfor %}{% for i in array offset: continue limit: 1 %}{{ i }} {% endfor %}]
+[{% for i in array limit: 10 %}{{ i }} {% endfor %}{% for i in array offset: continue %}{{ i }} {% else %}else{% endfor %}]
+[{% for i in var_string offset: -1 limit: -1 %}{{ i }}{% else %}else{% endfor %}]

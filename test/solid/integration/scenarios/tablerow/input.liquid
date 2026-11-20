@@ -137,3 +137,13 @@ Empty collections and hashes
 [{% tablerow i in var_empty_hash %}{{ i }}{% endtablerow %}]
 [{% tablerow i in var_hash %}{{ i[0] }}={{ i[1] }}{% endtablerow %}]
 [{% tablerow i in var_hash cols: 1 %}{{ i[0] }}={{ i[1] }}{% endtablerow %}]
+
+Offset and limit
+
+[{% tablerow i in (1..5) offset: 2 limit: 2 %}{{ i }}{% endtablerow %}]
+[{% tablerow i in (1..5) offset: 2 limit: 2 %}{{ tablerowloop.length }}-{{ tablerowloop.last }}{% endtablerow %}]
+[{% tablerow i in (1..5) offset: -2 %}{{ i }}{% endtablerow %}]
+[{% tablerow i in (1..5) offset: -2 limit: 3 %}{{ i }}{% endtablerow %}]
+[{% tablerow i in (1..5) offset: 1 limit: -1 %}{{ i }}{% endtablerow %}]
+[{% tablerow i in (1..5) offset: 1 limit: 3 cols: 2 %}{{ i }}{% endtablerow %}]
+[{% tablerow product in products offset: 1 %}{{ tablerowloop.length }}{{ tablerowloop.col_last }}{% endtablerow %}]

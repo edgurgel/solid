@@ -37,6 +37,7 @@ defmodule Solid.Tags.TablerowTag do
   """
 
   alias Solid.{Argument, Parser, Variable}
+  alias Solid.Tags.CollectionSlice
 
   import Solid.NumberHelper, only: [to_integer: 1]
 
@@ -249,20 +250,13 @@ defmodule Solid.Tags.TablerowTag do
       end
     end
 
-    defp apply_parameters(string, tag, context, options) when is_binary(string) do
-      with {:ok, _start, context} <- offset(tag, context, options),
-           {:ok, _finish, context} <- limit(tag, 1, context, options) do
-        {:ok, [string], 1, context}
-      end
-    end
-
     defp apply_parameters(enumerable, tag, context, options) do
-      length = Enum.count(enumerable)
-
-      with {:ok, start, context} <- offset(tag, context, options),
-           {:ok, finish, context} <- limit(tag, length, context, options) do
-        enumerable = Enum.slice(enumerable, start..finish//1)
-        {:ok, enumerable, length, context}
+      with {:ok, from, context} <- offset(tag, context, options),
+           {:ok, limit, context} <- limit(tag, context, options) do
+        to = if limit, do: from + limit
+        segment = CollectionSlice.slice(enumerable, from, to)
+        # tablerowloop.length and the default cols count the segment, not the collection
+        {:ok, segment, length(segment), context}
       end
     end
 
@@ -279,16 +273,16 @@ defmodule Solid.Tags.TablerowTag do
       end
     end
 
-    defp limit(tag, length, context, options) do
+    defp limit(tag, context, options) do
       if argument = tag.parameters[:limit] do
         {:ok, limit, context} = Argument.get(argument, context, [], options)
 
         case to_integer(limit) do
-          {:ok, limit} -> {:ok, limit - 1, context}
+          {:ok, limit} -> {:ok, limit, context}
           {:error, message} -> {:error, message, context}
         end
       else
-        {:ok, length, context}
+        {:ok, nil, context}
       end
     end
 

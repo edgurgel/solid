@@ -282,7 +282,7 @@ defmodule Solid.Tags.ForTagTest do
       assert Renderable.render(tag, context, []) == {
                [["shoes"], ["shirts"]],
                %Solid.Context{
-                 registers: %{"product-collection" => 3},
+                 registers: %{"product-collection" => 2},
                  vars: %{
                    "collection" => [
                      %{"title" => "shoes"},
@@ -314,7 +314,7 @@ defmodule Solid.Tags.ForTagTest do
                  [[["2", "-", "1"], ["2", "-", "2"], ["2", "-", "3"]]]
                ],
                %Solid.Context{
-                 registers: %{"i-inner" => 4, "inner-outer" => 3},
+                 registers: %{"i-inner" => 3, "inner-outer" => 2},
                  vars: %{"outer" => [1..3, 1..3]}
                }
              }
@@ -333,6 +333,36 @@ defmodule Solid.Tags.ForTagTest do
       template = "{% for i in (1..1000000000) offset: 5 limit: 2 %}{{ i }} {% endfor %}"
 
       assert Solid.Helpers.render(template) == "6 7 "
+    end
+
+    test "large range with negative offset and limit does not materialize the whole range" do
+      template = "{% for i in (1..1000000000) offset: -5 limit: 7 %}{{ i }} {% endfor %}"
+
+      assert Solid.Helpers.render(template) == "1 2 "
+    end
+
+    test "negative offset starts at the first item" do
+      assert Solid.Helpers.render("{% for i in (0..3) offset: -2 %}{{ i }} {% endfor %}") ==
+               "0 1 2 3 "
+    end
+
+    test "negative offset with limit ends at offset + limit" do
+      assert Solid.Helpers.render("{% for i in (0..3) offset: -2 limit: 3 %}{{ i }} {% endfor %}") ==
+               "0 "
+    end
+
+    test "negative limit loops zero times" do
+      template = "{% for i in (0..5) offset: 1 limit: -1 %}{{ i }}{% else %}else{% endfor %}"
+
+      assert Solid.Helpers.render(template) == "else"
+    end
+
+    test "offset: continue resumes after a negative offset" do
+      template =
+        "{% for i in (0..3) offset: -2 %}{{ i }} {% endfor %}|" <>
+          "{% for i in (0..3) offset: continue %}{{ i }} {% endfor %}"
+
+      assert Solid.Helpers.render(template) == "0 1 2 3 |2 3 "
     end
   end
 end

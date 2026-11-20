@@ -190,5 +190,33 @@ defmodule Solid.Tags.TablerowTagTest do
                ~s(<tr class="row1">\n<td class="col1">1</td><td class="col2">2</td></tr>\n) <>
                  ~s(<tr class="row2"><td class="col1">3</td></tr>\n)
     end
+
+    test "limit counts from the offset" do
+      template =
+        "{% tablerow i in (1..5) offset: 2 limit: 2 %}{{ i }}-{{ tablerowloop.length }}{% endtablerow %}"
+
+      assert Solid.Helpers.render(template) ==
+               ~s(<tr class="row1">\n<td class="col1">3-2</td><td class="col2">4-2</td></tr>\n)
+    end
+
+    test "negative offset starts at the first item" do
+      template = "{% tablerow i in (1..3) offset: -2 %}{{ i }}{% endtablerow %}"
+
+      assert Solid.Helpers.render(template) ==
+               ~s(<tr class="row1">\n<td class="col1">1</td><td class="col2">2</td><td class="col3">3</td></tr>\n)
+    end
+
+    test "negative offset with limit ends at offset + limit" do
+      template = "{% tablerow i in (1..5) offset: -2 limit: 3 %}{{ i }}{% endtablerow %}"
+
+      assert Solid.Helpers.render(template) ==
+               ~s(<tr class="row1">\n<td class="col1">1</td></tr>\n)
+    end
+
+    test "negative limit renders an empty row" do
+      template = "{% tablerow i in (1..5) offset: 1 limit: -1 %}{{ i }}{% endtablerow %}"
+
+      assert Solid.Helpers.render(template) == ~s(<tr class="row1">\n</tr>\n)
+    end
   end
 end
