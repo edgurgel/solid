@@ -623,6 +623,9 @@ sort_natural
 {{ (0..15) | sort_natural | join: ", " }}
 {{ 123 | sort_natural | join: ", " }}
 {{ fruits | sort_natural | join: ", " }}
+{{ strings_with_nil | sort_natural | join: "#" }}
+{{ strings_with_nil | sort_natural | last }}
+{{ words | sort_natural | join: "#" }}
 
 strip_html
 

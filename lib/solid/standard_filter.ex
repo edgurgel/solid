@@ -973,10 +973,13 @@ defmodule Solid.StandardFilter do
   def sort(input), do: Enum.sort(to_enum(input))
 
   @doc """
-  Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.
+  Sorts items in an array in case-insensitive order. `nil` values are placed last.
 
   iex> Solid.StandardFilter.sort_natural(~w(zebra octopus giraffe SallySnake))
   ~w(giraffe octopus SallySnake zebra)
+
+  iex> Solid.StandardFilter.sort_natural(["b", "a", nil, "C", "B", "A"])
+  ["a", "A", "b", "B", "C", nil]
 
   iex> Solid.StandardFilter.sort_natural(123)
   "123"
@@ -985,11 +988,21 @@ defmodule Solid.StandardFilter do
   def sort_natural(input) when is_list(input) or is_struct(input, Range) do
     input
     |> to_enum()
-    |> Enum.sort(&(String.downcase(to_string(&1)) <= String.downcase(to_string(&2))))
+    |> Enum.sort(&natural_sorter/2)
   end
 
   def sort_natural(input) do
     to_string(input)
+  end
+
+  # Mirrors Ruby Liquid's `nil_safe_casecmp`: `nil` sorts after everything else,
+  # other values are compared case-insensitively as strings
+  defp natural_sorter(nil, nil), do: true
+  defp natural_sorter(nil, _), do: false
+  defp natural_sorter(_, nil), do: true
+
+  defp natural_sorter(a, b) do
+    String.downcase(to_str(a)) <= String.downcase(to_str(b))
   end
 
   @doc """
