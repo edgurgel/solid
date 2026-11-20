@@ -117,6 +117,10 @@ defmodule Solid.Tags.TablerowTag do
              apply_parameters(enumerable, tag, context, options) do
         render_table_row(enumerable, length, tag, context, options)
       else
+        # nil and false render nothing at all, not even an empty row
+        {:skip, context} ->
+          {"", context}
+
         {:error, message, context} ->
           exception = %Solid.ArgumentError{loc: tag.loc, message: message}
           context = Solid.Context.put_errors(context, exception)
@@ -129,7 +133,9 @@ defmodule Solid.Tags.TablerowTag do
       %{acc_context | iteration_vars: iteration_vars}
     end
 
-    defp render_table_row([], _length, _tag, context, _options), do: {"", context}
+    defp render_table_row([], _length, _tag, context, _options) do
+      {~s(<tr class="row1">\n</tr>\n), context}
+    end
 
     defp render_table_row(enumerable, length, tag, context, options) do
       enumerable_key = tag.variable.identifier
@@ -215,10 +221,13 @@ defmodule Solid.Tags.TablerowTag do
 
     defp enumerable(enumerable, context, options) do
       {:ok, enumerable, context} = Argument.get(enumerable, context, [], options)
-      enumerable = enumerable || []
 
       case enumerable do
-        enumerable when is_list(enumerable) ->
+        falsy when falsy in [nil, false] ->
+          {:skip, context}
+
+        enumerable
+        when is_list(enumerable) or (is_map(enumerable) and not is_struct(enumerable)) ->
           {:ok, enumerable, context}
 
         %Range{first: first, last: last} when first <= last ->
@@ -227,8 +236,23 @@ defmodule Solid.Tags.TablerowTag do
         %Range{} ->
           {:ok, [], context}
 
-        other ->
-          {:ok, [other], context}
+        "" ->
+          {:ok, [], context}
+
+        # A non-empty string is iterated once, as a whole, ignoring offset and limit
+        string when is_binary(string) ->
+          {:ok, string, context}
+
+        # Anything else (numbers, true, structs) is not iterable
+        _ ->
+          {:ok, [], context}
+      end
+    end
+
+    defp apply_parameters(string, tag, context, options) when is_binary(string) do
+      with {:ok, _start, context} <- offset(tag, context, options),
+           {:ok, _finish, context} <- limit(tag, 1, context, options) do
+        {:ok, [string], 1, context}
       end
     end
 

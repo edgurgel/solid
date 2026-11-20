@@ -22,5 +22,15 @@
       "title": "vase",
       "type": "livingroom"
     }
-  ]
+  ],
+  "var_true": true,
+  "var_false": false,
+  "var_nil": null,
+  "var_number": 5,
+  "var_float": 1.5,
+  "var_empty_string": "",
+  "var_string": "hello",
+  "var_empty_array": [],
+  "var_empty_hash": {},
+  "var_hash": { "a": 1, "b": 2 }
 }

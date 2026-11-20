@@ -218,8 +218,16 @@ defmodule Solid.Tags.ForTag do
         %Range{} ->
           {:ok, [], context}
 
-        other ->
-          {:ok, [other], context}
+        "" ->
+          {:ok, [], context}
+
+        # A non-empty string is iterated once, as a whole, ignoring offset and limit
+        string when is_binary(string) ->
+          {:ok, string, context}
+
+        # Anything else (numbers, booleans, structs) is not iterable
+        _ ->
+          {:ok, [], context}
       end
     end
 
@@ -228,10 +236,13 @@ defmodule Solid.Tags.ForTag do
            {:ok, finish, context} <- limit(enumerable, tag, context, options) do
         last_offset = start + finish
         context = %{context | registers: Map.put(context.registers, for_name, last_offset + 1)}
-        enumerable = Enum.slice(enumerable, start..last_offset//1)
+        enumerable = slice(enumerable, start..last_offset//1)
         {:ok, apply_reversed(enumerable, tag), context}
       end
     end
+
+    defp slice(string, _range) when is_binary(string), do: [string]
+    defp slice(enumerable, range), do: Enum.slice(enumerable, range)
 
     defp offset(tag, for_name, context, options) do
       if argument = tag.parameters[:offset] do
@@ -265,9 +276,12 @@ defmodule Solid.Tags.ForTag do
           {:error, message} -> {:error, message, context}
         end
       else
-        {:ok, Enum.count(enumerable), context}
+        {:ok, count(enumerable), context}
       end
     end
+
+    defp count(string) when is_binary(string), do: 1
+    defp count(enumerable), do: Enum.count(enumerable)
 
     defp apply_reversed(enumerable, tag) do
       if tag.reversed do
