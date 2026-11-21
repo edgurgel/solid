@@ -4,11 +4,12 @@ defmodule Solid.Tags.CaseTag do
   @type t :: %__MODULE__{
           loc: Parser.Loc.t(),
           argument: Argument.t(),
-          cases: [{[Argument.t()] | :else, [Parser.entry()]}]
+          cases: [{[Argument.t()] | :else, [Parser.entry()]}],
+          blank: boolean
         }
 
   @enforce_keys [:loc, :argument, :cases]
-  defstruct [:loc, :argument, :cases]
+  defstruct [:loc, :argument, :cases, blank: false]
 
   @behaviour Solid.Tag
 
@@ -16,8 +17,9 @@ defmodule Solid.Tags.CaseTag do
   def parse("case", loc, context) do
     with {:ok, tokens, context} <- Solid.Lexer.tokenize_tag_end(context),
          {:ok, argument, [{:end, _}]} <- Argument.parse(tokens),
-         {:ok, cases, context} <- parse_cases(context) do
-      {:ok, %__MODULE__{loc: loc, argument: argument, cases: cases}, context}
+         {:ok, leading_body, cases, context} <- parse_cases(context) do
+      tag = %__MODULE__{loc: loc, argument: argument, cases: cases}
+      {:ok, remove_blank_text_if_blank(tag, leading_body), context}
     else
       {:ok, _argument, rest} -> {:error, "Unexpected token", Parser.meta_head(rest)}
       {:error, reason, _rest, loc} -> {:error, reason, loc}
@@ -25,11 +27,35 @@ defmodule Solid.Tags.CaseTag do
     end
   end
 
+  # Whitespace is stripped from every branch, or from none: a branch that is
+  # blank on its own keeps its whitespace when another branch has output, even
+  # if that other branch is never rendered. What comes before the first `when`
+  # is never rendered either, but output there also keeps the whitespace.
+  #
+  # The result is stored in `blank` so that an enclosing tag reads it instead of
+  # walking this tag's branches again
+  defp remove_blank_text_if_blank(tag, leading_body) do
+    blank =
+      Solid.Block.blank?(leading_body) and
+        Enum.all?(tag.cases, fn {_arguments, body} -> Solid.Block.blank?(body) end)
+
+    if blank do
+      cases =
+        Enum.map(tag.cases, fn {arguments, body} -> {arguments, Parser.remove_text(body)} end)
+
+      %{tag | cases: cases, blank: true}
+    else
+      tag
+    end
+  end
+
   defp parse_cases(context) do
-    # We just want to parse whatever is after {% case %} and before the first when, else or endcase
-    with {:ok, _, tag_name, tokens, context} <-
-           Parser.parse_until(context, ~w(when else endcase), "Expected endcase") do
-      do_parse_cases(tag_name, tokens, context, [])
+    # Whatever is after {% case %} and before the first when, else or endcase is
+    # not rendered, but it decides whether the tag is blank
+    with {:ok, leading_body, tag_name, tokens, context} <-
+           Parser.parse_until(context, ~w(when else endcase), "Expected endcase"),
+         {:ok, cases, context} <- do_parse_cases(tag_name, tokens, context, []) do
+      {:ok, leading_body, cases, context}
     end
   end
 
@@ -38,7 +64,7 @@ defmodule Solid.Tags.CaseTag do
          {:ok, result, tag_name, tokens, context} <-
            Parser.parse_until(context, ~w(when else endcase), "Expected endcase") do
       do_parse_cases(tag_name, tokens, context, [
-        {arguments, Parser.remove_blank_text_if_blank_body(result)} | acc
+        {arguments, result} | acc
       ])
     end
   end
@@ -48,7 +74,7 @@ defmodule Solid.Tags.CaseTag do
          {:ok, result, tag_name, tokens, context} <-
            Parser.parse_until(context, ~w(when else endcase), "Expected endcase") do
       do_parse_cases(tag_name, tokens, context, [
-        {:else, Parser.remove_blank_text_if_blank_body(result)} | acc
+        {:else, result} | acc
       ])
     else
       {:tokens, tokens} ->
@@ -75,6 +101,10 @@ defmodule Solid.Tags.CaseTag do
         _ -> {:error, "Expected ',' or 'or'", Parser.meta_head(tokens)}
       end
     end
+  end
+
+  defimpl Solid.Block do
+    def blank?(tag), do: tag.blank
   end
 
   defimpl Solid.Renderable do

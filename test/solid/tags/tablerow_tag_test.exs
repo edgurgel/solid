@@ -219,4 +219,30 @@ defmodule Solid.Tags.TablerowTagTest do
       assert Solid.Helpers.render(template) == ~s(<tr class="row1">\n</tr>\n)
     end
   end
+
+  describe "blank bodies" do
+    test "a blank body keeps its whitespace" do
+      template = ~s<{% tablerow i in xs %} {% assign a = 1 %} {% endtablerow %}>
+
+      assert {:ok,
+              %TablerowTag{
+                body: [%Solid.Text{text: " "}, %Solid.Tags.AssignTag{}, %Solid.Text{text: " "}],
+                blank: true
+              }, _} = parse(template)
+    end
+
+    test "is not blank when the body has output" do
+      assert {:ok, %TablerowTag{blank: false} = tag, _} =
+               parse(~s<{% tablerow i in xs %}{{ i }}{% endtablerow %}>)
+
+      refute Solid.Block.blank?(tag)
+    end
+
+    test "an enclosing if treats a tablerow with a blank body as blank" do
+      template = "[{% if true %} {% tablerow i in (1..2) %} {% endtablerow %} {% endif %}]"
+
+      assert template |> Solid.parse!() |> Solid.render!(%{}) |> to_string() ==
+               ~s([<tr class="row1">\n<td class="col1"> </td><td class="col2"> </td></tr>\n])
+    end
+  end
 end

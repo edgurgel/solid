@@ -48,11 +48,12 @@ defmodule Solid.Tags.TablerowTag do
           variable: Variable.t(),
           enumerable: Argument.t(),
           parameters: %{parameter => Argument.t()},
-          body: [Parser.entry()]
+          body: [Parser.entry()],
+          blank: boolean
         }
 
   @enforce_keys [:loc, :variable, :enumerable, :parameters, :body]
-  defstruct [:loc, :variable, :enumerable, :parameters, :body]
+  defstruct [:loc, :variable, :enumerable, :parameters, :body, blank: false]
 
   @behaviour Solid.Tag
 
@@ -66,13 +67,20 @@ defmodule Solid.Tags.TablerowTag do
          {:end, [{:end, _}]} <- {:end, tokens},
          {:ok, body, _tag_name, _tokens, context} <-
            Parser.parse_until(context, ~w(endtablerow), "Expected endtablerow") do
+      # The body keeps its whitespace even when it is blank, as every cell is
+      # rendered inside its own `<td>`. An enclosing tag still treats a tablerow
+      # with a blank body as blank, even though it renders `<tr>` and `<td>`.
+      #
+      # `blank` is stored so that an enclosing tag reads it instead of walking
+      # the body again
       {:ok,
        %__MODULE__{
          loc: loc,
          enumerable: enumerable,
          variable: variable,
          parameters: parameters,
-         body: Parser.remove_blank_text_if_blank_body(body)
+         body: body,
+         blank: Solid.Block.blank?(body)
        }, context}
     else
       {:end, tokens} -> {:error, "Unexpected token", Parser.meta_head(tokens)}
@@ -109,6 +117,10 @@ defmodule Solid.Tags.TablerowTag do
       _ ->
         {:error, "Expected parameters are offset, limit and cols", Parser.meta_head(tokens)}
     end
+  end
+
+  defimpl Solid.Block do
+    def blank?(tag), do: tag.blank
   end
 
   defimpl Solid.Renderable do

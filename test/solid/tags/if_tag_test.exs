@@ -347,8 +347,33 @@ defmodule Solid.Tags.IfTagTest do
                       value: true
                     },
                     argument_filters: []
-                  }
+                  },
+                  blank: true
                 }, %ParserContext{rest: "", line: 1, column: 56, mode: :normal, tags: nil}}
+    end
+
+    test "blank branch keeps its text when another branch has output" do
+      template = ~s<{% if true %}  {% elsif false %}{{ x }}{% else %} {% endif %}>
+
+      assert {:ok, %IfTag{body: body, elsifs: [{_, elsif_body}], else_body: else_body}, _} =
+               parse(template)
+
+      assert [%Solid.Text{text: "  "}] = body
+      assert [%Solid.Object{}] = elsif_body
+      assert [%Solid.Text{text: " "}] = else_body
+    end
+
+    test "nested blank if is stripped together with its parent" do
+      template = ~s<{% if true %} {% if true %} {% assign a = 1 %} {% endif %} {% endif %}>
+
+      assert {:ok, %IfTag{body: [%IfTag{body: [%Solid.Tags.AssignTag{}]}]}, _} = parse(template)
+    end
+
+    test "nested if with output keeps the parent's text" do
+      template = ~s<{% if true %} {% if true %} {% else %}{{ x }}{% endif %} {% endif %}>
+
+      assert {:ok, %IfTag{body: [%Solid.Text{}, %IfTag{body: [%Solid.Text{}]}, %Solid.Text{}]}, _} =
+               parse(template)
     end
 
     test "unexpected error after if" do
@@ -438,6 +463,57 @@ defmodule Solid.Tags.IfTagTest do
       {:ok, tag, _rest} = parse(template, filters_in_conditional_tags: true)
 
       assert {[%Solid.Text{text: " empty "}], _} = Renderable.render(tag, context, [])
+    end
+  end
+
+  describe "Solid.Block impl" do
+    test "blank when every branch is blank" do
+      {:ok, tag, _} = parse(~s<{% if a %} {% elsif b %}{% assign c = 1 %}{% else %} {% endif %}>)
+
+      assert Solid.Block.blank?(tag)
+    end
+
+    test "not blank when the if body has output" do
+      {:ok, tag, _} = parse(~s<{% if a %}{{ x }}{% else %} {% endif %}>)
+
+      refute Solid.Block.blank?(tag)
+    end
+
+    test "not blank when an elsif body has output" do
+      {:ok, tag, _} = parse(~s<{% if a %} {% elsif b %}{{ x }}{% endif %}>)
+
+      refute Solid.Block.blank?(tag)
+    end
+
+    test "not blank when the else body has output" do
+      {:ok, tag, _} = parse(~s<{% unless a %} {% else %}text{% endunless %}>)
+
+      refute Solid.Block.blank?(tag)
+    end
+  end
+
+  describe "rendering whitespace in blank bodies" do
+    defp render(template), do: template |> Solid.parse!() |> Solid.render!(%{}) |> to_string()
+
+    test "nested if blocks with only assigns render nothing" do
+      template =
+        "!{% if true %}\n\n{% assign bar = 'foo' %}\n{% if true %}\n\n\n    {% assign foo = 'bar' %}\n\n{% endif %}\n\n\n{% endif %}!"
+
+      assert render(template) == "!!"
+    end
+
+    test "nested unless blocks with only assigns render nothing" do
+      template =
+        "!{% unless false %}\n\n{% assign bar = 'foo' %}\n{% unless false %}\n\n\n    {% assign foo = 'bar' %}\n\n{% endunless %}\n\n\n{% endunless %}!"
+
+      assert render(template) == "!!"
+    end
+
+    test "output in a branch that is not rendered keeps whitespace in every branch" do
+      template =
+        "!{% if 1 %}\n\n{% assign bar = 'foo' %}\n{% if true %}\n\n    {% assign foo = 'bar' %}\n\n{% else %}\n    {{ '' }}\n{% endif %}\n\n\n{% endif %}!"
+
+      assert render(template) == "!\n\n\n\n\n    \n\n\n\n\n!"
     end
   end
 end

@@ -13,11 +13,21 @@ defmodule Solid.Tags.ForTag do
           reversed: boolean,
           parameters: %{parameter => Argument.t()},
           body: [Parser.entry()],
-          else_body: [Parser.entry()]
+          else_body: [Parser.entry()],
+          blank: boolean
         }
 
   @enforce_keys [:loc, :enumerable, :variable, :reversed, :parameters, :body, :else_body]
-  defstruct [:loc, :enumerable, :variable, :reversed, :parameters, :body, :else_body]
+  defstruct [
+    :loc,
+    :enumerable,
+    :variable,
+    :reversed,
+    :parameters,
+    :body,
+    :else_body,
+    blank: false
+  ]
 
   @behaviour Solid.Tag
 
@@ -33,19 +43,39 @@ defmodule Solid.Tags.ForTag do
          {:ok, body, tag_name, _tokens, context} <-
            Parser.parse_until(context, ~w(else endfor), "Expected endfor"),
          {:ok, else_body, context} <- parse_else_body(tag_name, context) do
-      {:ok,
-       %__MODULE__{
-         loc: loc,
-         enumerable: enumerable,
-         variable: variable,
-         reversed: reversed,
-         parameters: parameters,
-         body: Parser.remove_blank_text_if_blank_body(body),
-         else_body: Parser.remove_blank_text_if_blank_body(else_body)
-       }, context}
+      tag = %__MODULE__{
+        loc: loc,
+        enumerable: enumerable,
+        variable: variable,
+        reversed: reversed,
+        parameters: parameters,
+        body: body,
+        else_body: else_body
+      }
+
+      {:ok, remove_blank_text_if_blank(tag), context}
     else
       {:end, tokens} -> {:error, "Unexpected token", Parser.meta_head(tokens)}
       error -> error
+    end
+  end
+
+  # Whitespace is stripped from both the loop body and the else body, or from
+  # neither: a body that is blank on its own keeps its whitespace when the other
+  # one has output.
+  #
+  # The result is stored in `blank` so that an enclosing tag reads it instead of
+  # walking this tag's bodies again
+  defp remove_blank_text_if_blank(tag) do
+    if Solid.Block.blank?(tag.body) and Solid.Block.blank?(tag.else_body) do
+      %{
+        tag
+        | body: Parser.remove_text(tag.body),
+          else_body: Parser.remove_text(tag.else_body),
+          blank: true
+      }
+    else
+      tag
     end
   end
 
@@ -95,6 +125,10 @@ defmodule Solid.Tags.ForTag do
 
   defp drop_comma([{:comma, _meta} | tokens]), do: tokens
   defp drop_comma(tokens), do: tokens
+
+  defimpl Solid.Block do
+    def blank?(tag), do: tag.blank
+  end
 
   defimpl Solid.Renderable do
     def render(tag, context, options) do

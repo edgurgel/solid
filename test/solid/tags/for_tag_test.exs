@@ -224,7 +224,8 @@ defmodule Solid.Tags.ForTagTest do
                   reversed: false,
                   parameters: %{},
                   body: [],
-                  else_body: []
+                  else_body: [],
+                  blank: true
                 }, %ParserContext{rest: "\n", line: 3, column: 13, mode: :normal, tags: nil}}
     end
 
@@ -363,6 +364,52 @@ defmodule Solid.Tags.ForTagTest do
           "{% for i in (0..3) offset: continue %}{{ i }} {% endfor %}"
 
       assert Solid.Helpers.render(template) == "0 1 2 3 |2 3 "
+    end
+  end
+
+  describe "blank bodies" do
+    test "whitespace is removed from both bodies when both are blank" do
+      template = ~s<{% for i in xs %} {% assign a = i %} {% else %} {% endfor %}>
+
+      assert {:ok, %ForTag{body: [%Solid.Tags.AssignTag{}], else_body: [], blank: true}, _} =
+               parse(template)
+    end
+
+    test "blank body keeps its whitespace when the else body has output" do
+      template = ~s<{% for i in xs %} {% else %}{{ x }}{% endfor %}>
+
+      assert {:ok,
+              %ForTag{body: [%Solid.Text{text: " "}], else_body: [%Solid.Object{}], blank: false},
+              _} = parse(template)
+    end
+
+    test "blank else body keeps its whitespace when the body has output" do
+      template = ~s<{% for i in xs %}{{ i }}{% else %} {% endfor %}>
+
+      assert {:ok, %ForTag{else_body: [%Solid.Text{text: " "}], blank: false}, _} =
+               parse(template)
+    end
+
+    test "nested blank for is stripped together with its parent" do
+      template = ~s<{% for i in xs %} {% for j in xs %} {% endfor %} {% endfor %}>
+
+      assert {:ok, %ForTag{body: [%ForTag{body: [], blank: true}], blank: true}, _} =
+               parse(template)
+    end
+
+    test "break and continue are not blank" do
+      assert {:ok, %ForTag{blank: false}, _} =
+               parse(~s<{% for i in xs %} {% break %} {% endfor %}>)
+
+      assert {:ok, %ForTag{blank: false}, _} =
+               parse(~s<{% for i in xs %} {% continue %} {% endfor %}>)
+    end
+
+    test "blank for inside an if is stripped together with the if" do
+      template =
+        "!{% if true %}\n  {% for i in (1..2) %}\n    {% assign a = i %}\n  {% endfor %}\n{% endif %}!"
+
+      assert template |> Solid.parse!() |> Solid.render!(%{}) |> to_string() == "!!"
     end
   end
 end

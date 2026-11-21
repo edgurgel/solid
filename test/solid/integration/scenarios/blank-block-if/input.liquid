@@ -1,0 +1,116 @@
+only-whitespace:[{% if true %}
+
+{% endif %}]
+only-assign:[{% if true %}
+  {% assign a = 1 %}
+{% endif %}]
+only-output:[{% if true %}
+  {{ space }}
+{% endif %}]
+text:[{% if true %}
+  text
+{% endif %}]
+nested-only-assign:[{% if true %}
+  {% assign a = 1 %}
+  {% if true %}
+    {% assign b = 2 %}
+  {% endif %}
+{% endif %}]
+nested-output:[{% if true %}
+  {% assign a = 1 %}
+  {% if true %}
+    {{ space }}
+    {% assign b = 2 %}
+  {% endif %}
+{% endif %}]
+deeply-nested-only-assign:[{% if true %}
+  {% if true %}
+    {% if true %}
+      {% assign a = 1 %}
+    {% endif %}
+  {% endif %}
+{% endif %}]
+deeply-nested-output:[{% if true %}
+  {% if true %}
+    {% if true %}
+      {{ space }}
+    {% endif %}
+  {% endif %}
+{% endif %}]
+else-all-blank:[{% if false %}
+  {% assign a = 1 %}
+{% else %}
+  {% assign b = 1 %}
+{% endif %}]
+else-has-output:[{% if true %}
+  {% assign a = 1 %}
+{% else %}{{ space }}
+{% endif %}]
+elsif-has-output:[{% if true %}
+  {% assign a = 1 %}
+{% elsif false %}{{ space }}
+{% endif %}]
+elsif-has-text:[{% if false %}
+  {% assign a = 1 %}
+{% elsif true %}
+  {% assign b = 1 %}
+{% elsif false %}text
+{% endif %}]
+elsifs-all-blank:[{% if false %}
+{% elsif false %}
+  {% assign a = 1 %}
+{% elsif true %}
+  {% assign b = 1 %}
+{% else %}
+{% endif %}]
+nested-else-has-output:[{% if true %}
+  {% if true %}
+    {% assign a = 1 %}
+  {% else %}
+    {{ space }}
+  {% endif %}
+{% endif %}]
+nested-else-all-blank:[{% if true %}
+  {% if false %}
+    {% assign a = 1 %}
+  {% else %}
+    {% assign b = 1 %}
+  {% endif %}
+{% endif %}]
+unless-only-assign:[{% unless false %}
+  {% assign a = 1 %}
+  {% unless false %}
+    {% assign b = 2 %}
+  {% endunless %}
+{% endunless %}]
+unless-nested-output:[{% unless false %}
+  {% unless false %}
+    {{ space }}
+    {% assign b = 2 %}
+  {% endunless %}
+{% endunless %}]
+unless-else-has-output:[{% unless false %}
+  {% assign a = 1 %}
+{% else %}x
+{% endunless %}]
+unless-inside-if:[{% if true %}
+  {% unless false %}
+    {% assign a = 1 %}
+  {% endunless %}
+{% endif %}]
+if-inside-unless-has-output:[{% unless false %}
+  {% if false %}
+  {% else %}{{ space }}{% endif %}
+{% endunless %}]
+whitespace-control:[{% if true -%}
+  {% assign a = 1 %}
+  {%- if true %}
+    {{ space }}
+  {% endif -%}
+{%- endif %}]
+whitespace-control-blank:[{%- if true -%}
+  {% assign a = 1 %}
+{%- endif -%}]
+condition-false:[{% if false %}
+  {% assign a = 1 %}
+{% endif %}]

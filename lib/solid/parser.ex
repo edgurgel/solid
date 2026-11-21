@@ -285,11 +285,18 @@ defmodule Solid.Parser do
   @spec remove_blank_text_if_blank_body(parse_tree) :: parse_tree
   def remove_blank_text_if_blank_body(entries) do
     if Solid.Block.blank?(entries) do
-      Enum.reject(entries, &match?(%Solid.Text{}, &1))
+      remove_text(entries)
     else
       entries
     end
   end
+
+  @doc """
+  Remove every `Solid.Text` entry. Used by block tags once they know that all
+  their bodies are blank (see `Solid.Block`)
+  """
+  @spec remove_text(parse_tree) :: parse_tree
+  def remove_text(entries), do: Enum.reject(entries, &match?(%Solid.Text{}, &1))
 
   defp object(context) do
     case Lexer.tokenize_object(context) do
