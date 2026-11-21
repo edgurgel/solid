@@ -55,7 +55,10 @@ end
 Now to use it simply pass a `:tags` option to `Solid.parse/2` including your custom tag:
 
 ```elixir
-tags = Map.put(Solid.Tag.default_tags(), "get_current_year", CurrentYear)
+tags =
+  Solid.Tag.default_tags()
+  |> Solid.Tag.put("get_current_year", CurrentYear)
+
 Solid.parse!("{{ get_current_year }}", tags: tags)
 ```
 
@@ -63,7 +66,10 @@ One can also pass a subset of the default tags if a more restricted environment 
 
 ```elixir
 # No comment tags allowed
-tags = Map.delete(Solid.Tag.default_tags(), "comment")
+tags =
+  Solid.Tag.default_tags()
+  |> Solid.Tag.remove("comment")
+
 Solid.parse!("{% comment %} {% endcomment %}", tags: tags)
 ```
 
