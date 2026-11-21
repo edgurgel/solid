@@ -992,8 +992,8 @@ defmodule Solid.StandardFilter do
     to_string(input)
   end
 
-  # Mirrors Ruby Liquid's `nil_safe_casecmp`: `nil` sorts after everything else,
-  # other values are compared case-insensitively as strings
+  # `nil` sorts after everything else, other values are compared
+  # case-insensitively as strings
   defp natural_sorter(nil, nil), do: true
   defp natural_sorter(nil, _), do: false
   defp natural_sorter(_, nil), do: true

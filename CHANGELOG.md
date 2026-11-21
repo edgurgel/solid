@@ -1,3 +1,49 @@
+# Unreleased
+
+## Bug fixes
+
+* Hashes render as `{"a"=>1, "b"=>[nil, "x"]}` instead of `%{"a" => 1, "b" => [nil, "x"]}`, both
+  in `{{ hash }}` and when passed to string filters such as `append`. Lists passed to string
+  filters use the same format: `[{}, "x"]` instead of `[%{}, "x"]` (#218)
+* Floats use scientific notation when their exponent is below -4 or at least 15, everywhere they
+  are turned into text: `{{ 0.00001 }}` renders `1.0e-05` and `{{ 1.0e15 }}` renders `1.0e+15`.
+  String filters such as `append` now follow the same rule (#218)
+* `for` and `tablerow` no longer loop once over a value that can't be iterated, such as a number,
+  `true` or a struct. `for` renders its `else` body instead (#218)
+* A negative `offset` in `for` and `tablerow` now counts as `0`, and a negative `limit` loops zero
+  times. Previously both counted back from the end of the collection (#218)
+* `contains` now checks a hash's keys, so `{% if hash contains "a" %}` is `true` when `hash` has
+  the key `"a"`. `contains` with `false` on either side is always `false` (#218)
+* `split: " "` now splits on any run of whitespace, including tabs and newlines, not only on
+  spaces (#218)
+* `where: "key"`, without a value, keeps only the items whose `key` is truthy. Previously it kept
+  every item that had the key, even when its value was `false` or `nil` (#218)
+* `sort_natural` puts `nil` values last, and no longer raises on lists that contain hashes (#218)
+* `for` and `tablerow` loops over strings (#218):
+  * An empty string loops zero times instead of once
+  * A non-empty string loops once, as a whole, and ignores `offset` and `limit`
+* `tablerow` fixes (#218):
+  * Loops over a hash's key/value pairs, like `for`, instead of rendering the hash as one cell
+  * `nil` and `false` render nothing, and an empty collection renders an empty row
+    (`<tr class="row1">\n</tr>\n`)
+  * `tablerowloop.length` counts the items left after `offset` and `limit`, not the whole
+    collection
+* `offset: continue` resumes right after the last item the previous loop iterated (#218)
+* `{% comment %}` blocks (#218):
+  * A nested `{% comment %}` is balanced: the outer comment ends at the `{% endcomment %}` that
+    matches it, not the first one found
+  * A `{% raw %}` inside a comment is honoured, so an `{% endcomment %}` inside it doesn't end the
+    comment
+  * Other tags inside a comment are skipped as a whole, so `{% endcommentx %}` or an
+    `{% endcomment %}` inside an unclosed tag no longer ends the comment
+* Whitespace in blank `if`, `unless`, `case` and `for` blocks (#218):
+  * It is stripped from every branch, or from none: a blank branch keeps its whitespace when
+    another branch, including `else`, has output. Text between `{% case %}` and the first `when`
+    counts too
+  * Nested blocks are now taken into account, so an `if` that only holds a blank `if` is blank too
+  * `tablerow` never strips whitespace from its body, as every cell renders inside its own `<td>`
+  * A `{% raw %}` block that holds whitespace is no longer blank, so its whitespace is kept
+
 # 1.4.0 (2026-11-15)
 
 ## Enhancements
