@@ -159,23 +159,10 @@ defmodule Solid.Argument do
     |> Enum.map_join(&stringify!/1)
   end
 
-  defp stringify!(value) when is_float(value) do
-    # Count digits in the integer part
-    digit_count = value |> trunc() |> abs() |> Integer.digits() |> length()
-
-    if digit_count >= 16 do
-      # Use scientific notation for numbers with 16+ digits
-      :erlang.float_to_binary(value, [:compact, {:scientific, 1}])
-    else
-      # Use regular decimal notation
-      value
-      |> Decimal.from_float()
-      |> Decimal.to_string(:xsd)
-    end
-  end
+  defp stringify!(value) when is_float(value), do: Solid.NumberHelper.float_to_string(value)
 
   defp stringify!(value) when is_map(value) and not is_struct(value) do
-    "#{inspect(value)}"
+    Solid.Inspect.inspect(value)
   end
 
   defp stringify!(%Literal.Empty{}), do: ""

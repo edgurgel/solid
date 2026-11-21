@@ -98,6 +98,7 @@ last
 {{ string | last }}
 {{ does_not_exist | last }}
 {{ (1..3) | last }}
+{{ things | last }}
 
 floor
 
@@ -269,6 +270,9 @@ replace
 {{ unknown | replace: "rain", "unknown" }}
 {{ (1..5) | replace: 1, "one" }}
 {{ 1 | replace: (1..5), "range" }}
+{{ var_empty_hash | replace: "{", "<" }}
+{{ things | replace: "=>", ":" }}
+{{ var_empty_hash | append: "!" }}
 {% # {{ post | replace: 'T', 't' | join: '#' }} %}
 
 remove
@@ -428,6 +432,7 @@ uniq
 {{ my_array | uniq | join: '-' }}
 {{ array | uniq | join: '-' }}
 {{ (1..5) | uniq | join: '-' }}
+{{ things | uniq | join: '-' }}
 {{ fruits | split: ","| uniq | join: ", " }}
 
 date
@@ -602,6 +607,7 @@ reverse
 {{ my_numbers | reverse | join: '#' }}
 {{ true | reverse | join: '#' }}
 {{ false | reverse | join: '#' }}
+{{ things | reverse | join: '#' }}
 {{ 1 | reverse | join: '#' }}
 {{ "text" | reverse | join: '#' }}
 {{ unknown | reverse | join: '#' }}
@@ -624,6 +630,8 @@ sort_natural
 {{ 123 | sort_natural | join: ", " }}
 {{ fruits | sort_natural | join: ", " }}
 {{ strings_with_nil | sort_natural | join: "#" }}
+{% assign s = mixed_types | sort_natural %}{{ s[0] }}#{{ s[1] }}#{{ s[2].size }}
+{{ mixed_types | sort_natural }}
 {{ strings_with_nil | sort_natural | last }}
 {{ words | sort_natural | join: "#" }}
 

@@ -727,14 +727,11 @@ defmodule Solid.StandardFilter do
   #   to_string(datetime)
   # end
 
+  defp to_str(input) when is_map(input) and not is_struct(input), do: Solid.Inspect.inspect(input)
   defp to_str(input) when is_map(input), do: inspect(input)
-  defp to_str(input) when is_list(input), do: inspect(input, charlists: :as_lists)
+  defp to_str(input) when is_list(input), do: Solid.Inspect.inspect(input)
 
-  defp to_str(input) when is_float(input) do
-    input
-    |> Decimal.from_float()
-    |> Decimal.to_string(:xsd)
-  end
+  defp to_str(input) when is_float(input), do: Solid.NumberHelper.float_to_string(input)
 
   defp to_str(input), do: to_string(input)
 

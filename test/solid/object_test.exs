@@ -106,7 +106,7 @@ defmodule Solid.ObjectTest do
 
       context = %Solid.Context{vars: %{"products" => [%{"a" => 1}, [%{"b" => 2}, nil, 2.5]]}}
 
-      assert {~s(%{"a" => 1}%{"b" => 2}2.5), ^context} = Renderable.render(object, context, [])
+      assert {~s({"a"=>1}{"b"=>2}2.5), ^context} = Renderable.render(object, context, [])
     end
   end
 end
