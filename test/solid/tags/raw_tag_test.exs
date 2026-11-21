@@ -65,4 +65,24 @@ defmodule Solid.Tags.RawTagTest do
       assert Solid.Renderable.render(tag, context, []) == {" {{ yo }} ", context}
     end
   end
+
+  describe "Solid.Block impl" do
+    test "an empty raw is blank" do
+      {:ok, tag, _} = parse("{% raw %}{% endraw %}")
+
+      assert Solid.Block.blank?(tag)
+    end
+
+    test "a raw with only whitespace is not blank" do
+      {:ok, tag, _} = parse("{% raw %} \n {% endraw %}")
+
+      refute Solid.Block.blank?(tag)
+    end
+
+    test "whitespace around a raw with only whitespace is kept" do
+      template = "[{% if true %} {% raw %} {% endraw %} {% endif %}]"
+
+      assert template |> Solid.parse!() |> Solid.render!(%{}) |> to_string() == "[   ]"
+    end
+  end
 end

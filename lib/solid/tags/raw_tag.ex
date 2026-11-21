@@ -86,7 +86,8 @@ defmodule Solid.Tags.RawTag do
     end
   end
 
+  # Only an empty raw block is blank: whitespace inside it is always rendered
   defimpl Solid.Block do
-    def blank?(tag), do: Solid.Text.blank_text?(tag.text)
+    def blank?(tag), do: tag.text == ""
   end
 end

@@ -219,3 +219,28 @@ true_value <> empty: {% if true_value <> empty %}T{% else %}F{% endif %} {% if e
 zero <> empty: {% if zero <> empty %}T{% else %}F{% endif %} {% if empty <> zero %}T{% else %}F{% endif %}
 one <> empty: {% if one <> empty %}T{% else %}F{% endif %} {% if empty <> one %}T{% else %}F{% endif %}
 
+contains with false and nil
+array_with_false contains false: {% if array_with_false contains false %}T{% else %}F{% endif %}
+array_with_false contains 1: {% if array_with_false contains 1 %}T{% else %}F{% endif %}
+array_with_nil contains nil: {% if array_with_nil contains nil %}T{% else %}F{% endif %}
+array_with_nil contains nil_value: {% if array_with_nil contains nil_value %}T{% else %}F{% endif %}
+array_with_nil contains undefined: {% if array_with_nil contains nosuchthing %}T{% else %}F{% endif %}
+false_value contains false: {% if false_value contains false %}T{% else %}F{% endif %}
+str_x contains false: {% if str_x contains false %}T{% else %}F{% endif %}
+str_x contains false_value: {% if str_x contains false_value %}T{% else %}F{% endif %}
+
+contains on a hash checks its keys
+hash_foo contains 'foo': {% if hash_foo contains 'foo' %}T{% else %}F{% endif %}
+hash_foo contains 'bar': {% if hash_foo contains 'bar' %}T{% else %}F{% endif %}
+hash_foo contains 'baz': {% if hash_foo contains 'baz' %}T{% else %}F{% endif %}
+hash_foo contains nil: {% if hash_foo contains nil %}T{% else %}F{% endif %}
+hash_foo contains undefined: {% if hash_foo contains nosuchthing %}T{% else %}F{% endif %}
+hash_foo contains false: {% if hash_foo contains false %}T{% else %}F{% endif %}
+hash_full contains 'a': {% if hash_full contains 'a' %}T{% else %}F{% endif %}
+hash_empty contains 'a': {% if hash_empty contains 'a' %}T{% else %}F{% endif %}
+pages contains 'about-us': {% if pages contains 'about-us' %}T{% else %}F{% endif %}
+undefined contains hash_foo: {% if nosuchthing contains hash_foo %}T{% else %}F{% endif %}
+'foo' contains hash_foo: {% if 'foo' contains hash_foo %}T{% else %}F{% endif %}
+'foo' == hash_foo: {% if 'foo' == hash_foo %}T{% else %}F{% endif %}
+'foo' contains with unless: {% unless hash_foo contains 'foo' %}T{% else %}F{% endunless %}
+'foo' contains with elsif: {% if false %}A{% elsif hash_foo contains 'foo' %}T{% else %}F{% endif %}

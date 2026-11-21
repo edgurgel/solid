@@ -7,7 +7,7 @@ defmodule Solid.Tags.IfTag do
   alias Solid.{ConditionExpression, Parser.Loc, Parser}
 
   @enforce_keys [:loc, :tag_name, :body, :elsifs, :else_body, :condition]
-  defstruct [:loc, :tag_name, :body, :elsifs, :else_body, :condition]
+  defstruct [:loc, :tag_name, :body, :elsifs, :else_body, :condition, blank: false]
 
   @type t :: %__MODULE__{
           loc: Loc.t(),
@@ -15,7 +15,8 @@ defmodule Solid.Tags.IfTag do
           elsifs: [{ConditionExpression.condition(), [Parser.entry()]}],
           body: [Parser.entry()],
           else_body: [Parser.entry()],
-          condition: ConditionExpression.condition()
+          condition: ConditionExpression.condition(),
+          blank: boolean
         }
 
   defp ignore_until_end("if", "endif", context), do: {:ok, context}
@@ -48,15 +49,42 @@ defmodule Solid.Tags.IfTag do
          # Here we ignore until and endif or endunless is found ignoring extra
          # elses and elsifs
          {:ok, context} <- ignore_until_end(starting_tag_name, tag_name, context) do
-      {:ok,
-       %__MODULE__{
-         tag_name: String.to_existing_atom(starting_tag_name),
-         body: Parser.remove_blank_text_if_blank_body(body),
-         else_body: Parser.remove_blank_text_if_blank_body(else_body),
-         elsifs: elsifs,
-         condition: condition,
-         loc: loc
-       }, context}
+      tag = %__MODULE__{
+        tag_name: String.to_existing_atom(starting_tag_name),
+        body: body,
+        else_body: else_body,
+        elsifs: elsifs,
+        condition: condition,
+        loc: loc
+      }
+
+      {:ok, remove_blank_text_if_blank(tag), context}
+    end
+  end
+
+  # Whitespace is stripped from every branch, or from none: a branch that is
+  # blank on its own keeps its whitespace when another branch has output, even
+  # if that other branch is never rendered.
+  #
+  # The result is stored in `blank` so that an enclosing tag reads it instead of
+  # walking this tag's branches again
+  defp remove_blank_text_if_blank(tag) do
+    blank =
+      Solid.Block.blank?(tag.body) and
+        Enum.all?(tag.elsifs, fn {_condition, body} -> Solid.Block.blank?(body) end) and
+        Solid.Block.blank?(tag.else_body)
+
+    if blank do
+      %{
+        tag
+        | body: Parser.remove_text(tag.body),
+          elsifs:
+            Enum.map(tag.elsifs, fn {condition, body} -> {condition, Parser.remove_text(body)} end),
+          else_body: Parser.remove_text(tag.else_body),
+          blank: true
+      }
+    else
+      tag
     end
   end
 
@@ -98,7 +126,7 @@ defmodule Solid.Tags.IfTag do
         with {:ok, condition} <- ConditionExpression.parse(tokens, context.opts),
              {:ok, body, tag_name, tokens, context} <- parse_body(starting_tag_name, context) do
           parse_elsifs(starting_tag_name, tag_name, tokens, context, [
-            {condition, Parser.remove_blank_text_if_blank_body(body)} | acc
+            {condition, body} | acc
           ])
         end
     end
@@ -121,6 +149,10 @@ defmodule Solid.Tags.IfTag do
       {:error, reason, meta} ->
         {:error, "Expected '#{expected_tag}' tag. Got: #{reason}", meta}
     end
+  end
+
+  defimpl Solid.Block do
+    def blank?(tag), do: tag.blank
   end
 
   defimpl Solid.Renderable do

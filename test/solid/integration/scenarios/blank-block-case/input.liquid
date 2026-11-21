@@ -1,0 +1,88 @@
+only-assign:[{% case 1 %}
+  {% when 1 %}
+    {% assign a = 1 %}
+  {% else %}
+{% endcase %}]
+no-match:[{% case 3 %}
+  {% when 1 %}
+    {% assign a = 1 %}
+  {% when 2 %}
+{% endcase %}]
+other-when-has-output:[{% case 1 %}
+  {% when 1 %}
+    {% assign a = 1 %}
+  {% when 2 %}{{ space }}
+{% endcase %}]
+other-when-has-text:[{% case 2 %}
+  {% when 1 %}text
+  {% when 2 %}
+    {% assign a = 1 %}
+{% endcase %}]
+else-has-output:[{% case 1 %}
+  {% when 1 %}
+    {% assign a = 1 %}
+  {% else %}x
+{% endcase %}]
+else-rendered-all-blank:[{% case 5 %}
+  {% when 1 %}
+    {% assign a = 1 %}
+  {% else %}
+    {% assign b = 1 %}
+{% endcase %}]
+when-or:[{% case 2 %}
+  {% when 1 or 2 %}
+    {% assign a = 1 %}
+  {% when 3, 4 %}
+{% endcase %}]
+output-before-first-when:[{% case 1 %}{{ space }}
+  {% when 1 %}
+    {% assign a = 1 %}
+{% endcase %}]
+text-before-first-when:[{% case 1 %}text
+  {% when 1 %}
+    {% assign a = 1 %}
+{% endcase %}]
+assign-before-first-when:[{% case 1 %}{% assign a = 1 %}
+  {% when 1 %}
+    {% assign b = 1 %}
+{% endcase %}]
+empty:[{% case 1 %}
+{% endcase %}]
+if-around-blank-case:[{% if true %}
+  {% case 1 %}
+    {% when 1 %}
+      {% assign a = 1 %}
+  {% endcase %}
+{% endif %}]
+if-around-case-with-output:[{% if true %}
+  {% case 1 %}
+    {% when 1 %}
+      {% assign a = 1 %}
+    {% when 2 %}{{ space }}
+  {% endcase %}
+{% endif %}]
+case-around-blank-if:[{% case 1 %}
+  {% when 1 %}
+    {% if true %}
+      {% assign a = 1 %}
+    {% endif %}
+{% endcase %}]
+case-around-if-with-output:[{% case 1 %}
+  {% when 1 %}
+    {% if true %}
+    {% else %}{{ space }}
+    {% endif %}
+{% endcase %}]
+nested-case-blank:[{% case 1 %}
+  {% when 1 %}
+    {% case 2 %}
+      {% when 2 %}
+        {% assign a = 1 %}
+    {% endcase %}
+{% endcase %}]
+nested-case-with-output:[{% case 1 %}
+  {% when 1 %}
+    {% case 2 %}
+      {% when 2 %}{{ space }}
+    {% endcase %}
+{% endcase %}]

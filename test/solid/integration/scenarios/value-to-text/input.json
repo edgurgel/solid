@@ -6,6 +6,7 @@
   "mixed": [1, "a", null, 2.5, true], "with_nil": [3, null, 1],
   "hash": {"a": 1, "b": "two", "size": 99, "first": "F", "key with space": "sp", "dash-key": "dk"},
   "empty_hash": {},
+  "floats": [2.5, 100.0, 0.30000000000000004, 123456789012345.6, 1.0e15, 12345678901234567.0, 1.0e20, 0.0001, 0.000123456, 0.00001, -1.5e-10, -0.0, 0.0],
   "key": "b", "idx": 1,
   "products": [
     {"title": "Shoes", "price": 50, "type": "wear", "available": true, "tags": ["a", "b"]},

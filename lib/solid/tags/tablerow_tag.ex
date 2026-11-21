@@ -37,6 +37,7 @@ defmodule Solid.Tags.TablerowTag do
   """
 
   alias Solid.{Argument, Parser, Variable}
+  alias Solid.Tags.CollectionSlice
 
   import Solid.NumberHelper, only: [to_integer: 1]
 
@@ -47,11 +48,12 @@ defmodule Solid.Tags.TablerowTag do
           variable: Variable.t(),
           enumerable: Argument.t(),
           parameters: %{parameter => Argument.t()},
-          body: [Parser.entry()]
+          body: [Parser.entry()],
+          blank: boolean
         }
 
   @enforce_keys [:loc, :variable, :enumerable, :parameters, :body]
-  defstruct [:loc, :variable, :enumerable, :parameters, :body]
+  defstruct [:loc, :variable, :enumerable, :parameters, :body, blank: false]
 
   @behaviour Solid.Tag
 
@@ -65,13 +67,20 @@ defmodule Solid.Tags.TablerowTag do
          {:end, [{:end, _}]} <- {:end, tokens},
          {:ok, body, _tag_name, _tokens, context} <-
            Parser.parse_until(context, ~w(endtablerow), "Expected endtablerow") do
+      # The body keeps its whitespace even when it is blank, as every cell is
+      # rendered inside its own `<td>`. An enclosing tag still treats a tablerow
+      # with a blank body as blank, even though it renders `<tr>` and `<td>`.
+      #
+      # `blank` is stored so that an enclosing tag reads it instead of walking
+      # the body again
       {:ok,
        %__MODULE__{
          loc: loc,
          enumerable: enumerable,
          variable: variable,
          parameters: parameters,
-         body: Parser.remove_blank_text_if_blank_body(body)
+         body: body,
+         blank: Solid.Block.blank?(body)
        }, context}
     else
       {:end, tokens} -> {:error, "Unexpected token", Parser.meta_head(tokens)}
@@ -110,6 +119,10 @@ defmodule Solid.Tags.TablerowTag do
     end
   end
 
+  defimpl Solid.Block do
+    def blank?(tag), do: tag.blank
+  end
+
   defimpl Solid.Renderable do
     def render(tag, context, options) do
       with {:ok, enumerable, context} <- enumerable(tag.enumerable, context, options),
@@ -117,6 +130,10 @@ defmodule Solid.Tags.TablerowTag do
              apply_parameters(enumerable, tag, context, options) do
         render_table_row(enumerable, length, tag, context, options)
       else
+        # nil and false render nothing at all, not even an empty row
+        {:skip, context} ->
+          {"", context}
+
         {:error, message, context} ->
           exception = %Solid.ArgumentError{loc: tag.loc, message: message}
           context = Solid.Context.put_errors(context, exception)
@@ -129,7 +146,9 @@ defmodule Solid.Tags.TablerowTag do
       %{acc_context | iteration_vars: iteration_vars}
     end
 
-    defp render_table_row([], _length, _tag, context, _options), do: {"", context}
+    defp render_table_row([], _length, _tag, context, _options) do
+      {~s(<tr class="row1">\n</tr>\n), context}
+    end
 
     defp render_table_row(enumerable, length, tag, context, options) do
       enumerable_key = tag.variable.identifier
@@ -215,10 +234,13 @@ defmodule Solid.Tags.TablerowTag do
 
     defp enumerable(enumerable, context, options) do
       {:ok, enumerable, context} = Argument.get(enumerable, context, [], options)
-      enumerable = enumerable || []
 
       case enumerable do
-        enumerable when is_list(enumerable) ->
+        falsy when falsy in [nil, false] ->
+          {:skip, context}
+
+        enumerable
+        when is_list(enumerable) or (is_map(enumerable) and not is_struct(enumerable)) ->
           {:ok, enumerable, context}
 
         %Range{first: first, last: last} when first <= last ->
@@ -227,18 +249,26 @@ defmodule Solid.Tags.TablerowTag do
         %Range{} ->
           {:ok, [], context}
 
-        other ->
-          {:ok, [other], context}
+        "" ->
+          {:ok, [], context}
+
+        # A non-empty string is iterated once, as a whole, ignoring offset and limit
+        string when is_binary(string) ->
+          {:ok, string, context}
+
+        # Anything else (numbers, true, structs) is not iterable
+        _ ->
+          {:ok, [], context}
       end
     end
 
     defp apply_parameters(enumerable, tag, context, options) do
-      length = Enum.count(enumerable)
-
-      with {:ok, start, context} <- offset(tag, context, options),
-           {:ok, finish, context} <- limit(tag, length, context, options) do
-        enumerable = Enum.slice(enumerable, start..finish//1)
-        {:ok, enumerable, length, context}
+      with {:ok, from, context} <- offset(tag, context, options),
+           {:ok, limit, context} <- limit(tag, context, options) do
+        to = if limit, do: from + limit
+        segment = CollectionSlice.slice(enumerable, from, to)
+        # tablerowloop.length and the default cols count the segment, not the collection
+        {:ok, segment, length(segment), context}
       end
     end
 
@@ -255,16 +285,16 @@ defmodule Solid.Tags.TablerowTag do
       end
     end
 
-    defp limit(tag, length, context, options) do
+    defp limit(tag, context, options) do
       if argument = tag.parameters[:limit] do
         {:ok, limit, context} = Argument.get(argument, context, [], options)
 
         case to_integer(limit) do
-          {:ok, limit} -> {:ok, limit - 1, context}
+          {:ok, limit} -> {:ok, limit, context}
           {:error, message} -> {:error, message, context}
         end
       else
-        {:ok, length, context}
+        {:ok, nil, context}
       end
     end
 

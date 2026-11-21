@@ -224,7 +224,8 @@ defmodule Solid.Tags.ForTagTest do
                   reversed: false,
                   parameters: %{},
                   body: [],
-                  else_body: []
+                  else_body: [],
+                  blank: true
                 }, %ParserContext{rest: "\n", line: 3, column: 13, mode: :normal, tags: nil}}
     end
 
@@ -282,7 +283,7 @@ defmodule Solid.Tags.ForTagTest do
       assert Renderable.render(tag, context, []) == {
                [["shoes"], ["shirts"]],
                %Solid.Context{
-                 registers: %{"product-collection" => 3},
+                 registers: %{"product-collection" => 2},
                  vars: %{
                    "collection" => [
                      %{"title" => "shoes"},
@@ -314,7 +315,7 @@ defmodule Solid.Tags.ForTagTest do
                  [[["2", "-", "1"], ["2", "-", "2"], ["2", "-", "3"]]]
                ],
                %Solid.Context{
-                 registers: %{"i-inner" => 4, "inner-outer" => 3},
+                 registers: %{"i-inner" => 3, "inner-outer" => 2},
                  vars: %{"outer" => [1..3, 1..3]}
                }
              }
@@ -333,6 +334,82 @@ defmodule Solid.Tags.ForTagTest do
       template = "{% for i in (1..1000000000) offset: 5 limit: 2 %}{{ i }} {% endfor %}"
 
       assert Solid.Helpers.render(template) == "6 7 "
+    end
+
+    test "large range with negative offset and limit does not materialize the whole range" do
+      template = "{% for i in (1..1000000000) offset: -5 limit: 7 %}{{ i }} {% endfor %}"
+
+      assert Solid.Helpers.render(template) == "1 2 "
+    end
+
+    test "negative offset starts at the first item" do
+      assert Solid.Helpers.render("{% for i in (0..3) offset: -2 %}{{ i }} {% endfor %}") ==
+               "0 1 2 3 "
+    end
+
+    test "negative offset with limit ends at offset + limit" do
+      assert Solid.Helpers.render("{% for i in (0..3) offset: -2 limit: 3 %}{{ i }} {% endfor %}") ==
+               "0 "
+    end
+
+    test "negative limit loops zero times" do
+      template = "{% for i in (0..5) offset: 1 limit: -1 %}{{ i }}{% else %}else{% endfor %}"
+
+      assert Solid.Helpers.render(template) == "else"
+    end
+
+    test "offset: continue resumes after a negative offset" do
+      template =
+        "{% for i in (0..3) offset: -2 %}{{ i }} {% endfor %}|" <>
+          "{% for i in (0..3) offset: continue %}{{ i }} {% endfor %}"
+
+      assert Solid.Helpers.render(template) == "0 1 2 3 |2 3 "
+    end
+  end
+
+  describe "blank bodies" do
+    test "whitespace is removed from both bodies when both are blank" do
+      template = ~s<{% for i in xs %} {% assign a = i %} {% else %} {% endfor %}>
+
+      assert {:ok, %ForTag{body: [%Solid.Tags.AssignTag{}], else_body: [], blank: true}, _} =
+               parse(template)
+    end
+
+    test "blank body keeps its whitespace when the else body has output" do
+      template = ~s<{% for i in xs %} {% else %}{{ x }}{% endfor %}>
+
+      assert {:ok,
+              %ForTag{body: [%Solid.Text{text: " "}], else_body: [%Solid.Object{}], blank: false},
+              _} = parse(template)
+    end
+
+    test "blank else body keeps its whitespace when the body has output" do
+      template = ~s<{% for i in xs %}{{ i }}{% else %} {% endfor %}>
+
+      assert {:ok, %ForTag{else_body: [%Solid.Text{text: " "}], blank: false}, _} =
+               parse(template)
+    end
+
+    test "nested blank for is stripped together with its parent" do
+      template = ~s<{% for i in xs %} {% for j in xs %} {% endfor %} {% endfor %}>
+
+      assert {:ok, %ForTag{body: [%ForTag{body: [], blank: true}], blank: true}, _} =
+               parse(template)
+    end
+
+    test "break and continue are not blank" do
+      assert {:ok, %ForTag{blank: false}, _} =
+               parse(~s<{% for i in xs %} {% break %} {% endfor %}>)
+
+      assert {:ok, %ForTag{blank: false}, _} =
+               parse(~s<{% for i in xs %} {% continue %} {% endfor %}>)
+    end
+
+    test "blank for inside an if is stripped together with the if" do
+      template =
+        "!{% if true %}\n  {% for i in (1..2) %}\n    {% assign a = i %}\n  {% endfor %}\n{% endif %}!"
+
+      assert template |> Solid.parse!() |> Solid.render!(%{}) |> to_string() == "!!"
     end
   end
 end

@@ -1,0 +1,27 @@
+only-whitespace:[{% tablerow i in xs %}
+{% endtablerow %}]
+only-assign:[{% tablerow i in xs %}
+  {% assign a = 1 %}
+{% endtablerow %}]
+output:[{% tablerow i in xs %}
+  {{ i }}
+{% endtablerow %}]
+blank-if-inside:[{% tablerow i in xs %}
+  {% if true %}
+    {% assign a = 1 %}
+  {% endif %}
+{% endtablerow %}]
+if-around-blank-tablerow:[{% if true %}
+  {% tablerow i in xs %}
+  {% endtablerow %}
+{% endif %}]
+if-around-tablerow-with-output:[{% if true %}
+  {% tablerow i in xs %}{{ i }}{% endtablerow %}
+{% endif %}]
+for-around-blank-tablerow:[{% for x in xs %}
+  {% tablerow i in xs %} {% endtablerow %}
+{% endfor %}]
+empty-collection:[{% if true %}
+  {% tablerow i in empty %}
+  {% endtablerow %}
+{% endif %}]

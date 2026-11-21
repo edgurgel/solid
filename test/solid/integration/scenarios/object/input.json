@@ -22,5 +22,6 @@
   "a var" : {
     "foo" : "bar"
   },
-  "contains123" : "yo"
+  "contains123" : "yo",
+  "empty_hash" : {}
 }

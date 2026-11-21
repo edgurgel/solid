@@ -1,0 +1,38 @@
+assign:[{% if true %} {% assign a = 1 %} {% endif %}]
+capture:[{% if true %} {% capture c %} x {% endcapture %} {% endif %}]
+capture-with-output:[{% if true %} {% capture c %}{{ space }}{% endcapture %} {% endif %}]
+comment:[{% if true %} {% comment %} x {% endcomment %} {% endif %}]
+inline-comment:[{% if true %} {% # x %} {% endif %}]
+raw-empty:[{% if true %} {% raw %}{% endraw %} {% endif %}]
+raw-whitespace:[{% if true %} {% raw %} {% endraw %} {% endif %}]
+raw-text:[{% if true %} {% raw %}x{% endraw %} {% endif %}]
+for-raw-whitespace:[{% for i in xs %} {% raw %} {% endraw %} {% endfor %}]
+echo:[{% if true %} {% echo '' %} {% endif %}]
+object:[{% if true %} {{ '' }} {% endif %}]
+object-nil:[{% if true %} {{ nothing }} {% endif %}]
+cycle:[{% if true %} {% cycle 'a' %} {% endif %}]
+increment:[{% if true %} {% increment counter %} {% endif %}]
+decrement:[{% if true %} {% decrement counter %} {% endif %}]
+break:[{% for i in xs %} {% if true %} {% break %} {% endif %} {% endfor %}]
+continue:[{% for i in xs %} {% if true %} {% continue %} {% endif %} {% endfor %}]
+liquid-assign:[{% if true %} {% liquid assign a = 1 %} {% endif %}]
+liquid-echo:[{% if true %} {% liquid echo '' %} {% endif %}]
+liquid-nested-if:[{% if true %} {% liquid
+  if true
+    assign a = 1
+  endif
+%} {% endif %}]
+liquid-nested-for-echo:[{% if true %} {% liquid
+  for i in xs
+    echo i
+  endfor
+%} {% endif %}]
+mixed-blank:[{% if true %}
+  {% assign a = 1 %}
+  {% comment %} c {% endcomment %}
+  {% # inline %}
+  {% capture c %}x{% endcapture %}
+  {% raw %}{% endraw %}
+  {% liquid assign b = 2 %}
+{% endif %}]
+top-level-is-never-stripped:[  {% assign a = 1 %}  ]

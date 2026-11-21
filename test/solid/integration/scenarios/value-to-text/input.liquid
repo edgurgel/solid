@@ -17,4 +17,8 @@ Lists rendered directly are concatenated:
 {% cycle "named": nested, 1 %}
 {% cycle "nils": with_nil, 1 %}
 {% cycle "floats": float, int %}{% cycle "floats": float, int %}
+
+2.5 floats as text, directly, through a filter and inside a list:
+{% for x in floats %}{{ x }}|{{ x | append: "" }}|{{ floats | slice: forloop.index0 | append: "" }}
+{% endfor %}{{ floats | append: "" }}
 Done

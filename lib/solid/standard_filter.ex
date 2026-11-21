@@ -7,6 +7,8 @@ defmodule Solid.StandardFilter do
 
   import Kernel, except: [abs: 1, ceil: 1, round: 1, floor: 1, apply: 2]
 
+  @ascii_whitespace [" ", "\t", "\n", "\v", "\f", "\r"]
+
   @spec apply(String.t(), list(), Solid.Parser.Loc.t(), keyword()) ::
           {:ok, any()} | {:error, Exception.t(), any()} | {:error, Exception.t()}
   def apply(filter, args, loc, opts) do
@@ -486,9 +488,16 @@ defmodule Solid.StandardFilter do
   ~w(a b c)
   iex> Solid.StandardFilter.split("", " ")
   []
+  iex> Solid.StandardFilter.split(" a  b\\tc\\nd ", " ")
+  ~w(a b c d)
   """
   @spec split(term, term) :: list(String.t())
-  def split(input, pattern), do: to_str(input) |> String.split(to_str(pattern), trim: true)
+  def split(input, pattern) do
+    case to_str(pattern) do
+      " " -> String.split(to_str(input), @ascii_whitespace, trim: true)
+      pattern -> String.split(to_str(input), pattern, trim: true)
+    end
+  end
 
   @doc """
   Map through a list of hashes accessing `property`
@@ -718,14 +727,11 @@ defmodule Solid.StandardFilter do
   #   to_string(datetime)
   # end
 
+  defp to_str(input) when is_map(input) and not is_struct(input), do: Solid.Inspect.inspect(input)
   defp to_str(input) when is_map(input), do: inspect(input)
-  defp to_str(input) when is_list(input), do: inspect(input, charlists: :as_lists)
+  defp to_str(input) when is_list(input), do: Solid.Inspect.inspect(input)
 
-  defp to_str(input) when is_float(input) do
-    input
-    |> Decimal.from_float()
-    |> Decimal.to_string(:xsd)
-  end
+  defp to_str(input) when is_float(input), do: Solid.NumberHelper.float_to_string(input)
 
   defp to_str(input), do: to_string(input)
 
@@ -964,10 +970,13 @@ defmodule Solid.StandardFilter do
   def sort(input), do: Enum.sort(to_enum(input))
 
   @doc """
-  Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.
+  Sorts items in an array in case-insensitive order. `nil` values are placed last.
 
   iex> Solid.StandardFilter.sort_natural(~w(zebra octopus giraffe SallySnake))
   ~w(giraffe octopus SallySnake zebra)
+
+  iex> Solid.StandardFilter.sort_natural(["b", "a", nil, "C", "B", "A"])
+  ["a", "A", "b", "B", "C", nil]
 
   iex> Solid.StandardFilter.sort_natural(123)
   "123"
@@ -976,11 +985,21 @@ defmodule Solid.StandardFilter do
   def sort_natural(input) when is_list(input) or is_struct(input, Range) do
     input
     |> to_enum()
-    |> Enum.sort(&(String.downcase(to_string(&1)) <= String.downcase(to_string(&2))))
+    |> Enum.sort(&natural_sorter/2)
   end
 
   def sort_natural(input) do
     to_string(input)
+  end
+
+  # `nil` sorts after everything else, other values are compared
+  # case-insensitively as strings
+  defp natural_sorter(nil, nil), do: true
+  defp natural_sorter(nil, _), do: false
+  defp natural_sorter(_, nil), do: true
+
+  defp natural_sorter(a, b) do
+    String.downcase(to_str(a)) <= String.downcase(to_str(b))
   end
 
   @doc """
@@ -1195,8 +1214,10 @@ defmodule Solid.StandardFilter do
 
   iex> input = [
   ...>   %{"id" => 1, "available" => true},
-  ...>   %{"id" => 2, "type" => false},
-  ...>   %{"id" => 3, "available" => true}
+  ...>   %{"id" => 2, "available" => false},
+  ...>   %{"id" => 3, "available" => true},
+  ...>   %{"id" => 4, "available" => nil},
+  ...>   %{"id" => 5}
   ...> ]
   iex> Solid.StandardFilter.where(input, "available")
   [%{"id" => 1, "available" => true}, %{"id" => 3, "available" => true}]
@@ -1220,7 +1241,7 @@ defmodule Solid.StandardFilter do
         raise %Solid.ArgumentError{message: "cannot select the property '#{key}'"}
       end
 
-      if is_map(item) && Map.has_key?(item, key) do
+      if is_map(item) && item[key] not in [nil, false] do
         [item]
       else
         []

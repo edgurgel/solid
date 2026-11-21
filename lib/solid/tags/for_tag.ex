@@ -1,5 +1,6 @@
 defmodule Solid.Tags.ForTag do
   alias Solid.{Argument, Parser, Variable}
+  alias Solid.Tags.CollectionSlice
 
   import Solid.NumberHelper, only: [to_integer: 1]
 
@@ -12,11 +13,21 @@ defmodule Solid.Tags.ForTag do
           reversed: boolean,
           parameters: %{parameter => Argument.t()},
           body: [Parser.entry()],
-          else_body: [Parser.entry()]
+          else_body: [Parser.entry()],
+          blank: boolean
         }
 
   @enforce_keys [:loc, :enumerable, :variable, :reversed, :parameters, :body, :else_body]
-  defstruct [:loc, :enumerable, :variable, :reversed, :parameters, :body, :else_body]
+  defstruct [
+    :loc,
+    :enumerable,
+    :variable,
+    :reversed,
+    :parameters,
+    :body,
+    :else_body,
+    blank: false
+  ]
 
   @behaviour Solid.Tag
 
@@ -32,19 +43,39 @@ defmodule Solid.Tags.ForTag do
          {:ok, body, tag_name, _tokens, context} <-
            Parser.parse_until(context, ~w(else endfor), "Expected endfor"),
          {:ok, else_body, context} <- parse_else_body(tag_name, context) do
-      {:ok,
-       %__MODULE__{
-         loc: loc,
-         enumerable: enumerable,
-         variable: variable,
-         reversed: reversed,
-         parameters: parameters,
-         body: Parser.remove_blank_text_if_blank_body(body),
-         else_body: Parser.remove_blank_text_if_blank_body(else_body)
-       }, context}
+      tag = %__MODULE__{
+        loc: loc,
+        enumerable: enumerable,
+        variable: variable,
+        reversed: reversed,
+        parameters: parameters,
+        body: body,
+        else_body: else_body
+      }
+
+      {:ok, remove_blank_text_if_blank(tag), context}
     else
       {:end, tokens} -> {:error, "Unexpected token", Parser.meta_head(tokens)}
       error -> error
+    end
+  end
+
+  # Whitespace is stripped from both the loop body and the else body, or from
+  # neither: a body that is blank on its own keeps its whitespace when the other
+  # one has output.
+  #
+  # The result is stored in `blank` so that an enclosing tag reads it instead of
+  # walking this tag's bodies again
+  defp remove_blank_text_if_blank(tag) do
+    if Solid.Block.blank?(tag.body) and Solid.Block.blank?(tag.else_body) do
+      %{
+        tag
+        | body: Parser.remove_text(tag.body),
+          else_body: Parser.remove_text(tag.else_body),
+          blank: true
+      }
+    else
+      tag
     end
   end
 
@@ -94,6 +125,10 @@ defmodule Solid.Tags.ForTag do
 
   defp drop_comma([{:comma, _meta} | tokens]), do: tokens
   defp drop_comma(tokens), do: tokens
+
+  defimpl Solid.Block do
+    def blank?(tag), do: tag.blank
+  end
 
   defimpl Solid.Renderable do
     def render(tag, context, options) do
@@ -218,18 +253,28 @@ defmodule Solid.Tags.ForTag do
         %Range{} ->
           {:ok, [], context}
 
-        other ->
-          {:ok, [other], context}
+        "" ->
+          {:ok, [], context}
+
+        # A non-empty string is iterated once, as a whole, ignoring offset and limit
+        string when is_binary(string) ->
+          {:ok, string, context}
+
+        # Anything else (numbers, booleans, structs) is not iterable
+        _ ->
+          {:ok, [], context}
       end
     end
 
     defp apply_parameters(enumerable, tag, for_name, context, options) do
-      with {:ok, start, context} <- offset(tag, for_name, context, options),
-           {:ok, finish, context} <- limit(enumerable, tag, context, options) do
-        last_offset = start + finish
-        context = %{context | registers: Map.put(context.registers, for_name, last_offset + 1)}
-        enumerable = Enum.slice(enumerable, start..last_offset//1)
-        {:ok, apply_reversed(enumerable, tag), context}
+      with {:ok, from, context} <- offset(tag, for_name, context, options),
+           {:ok, limit, context} <- limit(tag, context, options) do
+        to = if limit, do: from + limit
+        segment = CollectionSlice.slice(enumerable, from, to)
+        # `offset: continue` resumes where this segment ends
+        next_offset = from + length(segment)
+        context = %{context | registers: Map.put(context.registers, for_name, next_offset)}
+        {:ok, apply_reversed(segment, tag), context}
       end
     end
 
@@ -256,16 +301,16 @@ defmodule Solid.Tags.ForTag do
 
     defp continue?(_), do: false
 
-    defp limit(enumerable, tag, context, options) do
+    defp limit(tag, context, options) do
       if argument = tag.parameters[:limit] do
         {:ok, limit, context} = Argument.get(argument, context, [], options)
 
         case to_integer(limit) do
-          {:ok, limit} -> {:ok, limit - 1, context}
+          {:ok, limit} -> {:ok, limit, context}
           {:error, message} -> {:error, message, context}
         end
       else
-        {:ok, Enum.count(enumerable), context}
+        {:ok, nil, context}
       end
     end
 

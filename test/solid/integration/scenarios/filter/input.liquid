@@ -98,6 +98,7 @@ last
 {{ string | last }}
 {{ does_not_exist | last }}
 {{ (1..3) | last }}
+{{ things | last }}
 
 floor
 
@@ -269,6 +270,9 @@ replace
 {{ unknown | replace: "rain", "unknown" }}
 {{ (1..5) | replace: 1, "one" }}
 {{ 1 | replace: (1..5), "range" }}
+{{ var_empty_hash | replace: "{", "<" }}
+{{ things | replace: "=>", ":" }}
+{{ var_empty_hash | append: "!" }}
 {% # {{ post | replace: 'T', 't' | join: '#' }} %}
 
 remove
@@ -309,6 +313,17 @@ split
 {{ '' | split: "," | join: '#'}}
 {{ ' a bc ' | split: "" | join: '#'}}
 {{ ' a bc ' | split: " " | join: '#'}}
+{{ "a b
+c" | split: " " | join: '#'}}
+{{ whitespace_string | split: " " | join: '#'}}
+{{ whitespace_string | split: " " | size }}
+{{ whitespace_string | split: "  " | join: '#'}}
+{{ whitespace_string | split: "
+" | join: '#'}}
+{{ "  " | split: " " | size }}
+{{ 56 | split: ' ' | first }}
+{% assign space = " " %}{{ "a b
+c" | split: space | join: '#'}}
 {{ fruits | split: ", " | reverse | join: ", " }}
 {{ fruits | split: "," |  size }}
 {{ "Ground control to Major Tom." | size }}
@@ -417,6 +432,7 @@ uniq
 {{ my_array | uniq | join: '-' }}
 {{ array | uniq | join: '-' }}
 {{ (1..5) | uniq | join: '-' }}
+{{ things | uniq | join: '-' }}
 {{ fruits | split: ","| uniq | join: ", " }}
 
 date
@@ -561,6 +577,15 @@ where
 {{ post | where: unknown, unknown | map: 'title' }}
 {{ post | where: "title", unknown | map: 'title' }}
 {{ posts | where: "title", unknown | map: 'title' }}
+{{ truthy_rows | where: 'x' | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'x', nil | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'x', unknown | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'x', false | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'x', true | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'x', 0 | map: 'i' | join: ',' }}
+{{ truthy_rows | where: 'y' | size }}
+{{ hashes | where: 'a' | map: 'a' | join: ',' }}
+{% assign filtered = truthy_rows | where: 'x' %}{% for row in filtered %}{{ row.i }};{% endfor %}
 
 newline_to_br
 
@@ -582,6 +607,7 @@ reverse
 {{ my_numbers | reverse | join: '#' }}
 {{ true | reverse | join: '#' }}
 {{ false | reverse | join: '#' }}
+{{ things | reverse | join: '#' }}
 {{ 1 | reverse | join: '#' }}
 {{ "text" | reverse | join: '#' }}
 {{ unknown | reverse | join: '#' }}
@@ -603,6 +629,11 @@ sort_natural
 {{ (0..15) | sort_natural | join: ", " }}
 {{ 123 | sort_natural | join: ", " }}
 {{ fruits | sort_natural | join: ", " }}
+{{ strings_with_nil | sort_natural | join: "#" }}
+{% assign s = mixed_types | sort_natural %}{{ s[0] }}#{{ s[1] }}#{{ s[2].size }}
+{{ mixed_types | sort_natural }}
+{{ strings_with_nil | sort_natural | last }}
+{{ words | sort_natural | join: "#" }}
 
 strip_html
 

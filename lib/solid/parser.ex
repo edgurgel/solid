@@ -202,6 +202,17 @@ defmodule Solid.Parser do
     end
   end
 
+  @doc false
+  # Move the context past the first `size` bytes of its rest, keeping line and
+  # column in sync. Used by tags that skip their body without parsing it
+  @spec skip(ParserContext.t(), non_neg_integer) :: ParserContext.t()
+  def skip(%ParserContext{rest: rest} = context, size) do
+    {_delimiter_pattern, newline_pattern} = patterns(context)
+    chunk = binary_part(rest, 0, size)
+    new_rest = binary_part(rest, size, byte_size(rest) - size)
+    advance_text(%{context | rest: new_rest}, chunk, size, newline_pattern)
+  end
+
   # Advance line/column past a fully-consumed `chunk` of `size` bytes. Every byte
   # counts as one column (matching the previous byte-at-a-time behaviour) and a
   # newline resets the column to 1.
@@ -274,11 +285,18 @@ defmodule Solid.Parser do
   @spec remove_blank_text_if_blank_body(parse_tree) :: parse_tree
   def remove_blank_text_if_blank_body(entries) do
     if Solid.Block.blank?(entries) do
-      Enum.reject(entries, &match?(%Solid.Text{}, &1))
+      remove_text(entries)
     else
       entries
     end
   end
+
+  @doc """
+  Remove every `Solid.Text` entry. Used by block tags once they know that all
+  their bodies are blank (see `Solid.Block`)
+  """
+  @spec remove_text(parse_tree) :: parse_tree
+  def remove_text(entries), do: Enum.reject(entries, &match?(%Solid.Text{}, &1))
 
   defp object(context) do
     case Lexer.tokenize_object(context) do

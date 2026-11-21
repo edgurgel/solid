@@ -35,3 +35,26 @@ echo 'still a comment'
 endcommentx
 endcomment
 echo 'after comment' %}
+
+nested comments
+a{% comment %}x{% comment %}y{% endcomment %}z{% endcomment %}b
+{% comment %}
+  {% if true %}
+    {% comment %}{% for x in y %}{{ x }}{% endcomment %}
+  {% endif %}
+{% endcomment %}
+a{% comment %}{% raw %}{% endcomment %}{% endraw %}{% endcomment %}b
+a{% comment %}{% raw %}{{ {% endraw %}{% endcomment %}b
+a{% comment %}{% foo {% endcomment %}{% endcomment %}b
+a{% comment %}{{ x } {% endcomment %}b
+a{% comment %}{% endcommentx %}{% endcomment %}b
+a{% comment %} x {% endcomment -%}
+  b
+
+{% liquid
+comment
+comment
+endcomment
+echo 'still a comment'
+endcomment
+echo 'after nested comment' %}

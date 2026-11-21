@@ -357,6 +357,85 @@ defmodule Solid.Tags.CaseTagTest do
     end
   end
 
+  describe "blank bodies" do
+    test "whitespace is removed from every branch when all of them are blank" do
+      template = ~s<{% case x %} {% when 1 %} {% assign a = 1 %} {% else %} {% endcase %}>
+
+      assert {:ok, %CaseTag{cases: [{_, [%Solid.Tags.AssignTag{}]}, {:else, []}], blank: true}, _} =
+               parse(template)
+    end
+
+    test "blank branch keeps its whitespace when another branch has output" do
+      template = ~s<{% case x %}{% when 1 %} {% when 2 %}{{ y }}{% endcase %}>
+
+      assert {:ok, %CaseTag{cases: [{_, [%Solid.Text{text: " "}]}, {_, [%Solid.Object{}]}]}, _} =
+               parse(template)
+    end
+
+    test "output before the first when keeps the whitespace" do
+      template = ~s<{% case x %}{{ y }}{% when 1 %} {% endcase %}>
+
+      assert {:ok, %CaseTag{cases: [{_, [%Solid.Text{text: " "}]}], blank: false}, _} =
+               parse(template)
+    end
+
+    test "text before the first when keeps the whitespace" do
+      template = ~s<{% case x %}text{% when 1 %} {% endcase %}>
+
+      assert {:ok, %CaseTag{cases: [{_, [%Solid.Text{text: " "}]}], blank: false}, _} =
+               parse(template)
+    end
+
+    test "nested blank if is stripped together with the case" do
+      template = ~s<{% case x %}{% when 1 %} {% if true %} {% endif %} {% endcase %}>
+
+      assert {:ok, %CaseTag{cases: [{_, [%Solid.Tags.IfTag{body: []}]}], blank: true}, _} =
+               parse(template)
+    end
+
+    test "nested if with output keeps the case's whitespace" do
+      template = ~s<{% case x %}{% when 1 %} {% if true %}{{ y }}{% endif %} {% endcase %}>
+
+      assert {:ok, %CaseTag{cases: [{_, [%Solid.Text{}, %Solid.Tags.IfTag{}, %Solid.Text{}]}]}, _} =
+               parse(template)
+    end
+
+    test "blank case inside an if is stripped together with the if" do
+      template =
+        "!{% if true %}\n  {% case 1 %}\n  {% when 1 %}\n    {% assign a = 1 %}\n  {% endcase %}\n{% endif %}!"
+
+      assert template |> Solid.parse!() |> Solid.render!(%{}) |> to_string() == "!!"
+    end
+
+    test "output in a branch that is not rendered keeps whitespace in every branch" do
+      template =
+        "!{% assign x = 1 %}{% case x %}\n\n  {% when 1 %}\n    {% assign foo = 'bar' %}\n\n  {% when 2 %}\n    {{ '' }}\n\n{% endcase %}!"
+
+      assert template |> Solid.parse!() |> Solid.render!(%{}) |> to_string() == "!\n    \n\n  !"
+    end
+  end
+
+  describe "Solid.Block impl" do
+    test "blank when every branch is blank" do
+      {:ok, tag, _} =
+        parse(~s<{% case x %} {% when 1 %} {% else %}{% assign a = 1 %}{% endcase %}>)
+
+      assert Solid.Block.blank?(tag)
+    end
+
+    test "not blank when a when body has output" do
+      {:ok, tag, _} = parse(~s<{% case x %}{% when 1 %} {% when 2 %}text{% endcase %}>)
+
+      refute Solid.Block.blank?(tag)
+    end
+
+    test "not blank when the else body has output" do
+      {:ok, tag, _} = parse(~s<{% case x %}{% when 1 %} {% else %}{{ y }}{% endcase %}>)
+
+      refute Solid.Block.blank?(tag)
+    end
+  end
+
   describe "Renderable impl" do
     test "renders the right case with literal" do
       template = """

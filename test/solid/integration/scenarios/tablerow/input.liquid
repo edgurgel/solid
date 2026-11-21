@@ -112,3 +112,38 @@ tablerowloop
   {% endif %}
   after continue
 {% endtablerow %}
+
+Non-iterables
+
+[{% tablerow i in var_true %}{{ i }}{% endtablerow %}]
+[{% tablerow i in var_false %}{{ i }}{% endtablerow %}]
+[{% tablerow i in var_nil %}{{ i }}{% endtablerow %}]
+[{% tablerow i in var_number %}{{ i }}{% endtablerow %}]
+[{% tablerow i in var_float %}{{ i }}{% endtablerow %}]
+[{% tablerow i in 42 %}{{ i }}{% endtablerow %}]
+
+Strings
+
+[{% tablerow i in '' %}{{ i }}{% endtablerow %}]
+[{% tablerow i in var_empty_string %}{{ i }}{% endtablerow %}]
+[{% tablerow i in var_string %}{{ i }}-{{ tablerowloop.length }}{% endtablerow %}]
+[{% tablerow i in var_string offset: 1 %}{{ i }}{% endtablerow %}]
+[{% tablerow i in var_string limit: 0 %}{{ i }}{% endtablerow %}]
+
+Empty collections and hashes
+
+[{% tablerow i in var_empty_array %}{{ i }}{% endtablerow %}]
+[{% tablerow i in (3..1) %}{{ i }}{% endtablerow %}]
+[{% tablerow i in var_empty_hash %}{{ i }}{% endtablerow %}]
+[{% tablerow i in var_hash %}{{ i[0] }}={{ i[1] }}{% endtablerow %}]
+[{% tablerow i in var_hash cols: 1 %}{{ i[0] }}={{ i[1] }}{% endtablerow %}]
+
+Offset and limit
+
+[{% tablerow i in (1..5) offset: 2 limit: 2 %}{{ i }}{% endtablerow %}]
+[{% tablerow i in (1..5) offset: 2 limit: 2 %}{{ tablerowloop.length }}-{{ tablerowloop.last }}{% endtablerow %}]
+[{% tablerow i in (1..5) offset: -2 %}{{ i }}{% endtablerow %}]
+[{% tablerow i in (1..5) offset: -2 limit: 3 %}{{ i }}{% endtablerow %}]
+[{% tablerow i in (1..5) offset: 1 limit: -1 %}{{ i }}{% endtablerow %}]
+[{% tablerow i in (1..5) offset: 1 limit: 3 cols: 2 %}{{ i }}{% endtablerow %}]
+[{% tablerow product in products offset: 1 %}{{ tablerowloop.length }}{{ tablerowloop.col_last }}{% endtablerow %}]

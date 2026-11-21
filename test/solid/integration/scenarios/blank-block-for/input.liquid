@@ -1,0 +1,84 @@
+only-whitespace:[{% for i in xs %}
+{% endfor %}]
+only-assign:[{% for i in xs %}
+  {% assign a = i %}
+{% endfor %}]
+output:[{% for i in xs %}
+  {{ i }}
+{% endfor %}]
+else-has-output:[{% for i in xs %}
+  {% assign a = i %}
+{% else %}x
+{% endfor %}]
+else-rendered-all-blank:[{% for i in empty %}
+  {% assign a = i %}
+{% else %}
+  {% assign b = 1 %}
+{% endfor %}]
+else-rendered-has-output:[{% for i in empty %}
+  {% assign a = i %}
+{% else %}
+  {{ space }}
+{% endfor %}]
+range:[{% for i in (1..3) %}
+  {% assign a = i %}
+{% endfor %}]
+parameters:[{% for i in (1..5) reversed limit: 2 offset: 1 %}
+  {% assign a = i %}
+{% endfor %}]
+break:[{% for i in xs %}
+  {% break %}
+{% endfor %}]
+continue:[{% for i in xs %}
+  {% continue %}
+{% endfor %}]
+break-in-if:[{% for i in (1..3) %}
+  {% if i == 2 %}{% break %}{% endif %}
+{% endfor %}]
+nested-blank:[{% for i in xs %}
+  {% for j in xs %}
+    {% assign a = j %}
+  {% endfor %}
+{% endfor %}]
+nested-with-output:[{% for i in xs %}
+  {% for j in xs %}{{ j }}{% endfor %}
+{% endfor %}]
+if-around-blank-for:[{% if true %}
+  {% for i in xs %}
+    {% assign a = i %}
+  {% endfor %}
+{% endif %}]
+if-around-for-with-output:[{% if true %}
+  {% for i in xs %}{{ i }}{% endfor %}
+{% endif %}]
+if-around-for-else-output:[{% if true %}
+  {% for i in xs %}
+  {% else %}{{ space }}
+  {% endfor %}
+{% endif %}]
+unless-around-blank-for:[{% unless false %}
+  {% for i in xs %}
+  {% endfor %}
+{% endunless %}]
+case-around-blank-for:[{% case 1 %}
+  {% when 1 %}
+    {% for i in xs %}
+    {% endfor %}
+{% endcase %}]
+for-around-blank-if:[{% for i in xs %}
+  {% if true %}
+    {% assign a = i %}
+  {% endif %}
+{% endfor %}]
+for-around-if-with-output:[{% for i in xs %}
+  {% if true %}{{ i }}{% endif %}
+{% endfor %}]
+for-around-blank-case:[{% for i in xs %}
+  {% case i %}
+    {% when 1 %}
+      {% assign a = i %}
+  {% endcase %}
+{% endfor %}]
+whitespace-control:[{% for i in xs -%}
+  {% assign a = i %}
+{%- endfor %}]
