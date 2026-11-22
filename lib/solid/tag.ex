@@ -25,6 +25,7 @@ defmodule Solid.Tag do
       "echo" => Tags.EchoTag,
       "for" => Tags.ForTag,
       "if" => Tags.IfTag,
+      "ifchanged" => Tags.IfchangedTag,
       "increment" => Tags.CounterTag,
       "raw" => Tags.RawTag,
       "render" => Tags.RenderTag,

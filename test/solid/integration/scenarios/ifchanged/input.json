@@ -1,0 +1,10 @@
+{
+  "list": [1, 1, 2, 2, 1, 3],
+  "products": [
+    {"name": "Apple", "type": "fruit"},
+    {"name": "Banana", "type": "fruit"},
+    {"name": "Carrot", "type": "vegetable"},
+    {"name": "Potato", "type": "vegetable"},
+    {"name": "Cherry", "type": "fruit"}
+  ]
+}

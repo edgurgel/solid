@@ -1,0 +1,55 @@
+{% ifchanged %}first{% endifchanged %}
+{% ifchanged %}{% endifchanged %}|
+{% ifchanged %}{% endifchanged %}|
+
+{% for item in list %}{% ifchanged %}{{ item }}{% endifchanged %}{% endfor %}
+
+{% assign sorted = list | sort %}
+{% for item in sorted -%}
+  {%- ifchanged %} {{ item }}{% endifchanged -%}
+{%- endfor %}
+
+{% for product in products %}
+  {%- ifchanged %}
+## {{ product.type }}
+  {%- endifchanged %}
+- {{ product.name }}
+{%- endfor %}
+
+{% assign foo = 'hello' %}
+{% ifchanged %}{{ foo }}{% endifchanged %}
+{% ifchanged %}{{ foo }}{% endifchanged %}
+{% assign foo = 'goodbye' %}
+{% ifchanged %}{{ foo }}{% endifchanged %}
+
+{% for i in (1..3) %}{% ifchanged %} {% endifchanged %}{% endfor %}|
+{% for i in (1..3) %}
+  {% ifchanged %}
+  {% endifchanged %}
+{% endfor %}|
+
+{% if true %}{% ifchanged %}x{% endifchanged %}{% endif %}
+{% unless false %}{% ifchanged %}x{% endifchanged %}{% endunless %}
+{% case 1 %}{% when 1 %}{% ifchanged %}y{% endifchanged %}{% endcase %}
+
+{% for i in (1..4) %}{% ifchanged %}a{% if i == 2 %}{% break %}{% endif %}b{% endifchanged %}{% endfor %}
+{% for i in (1..4) %}{% ifchanged %}c{% if i > 1 %}{% continue %}{% endif %}d{% endifchanged %}{% endfor %}
+
+{% capture captured %}{% ifchanged %}z{% endifchanged %}{% ifchanged %}z{% endifchanged %}{% endcapture %}
+{{ captured }}
+{% ifchanged %}z{% endifchanged %}
+
+{% ifchanged %}outer{% endifchanged %}
+{% render 'inner' %}
+{% ifchanged %}outer{% endifchanged %}
+{% ifchanged %}inner{% endifchanged %}
+
+{% liquid
+  for item in list
+    ifchanged
+      echo item
+    endifchanged
+  endfor
+%}
+
+{% tablerow item in list cols: 3 %}{% ifchanged %}{{ item }}{% endifchanged %}{% endtablerow %}
