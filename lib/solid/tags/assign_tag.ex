@@ -16,7 +16,7 @@ defmodule Solid.Tags.AssignTag do
   def parse("assign", loc, context) do
     with {:ok, tokens, context} <- Solid.Lexer.tokenize_tag_end(context),
          {:ok, argument, tokens} <- Argument.parse(tokens),
-         [{:assignment, _} | tokens] <- tokens,
+         {:ok, tokens} <- expect_assignment(tokens),
          {:ok, object, [{:end, _}]} <- Solid.Object.parse(tokens) do
       {:ok, %__MODULE__{loc: loc, argument: argument, object: object}, context}
     else
@@ -24,6 +24,9 @@ defmodule Solid.Tags.AssignTag do
       error -> error
     end
   end
+
+  defp expect_assignment([{:assignment, _} | tokens]), do: {:ok, tokens}
+  defp expect_assignment(tokens), do: {:error, "Expected '='", Parser.meta_head(tokens)}
 
   defimpl Solid.Renderable do
     def render(tag, context, options) do

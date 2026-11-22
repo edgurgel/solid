@@ -93,6 +93,16 @@ defmodule Solid.Tags.AssignTagTest do
       assert parse(template) == {:error, "Unexpected token", %{line: 1, column: 22}}
     end
 
+    test "error missing '='" do
+      assert parse(~s<{% assign var1 %}>) == {:error, "Expected '='", %{line: 1, column: 16}}
+
+      assert parse(~s<{% assign var1 var2 = 1 %}>) ==
+               {:error, "Expected '='", %{line: 1, column: 16}}
+
+      assert parse(~s<{% assign aA1_-.[] = 'hello' %}>) ==
+               {:error, "Expected '='", %{line: 1, column: 16}}
+    end
+
     test "error unexpected operator" do
       template = ~s<{% assign x = 1 - 2 %}{{ x }}>
 
