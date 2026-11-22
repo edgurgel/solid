@@ -99,6 +99,15 @@ defmodule Solid.Parser do
           :ok ->
             {:error, reason, %{line: context.line, column: context.column}}
 
+          # A block opened inside a `{% liquid %}` tag must close before that
+          # tag ends. Not allowed:
+          #
+          # {% liquid if true %}
+          # {% liquid endif %}
+          {:ok, _result, %ParserContext{mode: :normal} = context}
+          when expected_mode == :liquid_tag ->
+            {:error, reason, %{line: context.line, column: context.column}}
+
           {:ok, result, context} ->
             parse_until(context, tags, reason, result ++ acc, expected_mode)
 
