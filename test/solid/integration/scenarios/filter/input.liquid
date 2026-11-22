@@ -434,6 +434,10 @@ uniq
 {{ (1..5) | uniq | join: '-' }}
 {{ things | uniq | join: '-' }}
 {{ fruits | split: ","| uniq | join: ", " }}
+{{ dupes | uniq: 'k' | map: 'i' | join: ',' }}
+{{ truthy_rows | uniq: 'x' | map: 'i' | join: ',' }}
+{{ items_with_nil | uniq: 'x' }}
+{{ fruits | uniq: 'x' | size }}
 
 date
 
@@ -587,6 +591,53 @@ where
 {{ hashes | where: 'a' | map: 'a' | join: ',' }}
 {% assign filtered = truthy_rows | where: 'x' %}{% for row in filtered %}{{ row.i }};{% endfor %}
 
+reject
+
+{{ items | reject: 'k' | map: 'i' | join: ',' }}
+{{ items | reject: 'k', 'b' | map: 'i' | join: ',' }}
+{{ truthy_rows | reject: 'x' | map: 'i' | join: ',' }}
+{{ truthy_rows | reject: 'x', nil | map: 'i' | join: ',' }}
+{{ truthy_rows | reject: 'x', false | map: 'i' | join: ',' }}
+{{ posts | reject: 'title' | size }}
+{{ fruits | reject: 'plum' | size }}
+{{ fruits | reject: 'kiwi' | size }}
+{{ items_with_nil | reject: 'x' }}
+{{ unknown | reject: 'x' | size }}
+{{ my_array | reject: 'x' }}
+
+has
+
+{{ items | has: 'k' }}
+{{ items | has: 'k', 'C' }}
+{{ items | has: 'k', 'z' }}
+{{ items | has: 'k', 9 }}
+{{ items | has: 'n', 9 }}
+{{ items_with_nil | has: 'x', 1 }}
+{{ items_with_nil | has: 'x', 2 }}
+{{ truthy_rows | has: 'x', false }}
+{{ post | has: 'title' }}
+{{ fruits | has: 'plum' }}
+{{ unknown | has: 'x' }}
+{{ var_empty_array | has: 'x' }}
+
+find
+
+{% assign found = items | find: 'n', 9 %}{{ found.i }}
+{% assign found = items | find: 'k' %}{{ found.i }}
+{{ items | find: 'k', 'z' }}
+{{ fruits | find: 'peach' }}
+{{ items_with_nil | find: 'x', 2 }}
+{{ unknown | find: 'x' }}
+
+find_index
+
+{{ items | find_index: 'n', 9 }}
+{{ items | find_index: 'k', 'z' }}
+{{ items | find_index: 'missing' }}
+{{ post | find_index: 'title' }}
+{{ items_with_nil | find_index: 'x', 1 }}
+{{ items_with_nil | find_index: 'x', 2 }}
+
 newline_to_br
 
 {{ "1
@@ -622,6 +673,12 @@ sort
 {{ false | sort | join: '#' }}
 {{ unknown | sort | join: '#' }}
 {% # {{ posts | sort | join: '#' }} %}
+{{ items | sort: 'n' | map: 'i' | join: ',' }}
+{{ items | sort: 'k' | map: 'i' | join: ',' }}
+{{ array | sort: unknown | join: '#' }}
+{{ items_with_nil | sort: 'x' }}
+{{ var_empty_array | sort: 'x' | size }}
+{{ mixed_types | sort }}
 
 sort_natural
 
@@ -634,6 +691,10 @@ sort_natural
 {{ mixed_types | sort_natural }}
 {{ strings_with_nil | sort_natural | last }}
 {{ words | sort_natural | join: "#" }}
+{{ items | sort_natural: 'k' | map: 'i' | join: ',' }}
+{{ items | sort_natural: 'n' | map: 'i' | join: ',' }}
+{{ array | sort_natural: unknown | join: '#' }}
+{{ items_with_nil | sort_natural: 'x' }}
 
 strip_html
 
