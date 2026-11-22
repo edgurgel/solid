@@ -1651,5 +1651,39 @@ defmodule Solid.ParserTest do
 
       assert {:error, _} = parse(template)
     end
+
+    test "nested liquid tag can't open a block" do
+      template = """
+      {% liquid
+        liquid if true
+        echo 'a'
+        endif
+      %}
+      """
+
+      assert parse(template) ==
+               {:error,
+                [
+                  {"Tags inside a nested liquid tag must end on the same line",
+                   %{line: 2, column: 3}}
+                ]}
+    end
+
+    test "nested liquid tag can't close a block" do
+      template = """
+      {% liquid
+        if true
+        liquid endif
+      %}
+      """
+
+      assert {:error, errors} = parse(template)
+      assert {"Unexpected tag 'endif'", %{line: 3, column: 10}} in errors
+    end
+
+    test "unterminated nested liquid tag" do
+      assert parse("{% liquid liquid") ==
+               {:error, [{"Liquid tag not terminated", %{line: 1, column: 17}}]}
+    end
   end
 end

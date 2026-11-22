@@ -314,6 +314,12 @@ defmodule Solid.Tags.CaseTagTest do
       assert parse(template) == {:error, "Expected ',' or 'or'", %{column: 17, line: 3}}
     end
 
+    test "'and' between when values" do
+      template = "{% case title %}{% when 'bar' and 'Hello', 'Hello' %}bar{% endcase %}"
+
+      assert parse(template) == {:error, "Expected ',' or 'or'", %{column: 31, line: 1}}
+    end
+
     test "extra tokens on else" do
       template = """
       {% case product %}
