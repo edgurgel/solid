@@ -1,5 +1,21 @@
 # Unreleased
 
+## Enhancements
+
+* New filters `has`, `reject`, `find` and `find_index` (#220). Like `where`, they take a property
+  name and an optional value. Without a value they test whether the property is truthy:
+  * `has` returns `true` when at least one item matches
+  * `reject` returns the items that don't match
+  * `find` returns the first item that matches, and `find_index` its index. Both return `nil` when
+    nothing matches
+* `sort`, `sort_natural` and `uniq` accept a property: `{{ products | sort: "price" }}` (#220).
+  Items without the property sort last, and `uniq: "key"` keeps the first item for each value
+* New `{% ifchanged %}` tag: writes its body only when the output differs from the previous
+  `ifchanged` output in the template. A partial loaded with `render` starts fresh (#218)
+* A `liquid` line inside `{% liquid %}` now works, and `liquid liquid echo 'a'` nests. A tag opened
+  on such a line must end on the same line (#222). Before, it was the error "Unexpected tag
+  'liquid'"
+
 ## Bug fixes
 
 * Hashes render as `{"a"=>1, "b"=>[nil, "x"]}` instead of `%{"a" => 1, "b" => [nil, "x"]}`, both
@@ -43,6 +59,18 @@
   * Nested blocks are now taken into account, so an `if` that only holds a blank `if` is blank too
   * `tablerow` never strips whitespace from its body, as every cell renders inside its own `<td>`
   * A `{% raw %}` block that holds whitespace is no longer blank, so its whitespace is kept
+* `where` fixes (#220):
+  * A list that holds `nil`, a boolean or a float now returns `nil` instead of skipping those items
+  * On a list of strings, a string has the property `"oo"` when it contains `"oo"`, so
+    `["zoo", "bar"] | where: "oo"` returns `["zoo"]`. Before, it returned `[]`, and raised when
+    given a value
+* `sort` puts `nil` values last, and raises "cannot sort values of incompatible types" on a list
+  that mixes types, such as `[1, "a"]` (#220)
+* `{% assign %}` without `=` after the target, such as `{% assign a %}`, is now the parse error
+  "Expected '='" instead of a crash (#221)
+* A block opened in a `{% liquid %}` tag must close in that same tag. Before, a later
+  `{% liquid %}` tag could close it: `{% liquid if true %}x{% liquid endif %}` is now the parse
+  error "Expected 'endif'" (#222)
 
 # 1.4.0 (2026-11-15)
 
