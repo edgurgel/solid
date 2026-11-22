@@ -505,7 +505,7 @@ defmodule Solid.ParserTest do
       context = %ParserContext{rest: template, line: 1, column: 1, mode: :normal}
 
       assert Parser.parse_until(context, "endif", "endif not found") ==
-               {:error, "Expected 'endif'", %{line: 4, column: 12}}
+               {:error, "Expected 'endif'", %{line: 3, column: 3}}
     end
 
     test "error found" do
@@ -1650,6 +1650,55 @@ defmodule Solid.ParserTest do
       """
 
       assert {:error, _} = parse(template)
+    end
+
+    test "nested liquid tag can't open a block" do
+      template = """
+      {% liquid
+        liquid if true
+        echo 'a'
+        endif
+      %}
+      """
+
+      assert parse(template) ==
+               {:error,
+                [
+                  {"Tags inside a nested liquid tag must end on the same line",
+                   %{line: 2, column: 3}}
+                ]}
+    end
+
+    test "nested liquid tag can't close a block" do
+      template = """
+      {% liquid
+        if true
+        liquid endif
+      %}
+      """
+
+      assert {:error, errors} = parse(template)
+      assert {"Unexpected tag 'endif'", %{line: 3, column: 10}} in errors
+    end
+
+    test "block opened in a liquid tag can't be closed by another liquid tag" do
+      assert {:error, [{"Expected 'endif'", %{line: 1, column: 21}} | _]} =
+               parse("{% liquid if true %}{% liquid endif %}")
+    end
+
+    test "block opened in a liquid tag can't span text and close in another liquid tag" do
+      template = """
+      {% liquid if true %}
+      x
+      {% liquid endif %}
+      """
+
+      assert {:error, [{"Expected 'endif'", %{line: 1, column: 21}} | _]} = parse(template)
+    end
+
+    test "unterminated nested liquid tag" do
+      assert parse("{% liquid liquid") ==
+               {:error, [{"Liquid tag not terminated", %{line: 1, column: 17}}]}
     end
   end
 end

@@ -99,6 +99,15 @@ defmodule Solid.Parser do
           :ok ->
             {:error, reason, %{line: context.line, column: context.column}}
 
+          # A block opened inside a `{% liquid %}` tag must close before that
+          # tag ends. Not allowed:
+          #
+          # {% liquid if true %}
+          # {% liquid endif %}
+          {:ok, _result, %ParserContext{mode: :normal} = context}
+          when expected_mode == :liquid_tag ->
+            {:error, reason, %{line: context.line, column: context.column}}
+
           {:ok, result, context} ->
             parse_until(context, tags, reason, result ++ acc, expected_mode)
 
@@ -154,6 +163,9 @@ defmodule Solid.Parser do
 
       _ ->
         case Lexer.tokenize_tag_start(context) do
+          {:ok, "liquid", context} ->
+            nested_liquid_tag(context)
+
           {:ok, tag_name, context} ->
             loc = %Loc{line: line, column: column}
 
@@ -173,6 +185,61 @@ defmodule Solid.Parser do
         end
     end
   end
+
+  @line_whitespace ~c" \f\r\t\v"
+
+  # A `liquid` line inside a `{% liquid %}` tag. Its body is the rest of the
+  # line, so it holds at most one tag, and that tag must end on the same line:
+  #
+  #     {% liquid
+  #       liquid echo 'a'
+  #       liquid
+  #     %}
+  #
+  # A block tag such as `liquid if true` can't be closed on its own line, so it
+  # is an error.
+  defp nested_liquid_tag(%ParserContext{line: line, column: column} = context) do
+    loc = %{line: line, column: column - byte_size("liquid")}
+    context = skip(context, leading_line_whitespace(context.rest, 0))
+
+    case context.rest do
+      # Bare `liquid`: nothing to parse
+      <<"\n", _::binary>> ->
+        {:ok, [], skip(context, 1)}
+
+      # Bare `liquid` before the end of the outer tag, which the next entry handles
+      <<"%}", _::binary>> ->
+        {:ok, [], context}
+
+      <<"-%}", _::binary>> ->
+        {:ok, [], context}
+
+      _ ->
+        case parse_liquid_entry(context) do
+          {:ok, entries, new_context} ->
+            if ends_on_line?(new_context, line) do
+              {:ok, entries, new_context}
+            else
+              {:error, "Tags inside a nested liquid tag must end on the same line", loc,
+               new_context}
+            end
+
+          other ->
+            other
+        end
+    end
+  end
+
+  defp leading_line_whitespace(<<c, rest::binary>>, count) when c in @line_whitespace,
+    do: leading_line_whitespace(rest, count + 1)
+
+  defp leading_line_whitespace(_rest, count), do: count
+
+  # The tag stopped before the outer `%}` on the same line, or consumed the
+  # newline that ends the line
+  defp ends_on_line?(%ParserContext{line: line}, line), do: true
+  defp ends_on_line?(%ParserContext{line: new_line, column: 1}, line), do: new_line == line + 1
+  defp ends_on_line?(_context, _line), do: false
 
   # Consume plain text up to the next `{{`/`{%` delimiter (or end of input).
   #

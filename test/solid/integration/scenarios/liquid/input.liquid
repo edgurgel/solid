@@ -63,3 +63,19 @@ if 1 contains '1'
   echo contains123
 endif
 %}
+
+{%- liquid
+  liquid
+  echo "bare"
+-%}
+
+{%- liquid
+  liquid echo 'nested'
+  liquid  assign nested_var = 'assigned'
+  echo nested_var
+  liquid # nested comment
+-%}
+
+{%- liquid liquid liquid echo "deep" -%}
+
+{% liquid liquid %}
