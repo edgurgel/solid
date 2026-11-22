@@ -961,16 +961,26 @@ defmodule Solid.StandardFilter do
   end
 
   @doc """
-  Sorts items in an array by a property of an item in the array. The order of the sorted array is case-sensitive.
+  Sorts items in an array, or by a property of each item when `property` is given.
+  The order is case-sensitive. `nil` values, and items without the property, are placed last.
+
+  Numbers are compared with numbers and strings with strings. Comparing values of other
+  combinations of types is an error.
 
   iex> Solid.StandardFilter.sort(~w(zebra octopus giraffe SallySnake))
   ~w(SallySnake giraffe octopus zebra)
+
+  iex> Solid.StandardFilter.sort([%{"n" => 10}, %{"m" => 1}, %{"n" => 9}], "n")
+  [%{"n" => 9}, %{"n" => 10}, %{"m" => 1}]
   """
-  @spec sort(list) :: list
-  def sort(input), do: Enum.sort(to_enum(input))
+  @spec sort(any, any) :: list | nil
+  def sort(input, property \\ nil) do
+    sort_by_property(input, property, &compare_values/2)
+  end
 
   @doc """
-  Sorts items in an array in case-insensitive order. `nil` values are placed last.
+  Sorts items in an array in case-insensitive order, or by a property of each item when
+  `property` is given. `nil` values, and items without the property, are placed last.
 
   iex> Solid.StandardFilter.sort_natural(~w(zebra octopus giraffe SallySnake))
   ~w(giraffe octopus SallySnake zebra)
@@ -978,28 +988,90 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.sort_natural(["b", "a", nil, "C", "B", "A"])
   ["a", "A", "b", "B", "C", nil]
 
+  iex> Solid.StandardFilter.sort_natural([%{"t" => "b"}, %{"t" => "C"}, %{"t" => "a"}], "t")
+  [%{"t" => "a"}, %{"t" => "b"}, %{"t" => "C"}]
+
   iex> Solid.StandardFilter.sort_natural(123)
   "123"
   """
-  @spec sort_natural(any) :: any
-  def sort_natural(input) when is_list(input) or is_struct(input, Range) do
-    input
-    |> to_enum()
-    |> Enum.sort(&natural_sorter/2)
+  @spec sort_natural(any, any) :: any
+  def sort_natural(input, property \\ nil)
+
+  def sort_natural(input, nil) when not is_list(input) and not is_struct(input, Range) do
+    to_string(input)
   end
 
-  def sort_natural(input) do
-    to_string(input)
+  def sort_natural(input, property) do
+    sort_by_property(input, property, &compare_natural/2)
+  end
+
+  # Without a property, items are compared directly. With one, each item is compared by
+  # the value of that property, and the result is nil if any item doesn't have properties.
+  defp sort_by_property(input, property, compare) do
+    items = to_array(input)
+
+    cond do
+      items == [] ->
+        []
+
+      property == nil ->
+        Enum.sort(items, &(compare.(&1, &2) != :gt))
+
+      Enum.all?(items, &has_properties?/1) ->
+        items
+        |> Enum.map(&{elem(fetch_property(&1, property), 1), &1})
+        |> Enum.sort(fn {a, _}, {b, _} -> compare.(a, b) != :gt end)
+        |> Enum.map(&elem(&1, 1))
+
+      true ->
+        nil
+    end
+  end
+
+  # `nil` sorts after everything else
+  defp compare_values(a, b) do
+    case compare_same_type(a, b) do
+      nil when a == nil -> :gt
+      nil when b == nil -> :lt
+      nil -> raise %Solid.ArgumentError{message: "cannot sort values of incompatible types"}
+      result -> result
+    end
+  end
+
+  defp compare_same_type(a, b) when is_number(a) and is_number(b), do: compare_ordered(a, b)
+  defp compare_same_type(a, b) when is_binary(a) and is_binary(b), do: compare_ordered(a, b)
+  defp compare_same_type(a, b) when is_list(a) and is_list(b), do: compare_lists(a, b)
+  defp compare_same_type(a, b) when a == b, do: :eq
+  defp compare_same_type(_a, _b), do: nil
+
+  defp compare_ordered(a, b) do
+    cond do
+      a < b -> :lt
+      a > b -> :gt
+      true -> :eq
+    end
+  end
+
+  # Element by element, then the shorter list first. nil if any pair can't be compared.
+  defp compare_lists([], []), do: :eq
+  defp compare_lists([], _), do: :lt
+  defp compare_lists(_, []), do: :gt
+
+  defp compare_lists([a | rest_a], [b | rest_b]) do
+    case compare_same_type(a, b) do
+      :eq -> compare_lists(rest_a, rest_b)
+      result -> result
+    end
   end
 
   # `nil` sorts after everything else, other values are compared
   # case-insensitively as strings
-  defp natural_sorter(nil, nil), do: true
-  defp natural_sorter(nil, _), do: false
-  defp natural_sorter(_, nil), do: true
+  defp compare_natural(nil, nil), do: :eq
+  defp compare_natural(nil, _), do: :gt
+  defp compare_natural(_, nil), do: :lt
 
-  defp natural_sorter(a, b) do
-    String.downcase(to_str(a)) <= String.downcase(to_str(b))
+  defp compare_natural(a, b) do
+    compare_ordered(String.downcase(to_str(a)), String.downcase(to_str(b)))
   end
 
   @doc """
@@ -1152,17 +1224,36 @@ defmodule Solid.StandardFilter do
   end
 
   @doc """
-  Removes any duplicate elements in an array.
+  Removes any duplicate elements in an array. When `property` is given, items are duplicates
+  when they have the same value for that property, and the first one is kept.
 
   Output
   iex> Solid.StandardFilter.uniq(~w(ants bugs bees bugs ants))
   ~w(ants bugs bees)
+
+  iex> Solid.StandardFilter.uniq([%{"t" => "a", "i" => 1}, %{"t" => "a", "i" => 2}], "t")
+  [%{"t" => "a", "i" => 1}]
   """
-  @spec uniq(list) :: list
-  def uniq(input) do
+  @spec uniq(any, any) :: list | nil
+  def uniq(input, property \\ nil)
+
+  def uniq(input, nil) do
     input
     |> to_enum()
     |> Enum.uniq()
+  end
+
+  def uniq(input, property) do
+    input
+    |> to_array()
+    |> Enum.uniq_by(fn item ->
+      case fetch_property(item, property) do
+        {:ok, value} -> value
+        :error -> throw({__MODULE__, :no_properties})
+      end
+    end)
+  catch
+    :throw, {__MODULE__, :no_properties} -> nil
   end
 
   @doc """
@@ -1222,31 +1313,145 @@ defmodule Solid.StandardFilter do
   iex> Solid.StandardFilter.where(input, "available")
   [%{"id" => 1, "available" => true}, %{"id" => 3, "available" => true}]
   """
-  @spec where(term, term, term) :: list
-  def where(input, key, value) do
-    if value == nil do
-      where(input, key)
-    else
-      input = to_enum(input)
-      for map <- input, Map.has_key?(map, key), map[key] == value, do: map
+  @spec where(term, term, term) :: list | nil
+  def where(input, property, value \\ nil) do
+    filter_array(input, property, value, [], &Enum.filter/2)
+  end
+
+  @doc """
+  Creates an array excluding the objects with a given property value,
+  or any truthy value by default.
+
+  iex> input = [
+  ...>   %{"id" => 1, "type" => "kitchen"},
+  ...>   %{"id" => 2, "type" => "bath"},
+  ...>   %{"id" => 3}
+  ...> ]
+  iex> Solid.StandardFilter.reject(input, "type", "kitchen")
+  [%{"id" => 2, "type" => "bath"}, %{"id" => 3}]
+  iex> Solid.StandardFilter.reject(input, "type")
+  [%{"id" => 3}]
+  """
+  @spec reject(term, term, term) :: list | nil
+  def reject(input, property, value \\ nil) do
+    filter_array(input, property, value, [], &Enum.reject/2)
+  end
+
+  @doc """
+  Tests whether any object in an array has a given property value,
+  or any truthy value by default.
+
+  iex> input = [%{"id" => 1, "type" => "kitchen"}, %{"id" => 2}]
+  iex> Solid.StandardFilter.has(input, "type", "kitchen")
+  true
+  iex> Solid.StandardFilter.has(input, "type", "bath")
+  false
+  iex> Solid.StandardFilter.has(input, "id")
+  true
+  """
+  @spec has(term, term, term) :: boolean | nil
+  def has(input, property, value \\ nil) do
+    filter_array(input, property, value, false, &Enum.any?/2)
+  end
+
+  @doc """
+  Returns the first object in an array with a given property value,
+  or any truthy value by default. Returns `nil` when nothing matches.
+
+  iex> input = [%{"id" => 1, "type" => "kitchen"}, %{"id" => 2, "type" => "bath"}]
+  iex> Solid.StandardFilter.find(input, "type", "bath")
+  %{"id" => 2, "type" => "bath"}
+  iex> Solid.StandardFilter.find(input, "type", "garage")
+  nil
+  """
+  @spec find(term, term, term) :: term
+  def find(input, property, value \\ nil) do
+    filter_array(input, property, value, nil, &Enum.find/2)
+  end
+
+  @doc """
+  Returns the index of the first object in an array with a given property value,
+  or any truthy value by default. Returns `nil` when nothing matches.
+
+  iex> input = [%{"id" => 1, "type" => "kitchen"}, %{"id" => 2, "type" => "bath"}]
+  iex> Solid.StandardFilter.find_index(input, "type", "bath")
+  1
+  iex> Solid.StandardFilter.find_index(input, "type", "garage")
+  nil
+  """
+  @spec find_index(term, term, term) :: non_neg_integer | nil
+  def find_index(input, property, value \\ nil) do
+    filter_array(input, property, value, nil, &Enum.find_index/2)
+  end
+
+  # Shared by `where`, `reject`, `has`, `find` and `find_index`.
+  #
+  # An item matches when its `property` equals `value`, or, without a value, when the
+  # property is truthy (anything except `nil` and `false`). An empty input returns
+  # `default`. If the items are checked up to one that doesn't have properties at all
+  # (`nil`, a boolean, a float), the whole result is `nil`.
+  defp filter_array(input, property, value, default, enum_fun) do
+    case to_array(input) do
+      [] ->
+        default
+
+      items ->
+        enum_fun.(items, fn item ->
+          case fetch_property(item, property) do
+            {:ok, found} when value == nil -> found not in [nil, false]
+            {:ok, found} -> found == value
+            :error -> throw({__MODULE__, :no_properties})
+          end
+        end)
+    end
+  catch
+    :throw, {__MODULE__, :no_properties} -> nil
+  end
+
+  # Like `to_enum/1`, but `nil` is an empty array
+  defp to_array(nil), do: []
+  defp to_array(input), do: to_enum(input)
+
+  defp has_properties?(item) do
+    is_map(item) or is_binary(item) or is_integer(item)
+  end
+
+  # Reads `property` from an array item:
+  #
+  #   * maps return the value under that key
+  #   * strings return `property` itself when they contain it, or the character at an
+  #     integer position
+  #   * integers return the bit at an integer position
+  #
+  # Returns `:error` for items that don't have properties, and raises when the item has
+  # properties but `property` has the wrong type for it.
+  defp fetch_property(item, property) when is_struct(item) do
+    case Solid.Matcher.match(item, [property]) do
+      {:ok, value} -> {:ok, value}
+      {:error, _} -> {:ok, nil}
     end
   end
 
-  @spec where(term, term) :: list
-  def where(input, key) do
-    input
-    |> to_enum
-    |> Enum.flat_map(fn item ->
-      if is_integer(item) do
-        raise %Solid.ArgumentError{message: "cannot select the property '#{key}'"}
-      end
+  defp fetch_property(item, property) when is_map(item), do: {:ok, Map.get(item, property)}
 
-      if is_map(item) && item[key] not in [nil, false] do
-        [item]
-      else
-        []
-      end
-    end)
+  defp fetch_property(item, property) when is_binary(item) and is_binary(property) do
+    {:ok, if(String.contains?(item, property), do: property)}
+  end
+
+  defp fetch_property(item, property) when is_binary(item) and is_integer(property) do
+    {:ok, String.at(item, property)}
+  end
+
+  defp fetch_property(item, property) when is_integer(item) and is_integer(property) do
+    {:ok, if(property < 0, do: 0, else: Bitwise.band(Bitwise.bsr(item, property), 1))}
+  end
+
+  defp fetch_property(item, property) do
+    if has_properties?(item) do
+      raise %Solid.ArgumentError{message: "cannot select the property '#{to_str(property)}'"}
+    else
+      :error
+    end
   end
 
   @doc """
