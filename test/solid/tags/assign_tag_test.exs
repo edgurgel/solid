@@ -103,6 +103,44 @@ defmodule Solid.Tags.AssignTagTest do
                {:error, "Expected '='", %{line: 1, column: 16}}
     end
 
+    test "error the target is not a variable name" do
+      for target <- [
+            "123",
+            "1.5",
+            "'foo'",
+            ~s("foo"),
+            "true",
+            "false",
+            "nil",
+            "empty",
+            "blank",
+            "(1..2)"
+          ] do
+        assert parse("{% assign #{target} = 'hello' %}") ==
+                 {:error, "Expected a variable name", %{line: 1, column: 11}},
+               "target: #{target}"
+      end
+    end
+
+    test "error a name segment ends with '?'" do
+      assert parse(~s<{% assign foo? = 'hello' %}>) ==
+               {:error, "Invalid variable name 'foo?'", %{line: 1, column: 11}}
+
+      assert parse(~s<{% assign foo.bar? = 'hello' %}>) ==
+               {:error, "Invalid variable name 'foo.bar?'", %{line: 1, column: 11}}
+    end
+
+    test "a '?' inside a quoted key is fine" do
+      assert {:ok, _tag, _context} = parse(~s<{% assign foo['bar?'] = 'hello' %}>)
+    end
+
+    test "names with digits, underscores and hyphens are fine" do
+      for target <- ["foo1", "_", "_foo", "foo-a", "FOO", "true.x", "a.b", "a[0]"] do
+        assert {:ok, _tag, _context} = parse("{% assign #{target} = 'hello' %}"),
+               "target: #{target}"
+      end
+    end
+
     test "error unexpected operator" do
       template = ~s<{% assign x = 1 - 2 %}{{ x }}>
 
