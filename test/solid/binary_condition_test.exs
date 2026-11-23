@@ -65,6 +65,23 @@ defmodule Solid.BinaryConditionTest do
       assert eval({%Blank{}, :==, " \t "}) == {:ok, true}
     end
 
+    test "blank and empty with <, <=, > and >= are false" do
+      for literal <- [%Blank{}, %Empty{}],
+          op <- [:<, :<=, :>, :>=],
+          value <- [1, -1, 1.5, "", "a", nil, false, true, [], %{}, literal] do
+        assert eval({literal, op, value}) == {:ok, false}
+        assert eval({value, op, literal}) == {:ok, false}
+      end
+    end
+
+    test "blank and empty are never equal to each other or themselves" do
+      for left <- [%Blank{}, %Empty{}], right <- [%Blank{}, %Empty{}] do
+        assert eval({left, :==, right}) == {:ok, false}
+        assert eval({left, :!=, right}) == {:ok, true}
+        assert eval({left, :<>, right}) == {:ok, true}
+      end
+    end
+
     test "literals negated" do
       for op <- [:!=, :<>] do
         for {value, blank?, empty?} <- [

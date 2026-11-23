@@ -31,3 +31,5 @@
 {% cycle var1: "one", "two", "three" %}
 {% cycle var1: "one" %}
 {% cycle var1: "one", "two", "three" %}
+blank and empty in a cycle read as '':
+[{% cycle empty, 'a' %}{% cycle '', 'a' %}{% cycle blank, 'a' %}{% cycle empty, 'a' %}]

@@ -40,3 +40,9 @@
 
 Content order is maintained
 {%- case condition -%}{%- when 3 -%}<span>{{condition}}</span>{%- endcase %}
+when blank and when empty check the case value like == blank and == empty:
+{% case empty %}{% when empty %}T{% else %}F{% endcase %}{% case blank %}{% when blank %}T{% else %}F{% endcase %}{% case empty %}{% when blank %}T{% else %}F{% endcase %}{% case blank %}{% when empty %}T{% else %}F{% endcase %}
+{% case '' %}{% when empty %}T{% else %}F{% endcase %}{% case ' ' %}{% when blank %}T{% else %}F{% endcase %}{% case ' ' %}{% when empty %}T{% else %}F{% endcase %}{% case 'a' %}{% when blank %}T{% else %}F{% endcase %}
+{% assign arr = '' | split: ',' %}{% case arr %}{% when empty %}T{% else %}F{% endcase %}{% case arr %}{% when blank %}T{% else %}F{% endcase %}{% case nil %}{% when blank %}T{% else %}F{% endcase %}{% case false %}{% when blank %}T{% else %}F{% endcase %}{% case nil %}{% when empty %}T{% else %}F{% endcase %}
+{% case empty %}{% when '' %}T{% else %}F{% endcase %}{% case blank %}{% when '' %}T{% else %}F{% endcase %}{% case empty %}{% when ' ' %}T{% else %}F{% endcase %}{% case empty %}{% when nil %}T{% else %}F{% endcase %}{% case blank %}{% when false %}T{% else %}F{% endcase %}{% case empty %}{% when arr %}T{% else %}F{% endcase %}
+{% case 'x' %}{% when 'y', empty, 'x' %}T{% else %}F{% endcase %}{% case '' %}{% when 'y', empty %}T{% else %}F{% endcase %}

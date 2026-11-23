@@ -179,6 +179,21 @@ defmodule Solid.Argument do
   defp stringify!(value), do: to_string(value)
 
   @default_scopes [:iteration_vars, :vars, :counter_vars]
+  @blank_literals [Literal.Blank, Literal.Empty]
+
+  @doc """
+  Like `get/4`, for an operand of a comparison (`==`, `!=`, `contains`, ...)
+  or a `when` value. A bare `blank` or `empty` is kept as `%Literal.Blank{}` or
+  `%Literal.Empty{}`, so the comparison checks the other side's emptiness.
+  """
+  @spec get_operand(t, Context.t(), [Filter.t()], Keyword.t()) :: {:ok, term, Context.t()}
+  def get_operand(arg, context, filters, opts \\ [])
+
+  def get_operand(%Literal{value: %struct{} = literal}, context, [], _opts)
+      when struct in @blank_literals,
+      do: {:ok, literal, context}
+
+  def get_operand(arg, context, filters, opts), do: get(arg, context, filters, opts)
 
   @spec get(t, Context.t(), [Filter.t()], Keyword.t()) :: {:ok, term, Context.t()}
   def get(arg, context, filters, opts \\ []) do
@@ -219,6 +234,11 @@ defmodule Solid.Argument do
         {:ok, value, context}
     end
   end
+
+  # `blank` and `empty` evaluate to `""`. Only a condition operand or a `when`
+  # value keeps them as emptiness checks: see `get_operand/4`.
+  defp do_get(%Literal{value: %struct{}}, context, _options) when struct in @blank_literals,
+    do: {:ok, "", context}
 
   defp do_get(%Literal{value: value}, context, _options), do: {:ok, value, context}
 

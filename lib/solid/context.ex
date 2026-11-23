@@ -76,6 +76,10 @@ defmodule Solid.Context do
     end
   end
 
+  # `blank` and `empty` read as `""`, so `cycle empty, 'a'` shares the state of `cycle '', 'a'`
+  defp cycle_slug(%Literal{value: %struct{}}) when struct in [Literal.Blank, Literal.Empty],
+    do: "l:"
+
   defp cycle_slug(%Literal{value: value}), do: "l:#{value}"
 
   defp cycle_slug(%Variable{} = variable) do

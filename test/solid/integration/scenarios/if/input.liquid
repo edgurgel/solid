@@ -244,3 +244,17 @@ undefined contains hash_foo: {% if nosuchthing contains hash_foo %}T{% else %}F{
 'foo' == hash_foo: {% if 'foo' == hash_foo %}T{% else %}F{% endif %}
 'foo' contains with unless: {% unless hash_foo contains 'foo' %}T{% else %}F{% endunless %}
 'foo' contains with elsif: {% if false %}A{% elsif hash_foo contains 'foo' %}T{% else %}F{% endif %}
+blank and empty with <, <=, > and >= are false:
+{% if blank <= 1 or blank >= 1 or 1 >= blank or 1 <= blank %}T{% else %}F{% endif %}
+{% if empty < 1 or empty > 1 or 1 > empty or 1 < empty %}T{% else %}F{% endif %}
+{% if '' >= blank or '' <= empty or blank < 'a' or empty > 'a' %}T{% else %}F{% endif %}
+{% if var <= blank or array >= empty or var3 > blank %}T{% else %}F{% endif %}
+blank and empty are never equal to each other or themselves:
+{% if empty == empty %}T{% else %}F{% endif %}{% if blank == blank %}T{% else %}F{% endif %}{% if empty == blank %}T{% else %}F{% endif %}{% if blank == empty %}T{% else %}F{% endif %}
+{% if empty != empty %}T{% else %}F{% endif %}{% if blank != blank %}T{% else %}F{% endif %}{% if empty <> blank %}T{% else %}F{% endif %}{% if blank != empty %}T{% else %}F{% endif %}
+{% unless empty == empty %}T{% else %}F{% endunless %}{% if empty == empty or true %}T{% else %}F{% endif %}{% if blank == blank and true %}T{% else %}F{% endif %}
+blank and empty outside a comparison are '':
+{% assign e = empty %}{% if e == empty %}T{% else %}F{% endif %}{% if e == blank %}T{% else %}F{% endif %}{% if e != empty %}T{% else %}F{% endif %}{% if e == '' %}T{% else %}F{% endif %}{% if e %}T{% else %}F{% endif %}
+{% assign l = 'a' | split: ',' %}{% if l contains empty %}T{% else %}F{% endif %}{% if empty contains '' %}T{% else %}F{% endif %}{% if '' contains empty %}T{% else %}F{% endif %}{% if 'abc' contains blank %}T{% else %}F{% endif %}{% if nil contains empty %}T{% else %}F{% endif %}
+{% if empty %}T{% else %}F{% endif %}{% unless blank %}T{% else %}F{% endunless %}{% if 1 == empty %}T{% else %}F{% endif %}{% if empty == 1 %}T{% else %}F{% endif %}
+[{{ empty }}][{{ blank | append: 'x' }}][{{ empty | size }}][{{ nil | default: empty | size }}][{{ 'a' | replace: 'a', empty }}]
