@@ -359,6 +359,33 @@ defmodule Solid.ArgumentTest do
     end
   end
 
+  describe "get_operand/4" do
+    test "keeps a bare blank or empty" do
+      for literal <- [%Literal.Blank{}, %Literal.Empty{}] do
+        arg = %Literal{loc: @loc, value: literal}
+        context = %Solid.Context{}
+
+        assert Argument.get(arg, context, []) == {:ok, "", context}
+        assert Argument.get_operand(arg, context, []) == {:ok, literal, context}
+      end
+    end
+
+    test "evaluates blank or empty with filters to a value" do
+      arg = %Literal{loc: @loc, value: %Literal.Empty{}}
+
+      filters = [
+        %Filter{
+          loc: @loc,
+          function: "append",
+          positional_arguments: [%Literal{loc: @loc, value: "x"}],
+          named_arguments: %{}
+        }
+      ]
+
+      assert {:ok, "x", _context} = Argument.get_operand(arg, %Solid.Context{}, filters)
+    end
+  end
+
   describe "get/3 with filters" do
     test "basic filter" do
       arg = %Variable{original_name: "key", loc: @loc, identifier: "key", accesses: []}

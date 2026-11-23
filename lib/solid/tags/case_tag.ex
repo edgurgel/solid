@@ -128,9 +128,9 @@ defmodule Solid.Tags.CaseTag do
                                                                                    inner_acc,
                                                                                    context} ->
                 {:ok, evaluated_argument, context} =
-                  Solid.Argument.get(argument, context, [], options)
+                  Solid.Argument.get_operand(argument, context, [], options)
 
-                if evaluated_argument == value do
+                if when_matches?(value, evaluated_argument) do
                   {{:else_block, false}, [result | inner_acc], context}
                 else
                   {{:else_block, else_block}, inner_acc, context}
@@ -142,5 +142,13 @@ defmodule Solid.Tags.CaseTag do
 
       {List.flatten(Enum.reverse(acc)), context}
     end
+
+    # `when blank` and `when empty` check the case value like `value == blank`
+    defp when_matches?(value, %struct{} = literal)
+         when struct in [Solid.Literal.Blank, Solid.Literal.Empty] do
+      Solid.BinaryCondition.eval({value, :==, literal}) == {:ok, true}
+    end
+
+    defp when_matches?(value, when_value), do: value == when_value
   end
 end

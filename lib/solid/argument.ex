@@ -181,6 +181,20 @@ defmodule Solid.Argument do
   @default_scopes [:iteration_vars, :vars, :counter_vars]
   @blank_literals [Literal.Blank, Literal.Empty]
 
+  @doc """
+  Like `get/4`, for an operand of a comparison (`==`, `!=`, `contains`, ...)
+  or a `when` value. A bare `blank` or `empty` is kept as `%Literal.Blank{}` or
+  `%Literal.Empty{}`, so the comparison checks the other side's emptiness.
+  """
+  @spec get_operand(t, Context.t(), [Filter.t()], Keyword.t()) :: {:ok, term, Context.t()}
+  def get_operand(arg, context, filters, opts \\ [])
+
+  def get_operand(%Literal{value: %struct{} = literal}, context, [], _opts)
+      when struct in @blank_literals,
+      do: {:ok, literal, context}
+
+  def get_operand(arg, context, filters, opts), do: get(arg, context, filters, opts)
+
   @spec get(t, Context.t(), [Filter.t()], Keyword.t()) :: {:ok, term, Context.t()}
   def get(arg, context, filters, opts \\ []) do
     case do_get(arg, context, opts) do

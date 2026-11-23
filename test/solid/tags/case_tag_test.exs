@@ -443,6 +443,47 @@ defmodule Solid.Tags.CaseTagTest do
   end
 
   describe "Renderable impl" do
+    test "when blank and when empty check the case value" do
+      render = fn template, vars ->
+        {:ok, parsed} = Solid.parse(template)
+        {:ok, iodata, []} = Solid.render(parsed, vars)
+        IO.iodata_to_binary(iodata)
+      end
+
+      for {value, blank?, empty?} <- [
+            {"", true, true},
+            {" ", true, false},
+            {"a", false, false},
+            {[], true, true},
+            {%{}, true, true},
+            {nil, true, false},
+            {false, true, false},
+            {0, false, false}
+          ] do
+        vars = %{"x" => value}
+        expected = fn match? -> if match?, do: "T", else: "F" end
+
+        assert render.("{% case x %}{% when blank %}T{% else %}F{% endcase %}", vars) ==
+                 expected.(blank?),
+               "#{inspect(value)} when blank"
+
+        assert render.("{% case x %}{% when empty %}T{% else %}F{% endcase %}", vars) ==
+                 expected.(empty?),
+               "#{inspect(value)} when empty"
+      end
+    end
+
+    test "case blank and case empty read as ''" do
+      template =
+        "{% case empty %}{% when '' %}T{% else %}F{% endcase %}" <>
+          "{% case blank %}{% when nil %}T{% else %}F{% endcase %}"
+
+      {:ok, parsed} = Solid.parse(template)
+      {:ok, iodata, []} = Solid.render(parsed, %{})
+
+      assert IO.iodata_to_binary(iodata) == "TF"
+    end
+
     test "renders the right case with literal" do
       template = """
       {% case product %}

@@ -80,10 +80,20 @@ defmodule Solid.ConditionExpression do
           {:ok, boolean, Context.t()} | {:error, Exception.t(), Context.t()}
   def eval(%BinaryCondition{} = condition, context, options) do
     {:ok, left_argument, context} =
-      Argument.get(condition.left_argument, context, condition.left_argument_filters, options)
+      Argument.get_operand(
+        condition.left_argument,
+        context,
+        condition.left_argument_filters,
+        options
+      )
 
     {:ok, right_argument, context} =
-      Argument.get(condition.right_argument, context, condition.right_argument_filters, options)
+      Argument.get_operand(
+        condition.right_argument,
+        context,
+        condition.right_argument_filters,
+        options
+      )
 
     case BinaryCondition.eval({left_argument, condition.operator, right_argument}) do
       {:ok, result} -> eval_child_condition(result, condition, context, options)

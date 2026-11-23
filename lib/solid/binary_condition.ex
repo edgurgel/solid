@@ -24,8 +24,16 @@ defmodule Solid.BinaryCondition do
 
   @not_equal_operators [:!=, :<>]
   @blank_literals [Blank, Empty]
+  @relational_operators [:<, :<=, :>, :>=]
 
   @spec eval({term, Solid.Lexer.operator(), term}) :: {:ok, boolean} | {:error, binary}
+
+  # `blank` and `empty` are never equal to each other, nor to themselves:
+  # `empty == empty` is false and `blank != blank` is true.
+  def eval({%s1{}, op, %s2{}})
+      when op in [:== | @not_equal_operators] and s1 in @blank_literals and
+             s2 in @blank_literals,
+      do: {:ok, op != :==}
 
   # `x != blank` is the negation of `x == blank` (same for `empty` and `<>`).
   # These must come before the wildcard clauses below, which would otherwise
@@ -39,6 +47,15 @@ defmodule Solid.BinaryCondition do
       when op in @not_equal_operators and struct in @blank_literals do
     with {:ok, equal?} <- eval({literal, :==, v2}), do: {:ok, not equal?}
   end
+
+  # `blank` and `empty` have no order: `<`, `<=`, `>` and `>=` with them are false.
+  def eval({%struct{}, op, _v2})
+      when op in @relational_operators and struct in @blank_literals,
+      do: {:ok, false}
+
+  def eval({_v1, op, %struct{}})
+      when op in @relational_operators and struct in @blank_literals,
+      do: {:ok, false}
 
   def eval({v1, :==, %Empty{}}) when is_binary(v1), do: {:ok, v1 == ""}
   def eval({%Empty{}, :==, v2}) when is_binary(v2), do: {:ok, v2 == ""}
@@ -71,6 +88,10 @@ defmodule Solid.BinaryCondition do
       do: {:ok, false}
 
   def eval({v1, :contains, v2}) when is_list(v1), do: {:ok, v2 in v1}
+
+  # A string contains `blank` and `empty`, which read as `""` here
+  def eval({v1, :contains, %struct{}}) when is_binary(v1) and struct in @blank_literals,
+    do: {:ok, true}
 
   def eval({v1, :contains, v2}) when is_binary(v1) and is_binary(v2),
     do: {:ok, String.contains?(v1, v2)}
