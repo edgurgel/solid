@@ -1,0 +1,32 @@
+{% doc %}
+  Renders a product card.
+
+  @param {object} product - The product to show.
+  @example
+  {% render 'card', product: product %}
+{% enddoc %}
+[{% doc %}don't render me{% enddoc %}]
+[{%doc%}x{%enddoc%}]
+[{% doc %}{{ foo {% enddoc %}]
+[{% doc %}{% assign x = y {% enddoc %}]
+[{% doc %}{% if true %}{% for ? %}{% endcase %}{% unless if %}{% enddoc %}]
+[{% doc %}{% raw %}{% enddoc %}]
+[{% doc %}{% comment %}{% enddoc %}]
+[{% doc %}{% docs %}{% enddocs %}{% enddoc %}]
+[{% comment %}{% doc %}{% enddoc %}{% endcomment %}]
+[{% raw %}{% doc %}x{% enddoc %}{% endraw %}]
+whitespace control:
+[a {%- doc -%} x {%- enddoc -%} b]
+[a
+  {%- doc %}x{% enddoc -%}
+  b]
+blank bodies:
+[{% if true %} {% doc %}{% enddoc %} {% endif %}]
+[{% if true %} {% doc %}x{% enddoc %} {% endif %}]
+[{% for i in list %} {% doc %}{% enddoc %} {% endfor %}]
+[{% for i in list %} {% doc %} {% enddoc %} {% endfor %}]
+[{% unless false %}
+  {% doc %}
+    a doc in a block
+  {% enddoc %}
+{% endunless %}]

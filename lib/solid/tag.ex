@@ -22,6 +22,7 @@ defmodule Solid.Tag do
       "continue" => Tags.ContinueTag,
       "cycle" => Tags.CycleTag,
       "decrement" => Tags.CounterTag,
+      "doc" => Tags.DocTag,
       "echo" => Tags.EchoTag,
       "for" => Tags.ForTag,
       "if" => Tags.IfTag,
