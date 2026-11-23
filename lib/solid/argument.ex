@@ -179,6 +179,7 @@ defmodule Solid.Argument do
   defp stringify!(value), do: to_string(value)
 
   @default_scopes [:iteration_vars, :vars, :counter_vars]
+  @blank_literals [Literal.Blank, Literal.Empty]
 
   @spec get(t, Context.t(), [Filter.t()], Keyword.t()) :: {:ok, term, Context.t()}
   def get(arg, context, filters, opts \\ []) do
@@ -219,6 +220,11 @@ defmodule Solid.Argument do
         {:ok, value, context}
     end
   end
+
+  # `blank` and `empty` evaluate to `""`. Only a condition operand or a `when`
+  # value keeps them as emptiness checks: see `get_operand/4`.
+  defp do_get(%Literal{value: %struct{}}, context, _options) when struct in @blank_literals,
+    do: {:ok, "", context}
 
   defp do_get(%Literal{value: value}, context, _options), do: {:ok, value, context}
 
