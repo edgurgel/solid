@@ -3,3 +3,7 @@ test nested render tag
 {% for i in (1..5) %}
 {% render "inner", index: i %}
 {% endfor %}
+
+a for loop in a partial rendered with "for" has no parentloop:
+{% render "product" for products %}
+{% for i in (1..2) %}{% render "product" for products %}{% endfor %}
