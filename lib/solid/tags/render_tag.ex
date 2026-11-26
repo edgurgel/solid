@@ -158,7 +158,10 @@ defmodule Solid.Tags.RenderTag do
           |> Enum.with_index(0)
           |> Enum.map(fn {v, index} ->
             forloop = build_forloop_map(index, length)
-            %Context{vars: %{destination => v}, iteration_vars: %{"forloop" => forloop}}
+            # `forloop` is a plain variable of the partial, not an iteration
+            # variable, so a `for` loop inside the partial doesn't take it as
+            # its `parentloop`.
+            %Context{vars: Map.put(%{"forloop" => forloop}, destination, v)}
           end)
 
         {inner_contexts, outter_context}

@@ -33,6 +33,11 @@ defmodule Solid.Tags.RenderTagTest do
        "{{forloop.key}}{{ forloop.index }}{{ forloop.rindex }}{{ forloop.first }}{{ forloop.last }}{{ forloop.length }}"}
     end
 
+    def read_template_file("product", _opts) do
+      {:ok,
+       "{{ product.key }}-{{ forloop.index0 }} {% for x in (1..2) %}{{ forloop.index0 }}{{ forloop.parentloop.index0 }} {% endfor %}{{ forloop.index0 }}|"}
+    end
+
     def read_template_file("current_line", _opts) do
       {:ok, "{% current_line %}"}
     end
@@ -88,7 +93,8 @@ defmodule Solid.Tags.RenderTagTest do
                   "key" => %Solid.Variable{identifier: "value"},
                   "title" => %Solid.Literal{value: "text"}
                 }
-              }, %Solid.ParserContext{rest: "", line: 1, column: 54, mode: :normal, tags: nil}} =
+              },
+              %Solid.ParserContext{rest: "", line: 1, column: 54, mode: :normal, tags: nil}} =
                parse(template)
     end
 
@@ -293,6 +299,20 @@ defmodule Solid.Tags.RenderTagTest do
     end
 
     test "renders for + forloop" do
+      template = ~s<{% render "forloop" for array as item %}>
+      context = %Solid.Context{vars: %{"array" => [%{"key" => "value1"}, %{"key" => "value2"}]}}
+
+      {:ok, tag, _rest} = parse(template)
+      options = [file_system: {TestFileSystem, nil}]
+
+      assert Solid.Renderable.render(tag, context, options) ==
+               {[
+                  ["", "1", "2", "true", "false", "2"],
+                  ["", "2", "1", "false", "true", "2"]
+                ], context}
+    end
+
+    test "renders for with a variable named forloop: the variable wins" do
       template = ~s<{% render "forloop" for array  %}>
       context = %Solid.Context{vars: %{"array" => [%{"key" => "value1"}, %{"key" => "value2"}]}}
 
@@ -301,9 +321,21 @@ defmodule Solid.Tags.RenderTagTest do
 
       assert Solid.Renderable.render(tag, context, options) ==
                {[
-                  ["value1", "1", "2", "true", "false", "2"],
-                  ["value2", "2", "1", "false", "true", "2"]
+                  ["value1", "", "", "keyvalue1", "", ""],
+                  ["value2", "", "", "keyvalue2", "", ""]
                 ], context}
+    end
+
+    test "renders for: a for loop in the partial has no parentloop" do
+      template = ~s<{% render "product" for array %}>
+      context = %Solid.Context{vars: %{"array" => [%{"key" => "a"}, %{"key" => "b"}]}}
+
+      {:ok, tag, _rest} = parse(template)
+      options = [file_system: {TestFileSystem, nil}]
+
+      {result, _context} = Solid.Renderable.render(tag, context, options)
+
+      assert IO.iodata_to_binary(result) == "a-0 0 1 0|b-1 0 1 1|"
     end
 
     test "renders current_line" do
