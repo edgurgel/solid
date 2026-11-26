@@ -15,6 +15,10 @@
 * A `liquid` line inside `{% liquid %}` now works, and `liquid liquid echo 'a'` nests. A tag opened
   on such a line must end on the same line (#222). Before, it was the error "Unexpected tag
   'liquid'"
+* New `{% doc %}` tag to document a template, usually a partial's parameters (#224). It renders
+  nothing, and its body isn't parsed. The body is kept as written in `Solid.Tags.DocTag`'s `text`,
+  so tools can read it from the parse tree. Arguments on `doc` or `enddoc`, a nested `doc`
+  and a `doc` inside `{% liquid %}` are parse errors
 
 ## Bug fixes
 
@@ -71,6 +75,24 @@
 * A block opened in a `{% liquid %}` tag must close in that same tag. Before, a later
   `{% liquid %}` tag could close it: `{% liquid if true %}x{% liquid endif %}` is now the parse
   error "Expected 'endif'" (#222)
+* The target of `{% assign %}` must be a variable name (#225):
+  * A literal target, such as `123`, `'foo'`, `true` or `nil`, is now the parse error "Expected a
+    variable name". Before, `{% assign 123 = 'x' %}` assigned the variable `"123"`
+  * A name ending in `?`, such as `foo?` or `foo.bar?`, is now the parse error "Invalid variable
+    name 'foo?'"
+* `blank` and `empty` fixes (#226):
+  * Outside a comparison they are `""`: `{% assign e = empty %}` stores `""`, and
+    `{% case empty %}` compares `""`
+  * `when blank` and `when empty` now check the `case` value like `== blank` and `== empty`, so
+    `{% case '' %}{% when empty %}` matches. Before, they never matched
+  * `blank` and `empty` are never equal to each other or to themselves: `empty == empty` is
+    `false` and `blank != blank` is `true`
+  * `<`, `<=`, `>` and `>=` with `blank` or `empty` on either side are always `false`.
+    Before, `{% if empty >= 1 %}` was `true`
+  * `'abc' contains blank` is `true`, and `{% cycle empty, 'a' %}` works. Both used to raise
+* `{% render 'x' for items %}` no longer exposes the render loop as `forloop.parentloop` to a
+  `for` loop inside the partial. A variable named `forloop` in the partial now hides the render
+  loop's `forloop`, for example when the partial is itself named `forloop`
 
 # 1.4.0 (2026-11-15)
 
